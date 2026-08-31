@@ -4,67 +4,216 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>なにクウ？</title>
-    <!-- LIFF SDKの読み込み -->
+    <!-- LIFF SDK -->
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <!-- Firebaseの読み込み（必要に応じてご自身の環境に合わせてください） -->
-    <script type="module">
-      // Firebase等の初期化ロジックがここにある場合はそのまま維持してください
-    </script>
+    <!-- Firebase SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <style>
-        /* ここにお使いのデザインCSSが入ります */
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #ffffff;
+            --sub-text: #a0a0a0;
+            --accent-color: #ff5722;
+            --border-color: #333333;
+        }
         body {
-            background-color: #121212;
-            color: #ffffff;
-            font-family: sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             margin: 0;
             padding: 16px;
-        }
-        h1, h2 {
-            color: #ff5722;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         .container {
-            max-width: 600px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: 500px;
         }
-        /* その他のスタイル */
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        h1 {
+            color: var(--accent-color);
+            margin: 0 0 8px 0;
+            font-size: 28px;
+        }
+        p {
+            color: var(--sub-text);
+            margin: 0;
+            font-size: 14px;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+        }
+        h2 {
+            font-size: 16px;
+            margin: 0 0 12px 0;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .post-item, .no-data {
+            text-align: center;
+            color: var(--sub-text);
+            padding: 12px;
+            font-size: 14px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+            background-color: #2c2c2c;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-color);
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:active {
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>なにクウ？</h1>
-        <p>ご飯迷った時の決定＆写真共有アプリ</p>
+        <header>
+            <h1>なにクウ？</h1>
+            <p>ご飯迷った時の決定＆写真共有アプリ</p>
+        </header>
 
-        <!-- 投稿一覧などのセクション -->
-        <div id="app">
-            <!-- 動的に表示されるコンテンツ -->
+        <!-- みんなの投稿一覧 -->
+        <div class="card">
+            <h2>🍴 みんなの投稿一覧</h2>
+            <div id="posts-container">
+                <div class="no-data">条件に合う投稿がありません</div>
+            </div>
+        </div>
+
+        <!-- お店を探す・絞り込む -->
+        <div class="card">
+            <h2>🔍 お店を探す・絞り込む</h2>
+            <input type="text" id="search-keyword" placeholder="検索ワード（例：ラーメン、おしゃれ）">
+            <select id="search-genre">
+                <option value="すべて">すべて</option>
+                <option value="和食">和食</option>
+                <option value="洋食">洋食</option>
+                <option value="中華">中華</option>
+                <option value="定食屋">定食屋</option>
+                <option value="ファミレス">ファミレス</option>
+                <option value="ラーメン">ラーメン</option>
+                <option value="焼肉">焼肉</option>
+            </select>
+        </div>
+
+        <!-- 投稿フォーム -->
+        <div class="card">
+            <h2>✏️ お店を投稿する</h2>
+            <form id="post-form">
+                <input type="text" id="shop-name" placeholder="店名" required>
+                <select id="genre" required>
+                    <option value="">ジャンルを選択</option>
+                    <option value="和食">和食</option>
+                    <option value="洋食">洋食</option>
+                    <option value="中華">中華</option>
+                    <option value="定食屋">定食屋</option>
+                    <option value="ファミレス">ファミレス</option>
+                    <option value="ラーメン">ラーメン</option>
+                    <option value="焼肉">焼肉</option>
+                </select>
+                <input type="text" id="author" placeholder="投稿者名（自動取得）" readonly>
+                <button type="submit">投稿する</button>
+            </form>
         </div>
     </div>
 
-    <!-- アプリの動作およびLIFFセキュリティ設定用のJavaScript -->
     <script>
-        let currentUserName = "ゲスト";
+        // --- Firebaseの設定（ご自身の環境のものを入れてください） ---
+        const firebaseConfig = {
+            databaseURL: "https://nanikuu-default-rtdb.firebaseio.com/"
+        };
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
 
-        // LIFFの初期化 ＆ 未ログインならログインを促すセキュリティガード
+        // --- フォーム送信処理 ---
+        document.getElementById('post-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const shopName = document.getElementById('shop-name').value;
+            const genre = document.getElementById('genre').value;
+            const author = document.getElementById('author').value || "ゲスト";
+
+            db.ref('posts').push({
+                shopName,
+                genre,
+                author,
+                timestamp: Date.now()
+            }).then(() => {
+                alert('投稿しました！');
+                document.getElementById('post-form').reset();
+            }).catch((error) => {
+                alert('エラーが発生しました: ' + error.message);
+            });
+        });
+
+        // --- データのリアルタイム取得 ---
+        db.ref('posts').on('value', (snapshot) => {
+            const container = document.getElementById('posts-container');
+            container.innerHTML = '';
+            
+            if (!snapshot.exists()) {
+                container.innerHTML = '<div class="no-data">条件に合う投稿がありません</div>';
+                return;
+            }
+
+            snapshot.forEach((childSnapshot) => {
+                const post = childSnapshot.val();
+                const div = document.createElement('div');
+                div.className = 'post-item';
+                div.style.borderBottom = '1px solid #333';
+                div.style.padding = '8px 0';
+                div.innerHTML = `<strong>${post.shopName}</strong> (${post.genre}) <br><small>投稿者: ${post.author}</small>`;
+                container.appendChild(div);
+            });
+        });
+
+        // --- 絶対に止まらない安全なLIFF初期化処理 ---
         document.addEventListener("DOMContentLoaded", () => {
             try {
-                liff.init({ liffId: "2011348764-TFzS41F9" }).then(() => {
-                    // LINEアプリ外（普通のブラウザなど）で開いた場合、自動でログインを促す
-                    if (!liff.isInClient() && !liff.isLoggedIn()) {
-                        liff.login();
-                    } else if (liff.isLoggedIn()) {
-                        liff.getProfile().then(profile => {
-                            currentUserName = profile.displayName;
-                            const authorInput = document.getElementById('author');
-                            if (authorInput) {
-                                authorInput.value = currentUserName;
-                            }
-                        }).catch((err) => {
-                            console.log("Failed to get profile: ", err);
-                        });
-                    }
-                }).catch((err) => {
-                    console.log("LIFF initialization skipped/failed: ", err);
-                });
+                liff.init({ liffId: "2011348764-TFzS41F9" })
+                    .then(() => {
+                        if (liff.isLoggedIn()) {
+                            liff.getProfile().then(profile => {
+                                const authorInput = document.getElementById('author');
+                                if (authorInput) {
+                                    authorInput.value = profile.displayName;
+                                }
+                            }).catch(() => {});
+                        }
+                    })
+                    .catch((err) => {
+                        console.log("LIFF init error ignored: ", err);
+                    });
             } catch (e) {
                 console.log("LIFF not available");
             }
