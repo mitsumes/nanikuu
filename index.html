@@ -82,6 +82,7 @@
             font-weight: bold;
             font-size: 16px;
             cursor: pointer;
+            margin-bottom: 8px;
         }
         button:active {
             opacity: 0.8;
@@ -100,18 +101,37 @@
             border-radius: 8px;
             margin-top: 8px;
         }
+        .link-btns {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .link-btns a {
+            flex: 1;
+            text-align: center;
+            padding: 6px;
+            background: #333;
+            color: #fff;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        .link-btns a:hover {
+            background: #444;
+        }
         .no-data {
             text-align: center;
             color: var(--sub-text);
             padding: 12px;
             font-size: 14px;
         }
-        #roulette-result {
+        .roulette-result {
             text-align: center;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             color: var(--accent-color);
-            margin-top: 12px;
+            margin-top: 8px;
+            margin-bottom: 12px;
         }
         #loading-overlay {
             display: none;
@@ -174,10 +194,10 @@
                     <option value="ラーメン">ラーメン</option>
                     <option value="焼肉">焼肉</option>
                 </select>
-                <input type="text" id="country" placeholder="国（例：日本）">
                 <input type="text" id="state" placeholder="県名（例：愛知県）">
                 <input type="text" id="city" placeholder="市名（例：東海市）">
-                <input type="text" id="address" placeholder="詳細住所">
+                <input type="url" id="hp-url" placeholder="ホームページのURL（https://...）">
+                <input type="url" id="insta-url" placeholder="InstagramのURL（https://...）">
                 <textarea id="comment" placeholder="コメント・おすすめメニューなど" rows="3"></textarea>
                 <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">お店の写真（1枚）</label>
                 <input type="file" id="image-file" accept="image/*">
@@ -188,9 +208,13 @@
 
         <!-- 2. ルーレット機能（一番下） -->
         <div class="card">
-            <h2>🎰 ご飯決めルーレット</h2>
-            <button id="roulette-btn" type="button">今日のゴハンを決定する！</button>
-            <div id="roulette-result">ボタンを押してね！</div>
+            <h2>🎰 2段階ルーレットで決める</h2>
+            
+            <button id="roulette-genre-btn" type="button">1. ジャンルを決める！</button>
+            <div id="roulette-genre-result" class="roulette-result">ジャンル未選択</div>
+
+            <button id="roulette-shop-btn" type="button" style="background-color: #4CAF50;">2. このジャンルでお店を決める！</button>
+            <div id="roulette-shop-result" class="roulette-result">お店未決定</div>
         </div>
     </div>
 
@@ -207,6 +231,7 @@
         const storage = firebase.storage();
 
         let allPosts = [];
+        let selectedGenreForRoulette = "";
 
         // --- データのリアルタイム取得 ---
         db.ref('posts').on('value', (snapshot) => {
@@ -228,7 +253,7 @@
             renderPosts(allPosts);
         });
 
-        // --- 投稿一覧の描画関数 ---
+        // --- 投稿一覧の描画関数（マップ連動・リンク対応） ---
         function renderPosts(posts) {
             const container = document.getElementById('posts-container');
             container.innerHTML = '';
@@ -241,14 +266,26 @@
             const sorted = [...posts].reverse();
 
             sorted.forEach((post) => {
+                // Googleマップの検索用リンクを自動生成
+                const mapQuery = encodeURIComponent(`${post.state || ''}${post.city || ''} ${post.shopName}`);
+                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+
                 const div = document.createElement('div');
                 div.className = 'post-item';
                 div.innerHTML = `
                     <strong>${escapeHtml(post.shopName)}</strong> (${escapeHtml(post.genre)})<br>
-                    <small>📍 ${escapeHtml(post.state || '')} ${escapeHtml(post.city || '')} ${escapeHtml(post.address || '')}</small><br>
+                    <small>📍 ${escapeHtml(post.state || '')} ${escapeHtml(post.city || '')}</small>
+                    <a href="${mapUrl}" target="_blank" style="font-size: 12px; color: #4fa3ff; margin-left: 8px; text-decoration: none;">🗺️ マップを開く</a><br>
+                    
                     ${post.comment ? `<p style="margin: 4px 0; color: #ddd;">${escapeHtml(post.comment)}</p>` : ''}
                     ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-image" alt="投稿画像">` : ''}
-                    <small style="color: #a0a0a0; display: block; margin-top: 4px;">投稿者: ${escapeHtml(post.author)}</small>
+                    
+                    <div class="link-btns">
+                        ${post.hpUrl ? `<a href="${escapeHtml(post.hpUrl)}" target="_blank">🌐 HPを見る</a>` : ''}
+                        ${post.instaUrl ? `<a href="${escapeHtml(post.instaUrl)}" target="_blank">📷 Instagram</a>` : ''}
+                    </div>
+
+                    <small style="color: #a0a0a0; display: block; margin-top: 6px;">投稿者: ${escapeHtml(post.author)}</small>
                 `;
                 container.appendChild(div);
             });
@@ -261,7 +298,7 @@
 
             const filtered = allPosts.filter(post => {
                 const matchGenre = (genre === 'all' || genre === 'すべて' || post.genre === genre);
-                const text = `${post.shopName} ${post.genre} ${post.state} ${post.city} ${post.address} ${post.comment} ${post.author}`.toLowerCase();
+                const text = `${post.shopName} ${post.genre} ${post.state} ${post.city} ${post.comment} ${post.author}`.toLowerCase();
                 const matchKeyword = text.includes(keyword);
                 return matchGenre && matchKeyword;
             });
@@ -272,26 +309,53 @@
         document.getElementById('search-keyword').addEventListener('input', filterPosts);
         document.getElementById('search-genre').addEventListener('change', filterPosts);
 
-        // --- ルーレット機能 ---
-        document.getElementById('roulette-btn').addEventListener('click', () => {
+        // --- ルーレット機能（2段階） ---
+        // 1. ジャンルを決めるルーレット
+        document.getElementById('roulette-genre-btn').addEventListener('click', () => {
             if (allPosts.length === 0) {
-                document.getElementById('roulette-result').innerText = '投稿がまだありません！';
+                document.getElementById('roulette-genre-result').innerText = '投稿がありません！';
                 return;
             }
-            const randomIndex = Math.floor(Math.random() * allPosts.length);
-            const picked = allPosts[randomIndex];
-            document.getElementById('roulette-result').innerText = `🎉 ${picked.shopName} (${picked.genre}) に決定！`;
+            // 投稿されているお店のジャンル一覧を抽出（重複なし）
+            const genres = [...new Set(allPosts.map(p => p.genre))];
+            const randomGenre = genres[Math.floor(Math.random() * genres.length)];
+            
+            selectedGenreForRoulette = randomGenre;
+            document.getElementById('roulette-genre-result').innerText = `🎯 ジャンルは【 ${randomGenre} 】に決定！`;
+            document.getElementById('roulette-shop-result').innerText = '下のボタンを押してお店を決めよう！';
         });
 
-        // --- 投稿フォーム送信処理（画像アップロード対応） ---
+        // 2. 選ばれたジャンルの中で店を決めるルーレット
+        document.getElementById('roulette-shop-btn').addEventListener('click', () => {
+            if (allPosts.length === 0) {
+                document.getElementById('roulette-shop-result').innerText = '投稿がありません！';
+                return;
+            }
+
+            let targetPosts = allPosts;
+            // もしジャンルが選ばれていれば、そのジャンルに絞る
+            if (selectedGenreForRoulette) {
+                targetPosts = allPosts.filter(p => p.genre === selectedGenreForRoulette);
+            }
+
+            if (targetPosts.length === 0) {
+                document.getElementById('roulette-shop-result').innerText = '該当するジャンルのお店がありません';
+                return;
+            }
+
+            const picked = targetPosts[Math.floor(Math.random() * targetPosts.length)];
+            document.getElementById('roulette-shop-result').innerText = `🎉 【 ${picked.shopName} 】 (${picked.genre}) に決定！`;
+        });
+
+        // --- 投稿フォーム送信処理 ---
         document.getElementById('post-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const shopName = document.getElementById('shop-name').value;
             const genre = document.getElementById('genre').value;
-            const country = document.getElementById('country').value;
             const state = document.getElementById('state').value;
             const city = document.getElementById('city').value;
-            const address = document.getElementById('address').value;
+            const hpUrl = document.getElementById('hp-url').value;
+            const instaUrl = document.getElementById('insta-url').value;
             const comment = document.getElementById('comment').value;
             const author = document.getElementById('author').value || "ゲスト";
             const imageFile = document.getElementById('image-file').files[0];
@@ -312,10 +376,10 @@
                 await db.ref('posts').push({
                     shopName,
                     genre,
-                    country,
                     state,
                     city,
-                    address,
+                    hpUrl,
+                    instaUrl,
                     comment,
                     imageUrl,
                     author,
