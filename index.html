@@ -101,6 +101,19 @@
             border-radius: 8px;
             margin-top: 8px;
         }
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 6px 0;
+        }
+        .badge {
+            background-color: #333;
+            color: #ccc;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
         .link-btns {
             display: flex;
             gap: 8px;
@@ -183,7 +196,7 @@
         <div class="card">
             <h2>✏️ お店を投稿する</h2>
             <form id="post-form">
-                <input type="text" id="shop-name" placeholder="店名 *" required>
+                <!-- ご要望：ジャンル選択を店の上に -->
                 <select id="genre" required>
                     <option value="">ジャンルを選択 *</option>
                     <option value="和食">和食</option>
@@ -194,8 +207,32 @@
                     <option value="ラーメン">ラーメン</option>
                     <option value="焼肉">焼肉</option>
                 </select>
+                <input type="text" id="shop-name" placeholder="店名 *" required>
+
                 <input type="text" id="state" placeholder="県名（例：愛知県）">
                 <input type="text" id="city" placeholder="市名（例：東海市）">
+                
+                <!-- ご要望：市町村の下に定休日入力 -->
+                <input type="text" id="holiday" placeholder="定休日（例：水曜日、不定休）">
+
+                <!-- ご要望：利用シーン（1人向け、ファミリー向け、グループ向け） -->
+                <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">おすすめの利用シーン</label>
+                <select id="target-vibe">
+                    <option value="指定なし">利用シーンを選択</option>
+                    <option value="1人向け">👤 1人向け</option>
+                    <option value="ファミリー向け">👨‍👩‍👧 ファミリー向け</option>
+                    <option value="グループ向け">🍻 グループ向け</option>
+                </select>
+
+                <!-- ご要望：予約の可否タブ -->
+                <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">予約の可否</label>
+                <select id="reservation">
+                    <option value="不明・記載なし">予約の可否を選択</option>
+                    <option value="予約可能">⭕ 予約可能</option>
+                    <option value="予約不可">❌ 予約不可</option>
+                    <option value="要確認">⚠️ 要確認</option>
+                </select>
+
                 <input type="url" id="hp-url" placeholder="ホームページのURL（https://...）">
                 <input type="url" id="insta-url" placeholder="InstagramのURL（https://...）">
                 <textarea id="comment" placeholder="コメント・おすすめメニューなど" rows="3"></textarea>
@@ -253,7 +290,7 @@
             renderPosts(allPosts);
         });
 
-        // --- 投稿一覧の描画関数（マップ連動・リンク対応） ---
+        // --- 投稿一覧の描画関数 ---
         function renderPosts(posts) {
             const container = document.getElementById('posts-container');
             container.innerHTML = '';
@@ -266,9 +303,14 @@
             const sorted = [...posts].reverse();
 
             sorted.forEach((post) => {
-                // Googleマップの検索用リンクを自動生成
                 const mapQuery = encodeURIComponent(`${post.state || ''}${post.city || ''} ${post.shopName}`);
                 const mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+
+                // タグ情報の組み立て
+                let badgesHtml = '';
+                if (post.holiday) badgesHtml += `<span class="badge">店休: ${escapeHtml(post.holiday)}</span>`;
+                if (post.targetVibe && post.targetVibe !== '指定なし') badgesHtml += `<span class="badge">${escapeHtml(post.targetVibe)}</span>`;
+                if (post.reservation && post.reservation !== '不明・記載なし') badgesHtml += `<span class="badge">${escapeHtml(post.reservation)}</span>`;
 
                 const div = document.createElement('div');
                 div.className = 'post-item';
@@ -277,7 +319,8 @@
                     <small>📍 ${escapeHtml(post.state || '')} ${escapeHtml(post.city || '')}</small>
                     <a href="${mapUrl}" target="_blank" style="font-size: 12px; color: #4fa3ff; margin-left: 8px; text-decoration: none;">🗺️ マップを開く</a><br>
                     
-                    ${post.comment ? `<p style="margin: 4px 0; color: #ddd;">${escapeHtml(post.comment)}</p>` : ''}
+                    ${badgesHtml ? `<div class="tags-container">${badgesHtml}</div>` : ''}
+                    ${post.comment ? `<p style="margin: 6px 0; color: #ddd;">${escapeHtml(post.comment)}</p>` : ''}
                     ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-image" alt="投稿画像">` : ''}
                     
                     <div class="link-btns">
@@ -298,7 +341,7 @@
 
             const filtered = allPosts.filter(post => {
                 const matchGenre = (genre === 'all' || genre === 'すべて' || post.genre === genre);
-                const text = `${post.shopName} ${post.genre} ${post.state} ${post.city} ${post.comment} ${post.author}`.toLowerCase();
+                const text = `${post.shopName} ${post.genre} ${post.state} ${post.city} ${post.holiday} ${post.targetVibe} ${post.reservation} ${post.comment} ${post.author}`.toLowerCase();
                 const matchKeyword = text.includes(keyword);
                 return matchGenre && matchKeyword;
             });
@@ -310,13 +353,11 @@
         document.getElementById('search-genre').addEventListener('change', filterPosts);
 
         // --- ルーレット機能（2段階） ---
-        // 1. ジャンルを決めるルーレット
         document.getElementById('roulette-genre-btn').addEventListener('click', () => {
             if (allPosts.length === 0) {
                 document.getElementById('roulette-genre-result').innerText = '投稿がありません！';
                 return;
             }
-            // 投稿されているお店のジャンル一覧を抽出（重複なし）
             const genres = [...new Set(allPosts.map(p => p.genre))];
             const randomGenre = genres[Math.floor(Math.random() * genres.length)];
             
@@ -325,7 +366,6 @@
             document.getElementById('roulette-shop-result').innerText = '下のボタンを押してお店を決めよう！';
         });
 
-        // 2. 選ばれたジャンルの中で店を決めるルーレット
         document.getElementById('roulette-shop-btn').addEventListener('click', () => {
             if (allPosts.length === 0) {
                 document.getElementById('roulette-shop-result').innerText = '投稿がありません！';
@@ -333,7 +373,6 @@
             }
 
             let targetPosts = allPosts;
-            // もしジャンルが選ばれていれば、そのジャンルに絞る
             if (selectedGenreForRoulette) {
                 targetPosts = allPosts.filter(p => p.genre === selectedGenreForRoulette);
             }
@@ -350,10 +389,13 @@
         // --- 投稿フォーム送信処理 ---
         document.getElementById('post-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const shopName = document.getElementById('shop-name').value;
             const genre = document.getElementById('genre').value;
+            const shopName = document.getElementById('shop-name').value;
             const state = document.getElementById('state').value;
             const city = document.getElementById('city').value;
+            const holiday = document.getElementById('holiday').value;
+            const targetVibe = document.getElementById('target-vibe').value;
+            const reservation = document.getElementById('reservation').value;
             const hpUrl = document.getElementById('hp-url').value;
             const instaUrl = document.getElementById('insta-url').value;
             const comment = document.getElementById('comment').value;
@@ -374,10 +416,13 @@
                 }
 
                 await db.ref('posts').push({
-                    shopName,
                     genre,
+                    shopName,
                     state,
                     city,
+                    holiday,
+                    targetVibe,
+                    reservation,
                     hpUrl,
                     instaUrl,
                     comment,
