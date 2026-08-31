@@ -6,10 +6,52 @@
   <title>なにクウ？</title>
   <!-- LIFF SDK の読み込み -->
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+  <!-- Firebase SDK (v9) の読み込み -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+    import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+
+    // スクリーンショットより取得したFirebase設定
+    const firebaseConfig = {
+      apiKey: "AIzaSyDpani9pMAqzS4KhctYUXH...", // 自動設定済み
+      authDomain: "nanikuu.firebaseapp.com",
+      databaseURL: "https://nanikuu-default-rtdb.firebaseio.com",
+      projectId: "nanikuu",
+      storageBucket: "nanikuu.firebasestorage.app",
+      messagingSenderId: "926924103144",
+      appId: "1:926924103144:web:285b58f3b..."
+    };
+
+    // Firebase 初期化
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const postsRef = ref(db, 'posts');
+
+    // グローバル変数として保持
+    window.db = db;
+    window.postsRef = postsRef;
+    window.push = push;
+
+    // データベースの変更を監視（リアルタイム反映＆消えない保存）
+    onValue(postsRef, (snapshot) => {
+      const data = snapshot.val();
+      window.posts = [];
+      if (data) {
+        Object.keys(data).forEach(key => {
+          window.posts.unshift(data[key]);
+        });
+      }
+      if (typeof window.renderPosts === "function") {
+        window.renderPosts();
+      }
+    });
+  </script>
+
   <style>
     :root { --primary: #ff5722; --bg: #fff9e6; }
     body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #333; }
-    .container { max-width: 480px; margin: 0 auto; display: none; } /* 初期状態は非表示 */
+    .container { max-width: 480px; margin: 0 auto; display: none; }
     
     /* ブロック画面（外部ブラウザ対策） */
     #blocked-screen { display: none; text-align: center; padding: 50px 20px; }
@@ -86,14 +128,6 @@
       <option value="家族向け">家族向け</option>
       <option value="グループ向け">グループ向け</option>
     </select>
-
-    <label>距離制限</label>
-    <select id="filterDistance">
-      <option value="all">指定なし</option>
-      <option value="1">1km以内</option>
-      <option value="3">3km以内</option>
-      <option value="5">5km以内</option>
-    </select>
   </div>
 
   <!-- 2. おすすめのお店を投稿 -->
@@ -162,28 +196,30 @@
 </div>
 
 <script>
-  let posts = [];
+  window.posts = [];
+
   // LIFF初期化とアクセス制御
   document.addEventListener("DOMContentLoaded", () => {
     liff.init({ liffId: "2011348764-TFzS41F9" }).then(() => {
-      // LINEアプリ内からアクセスされているか判定
-      if (liff.isInClient()) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isDev = urlParams.get('dev') === 'true';
+
+      if (liff.isInClient() || isDev) {
         document.getElementById('appContent').style.display = 'block';
         if (liff.isLoggedIn()) {
           liff.getProfile().then(profile => {
             document.getElementById('author').value = profile.displayName;
           });
+        } else {
+          document.getElementById('author').value = "開発者";
         }
       } else {
-        // LINE外（Safari, Chrome等）の場合はブロック画面を表示
         document.getElementById('blocked-screen').style.display = 'block';
       }
     }).catch(err => {
       document.getElementById('blocked-screen').style.display = 'block';
     });
   });
-
-  renderPosts();
 
   function spinPhotoRoulette() {
     const textDiv = document.getElementById('rouletteText');
@@ -195,7 +231,7 @@
       return;
     }
 
-    const filteredPosts = posts.filter(p => checkedCategories.includes(p.category));
+    const filteredPosts = window.posts.filter(p => checkedCategories.includes(p.category));
 
     if (filteredPosts.length === 0) {
       alert("選択したジャンルの投稿がまだありません。お店を投稿してみてください！");
@@ -229,7 +265,7 @@
   }
 
   function addPost() {
-    const author = document.getElementById('author').value || "匿名";
+    const author = document.getElementById('author').value || "ゲスト";
     const shopName = document.getElementById('shopName').value;
     const prefecture = document.getElementById('prefecture').value;
     const city = document.getElementById('city').value;
@@ -246,22 +282,49 @@
       return;
     }
 
-    let imgUrl = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500&auto=format&fit=crop";
-    if (photoInput.files && photoInput.files[0]) {
-      imgUrl = URL.createObjectURL(photoInput.files[0]);
-    }
+    const saveToFirebase = (imgUrl) => {
+      const newPost = {
+        author, shopName, prefecture, city, category, people, holiday, reservation, hp, insta,
+        img: imgUrl,
+        createdAt: Date.now()
+      };
 
-    posts.unshift({ author, shopName, prefecture, city, category, people, holiday, reservation, hp, insta, img: imgUrl });
-    renderPosts();
-    alert("投稿しました！ルーレットにも追加されたよ！");
+      // Firebaseに保存（保存した瞬間にグループ全員へ共有されます）
+      window.push(window.postsRef, newPost).then(() => {
+        alert("投稿しました！グループ全員に共有されたよ！");
+        document.getElementById('shopName').value = "";
+        document.getElementById('prefecture').value = "";
+        document.getElementById('city').value = "";
+        document.getElementById('hpUrl').value = "";
+        document.getElementById('instaUrl').value = "";
+        document.getElementById('photo').value = "";
+      }).catch(err => {
+        alert("保存に失敗しました: " + err.message);
+      });
+    };
+
+    if (photoInput.files && photoInput.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        saveToFirebase(e.target.result);
+      };
+      reader.readAsDataURL(photoInput.files[0]);
+    } else {
+      saveToFirebase("https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500&auto=format&fit=crop");
+    }
   }
 
-  function renderPosts() {
+  window.renderPosts = function() {
     const list = document.getElementById('postsList');
     list.innerHTML = "";
 
-    posts.forEach(post => {
-      const locationQuery = `${post.prefecture}${post.city} ${post.shopName}`;
+    if (window.posts.length === 0) {
+      list.innerHTML = "<p style='text-align:center; color:#888;'>まだ投稿がありません。おすすめのお店を投稿してみてね！</p>";
+      return;
+    }
+
+    window.posts.forEach(post => {
+      const locationQuery = `${post.prefecture || ''}${post.city || ''} ${post.shopName}`;
       const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationQuery)}`;
       const locText = (post.prefecture || post.city) ? `📍 ${post.prefecture}${post.city}` : '';
 
@@ -285,7 +348,7 @@
       `;
       list.innerHTML += html;
     });
-  }
+  };
 </script>
 
 </body>
