@@ -19,13 +19,18 @@
     label { font-size: 0.85rem; font-weight: bold; color: #555; display: block; margin-top: 10px; }
     select, input, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 0.95rem; }
     
+    /* チェックボックスグループ */
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+    .checkbox-group label { display: flex; align-items: center; gap: 4px; margin-top: 0; font-weight: normal; font-size: 0.9rem; cursor: pointer; }
+    
     /* ボタン */
     .btn { background: var(--primary); color: white; border: none; width: 100%; padding: 12px; font-size: 1rem; font-weight: bold; border-radius: 25px; cursor: pointer; margin-top: 10px; box-shadow: 0 3px 8px rgba(255,87,34,0.3); }
     .btn-roulette { background: #e91e63; box-shadow: 0 3px 8px rgba(233,30,99,0.3); font-size: 1.1rem; }
     .btn-secondary { background: #4caf50; }
     
     /* ルーレット結果表示エリア */
-    .roulette-box { background: #fff0eb; border: 2px dashed #ffab91; border-radius: 12px; padding: 15px; text-align: center; font-size: 1.3rem; font-weight: bold; color: var(--primary); min-height: 40px; display: flex; align-items: center; justify-content: center; margin-top: 10px; }
+    .roulette-box { background: #fff0eb; border: 2px dashed #ffab91; border-radius: 12px; padding: 15px; text-align: center; font-size: 1.1rem; font-weight: bold; color: var(--primary); min-height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; }
+    .roulette-result-img { width: 100%; max-height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; display: none; }
     
     /* 投稿カード */
     .post-card { border: 1px solid #eee; border-radius: 12px; overflow: hidden; margin-top: 15px; background: #fff; }
@@ -44,12 +49,7 @@
   <h1>なにクウ？</h1>
   <p class="sub">ご飯迷った時の決定＆写真共有アプリ</p>
 
-  <div class="card">
-    <h2>🎯 迷った時のルーレット</h2>
-    <div id="rouletteResult" class="roulette-box">何がでるかな？</div>
-    <button class="btn btn-roulette" onclick="spinRoulette()">ルーレットを回す！</button>
-  </div>
-
+  <!-- 1. 条件で絞り込む -->
   <div class="card">
     <h2>🔍 条件で絞り込む</h2>
     <label>ジャンル</label>
@@ -58,6 +58,9 @@
       <option value="ラーメン">ラーメン</option>
       <option value="和食">和食</option>
       <option value="洋食">洋食</option>
+      <option value="中華">中華</option>
+      <option value="定食屋">定食屋</option>
+      <option value="ファミレス">ファミレス</option>
       <option value="居酒屋">居酒屋</option>
       <option value="焼肉">焼肉</option>
     </select>
@@ -79,6 +82,29 @@
     </select>
   </div>
 
+  <!-- 2. 迷った時の写真ルーレット -->
+  <div class="card">
+    <h2>🎯 投稿写真ルーレット</h2>
+    <label>対象ジャンルを選択</label>
+    <div class="checkbox-group">
+      <label><input type="checkbox" class="roulette-opt" value="和食" checked> 和食</label>
+      <label><input type="checkbox" class="roulette-opt" value="洋食" checked> 洋食</label>
+      <label><input type="checkbox" class="roulette-opt" value="中華" checked> 中華</label>
+      <label><input type="checkbox" class="roulette-opt" value="定食屋" checked> 定食屋</label>
+      <label><input type="checkbox" class="roulette-opt" value="ファミレス" checked> ファミレス</label>
+      <label><input type="checkbox" class="roulette-opt" value="ラーメン" checked> ラーメン</label>
+      <label><input type="checkbox" class="roulette-opt" value="焼肉" checked> 焼肉</label>
+      <label><input type="checkbox" class="roulette-opt" value="居酒屋" checked> 居酒屋</label>
+    </div>
+
+    <div class="roulette-box">
+      <img id="rouletteImg" class="roulette-result-img" src="" alt="決定写真">
+      <div id="rouletteText">投稿されたお店から決めるよ！</div>
+    </div>
+    <button class="btn btn-roulette" onclick="spinPhotoRoulette()">ルーレットを回す！</button>
+  </div>
+
+  <!-- 3. おすすめのお店を投稿 -->
   <div class="card">
     <h2>📸 おすすめのお店を投稿</h2>
     <input type="text" id="author" placeholder="投稿者のお名前">
@@ -87,6 +113,9 @@
       <option value="ラーメン">ラーメン</option>
       <option value="和食">和食</option>
       <option value="洋食">洋食</option>
+      <option value="中華">中華</option>
+      <option value="定食屋">定食屋</option>
+      <option value="ファミレス">ファミレス</option>
       <option value="居酒屋">居酒屋</option>
       <option value="焼肉">焼肉</option>
     </select>
@@ -107,7 +136,7 @@
 </div>
 
 <script>
-  // ダミーの初期データ
+  // 初期データ（テスト用）
   let posts = [
     {
       author: "たろう",
@@ -118,25 +147,66 @@
       hp: "https://example.com",
       insta: "https://instagram.com",
       img: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=500&auto=format&fit=crop"
+    },
+    {
+      author: "はなこ",
+      shopName: "極上和食 さくら",
+      category: "和食",
+      people: "家族向け",
+      holiday: "日曜日",
+      hp: "",
+      insta: "",
+      img: "https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56?w=500&auto=format&fit=crop"
     }
   ];
 
   // 画面初期化
   renderPosts();
 
-  // ルーレット機能
-  function spinRoulette() {
-    const box = document.getElementById('rouletteResult');
-    const categories = ["🍜 ラーメン", "🍱 和食", "🍝 洋食", "🍻 居酒屋", "🥩 焼肉"];
+  // 投稿写真ルーレット機能
+  function spinPhotoRoulette() {
+    const textDiv = document.getElementById('rouletteText');
+    const imgEl = document.getElementById('rouletteImg');
+
+    // チェックされているジャンルを取得
+    const checkedCategories = Array.from(document.querySelectorAll('.roulette-opt:checked')).map(cb => cb.value);
+
+    if (checkedCategories.length === 0) {
+      alert("ジャンルを1つ以上選択してください！");
+      return;
+    }
+
+    // 選択ジャンルに該当する投稿を抽出
+    const filteredPosts = posts.filter(p => checkedCategories.includes(p.category));
+
+    if (filteredPosts.length === 0) {
+      alert("選択したジャンルの投稿がまだありません。お店を投稿してみてください！");
+      return;
+    }
+
+    // シャッフル演出
     let count = 0;
-    
+    imgEl.style.display = "block"; // 画像を表示状態にする
+
     const timer = setInterval(() => {
-      box.innerText = categories[Math.floor(Math.random() * categories.length)];
+      const randomPost = filteredPosts[Math.floor(Math.random() * filteredPosts.length)];
+      imgEl.src = randomPost.img;
+      textDiv.innerHTML = `🎰 ${randomPost.shopName} (${randomPost.category})`;
+      
       count++;
-      if (count > 12) {
+      if (count > 15) {
         clearInterval(timer);
+        // 最終決定
+        const finalPost = filteredPosts[Math.floor(Math.random() * filteredPosts.length)];
+        imgEl.src = finalPost.img;
+        const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(finalPost.shopName)}`;
+        
+        textDiv.innerHTML = `
+          🎉 今日のご飯は <b>【${finalPost.shopName}】</b>！<br>
+          <a href="${mapUrl}" target="_blank" style="color: #1e88e5; font-size: 0.9rem;">📍 Googleマップで見る</a>
+        `;
       }
-    }, 50);
+    }, 80);
   }
 
   // 投稿を追加
@@ -163,7 +233,7 @@
 
     posts.unshift({ author, shopName, category, people, holiday, hp, insta, img: imgUrl });
     renderPosts();
-    alert("投稿しました！");
+    alert("投稿しました！ルーレットにも追加されたよ！");
   }
 
   // 投稿一覧を描画（地図検索連携含む）
