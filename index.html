@@ -168,7 +168,7 @@
     </style>
 </head>
 <body>
-    <div id="loading-overlay">画像をアップロード中...</div>
+    <div id="loading-overlay">画像を圧縮＆アップロード中...</div>
 
     <div class="container">
         <header>
@@ -188,6 +188,8 @@
         <div class="card">
             <h2>🔍 お店を探す・絞り込む</h2>
             <input type="text" id="search-keyword" placeholder="検索ワード（例：おしゃれ、美味しい）">
+            
+            <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">ジャンルで絞り込む</label>
             <select id="search-genre">
                 <option value="すべて">すべてのジャンル</option>
                 <option value="和食">和食</option>
@@ -201,7 +203,7 @@
 
             <!-- 検索用：ラーメンの種類サブ選択 -->
             <div id="search-ramen-sub" class="sub-field-group">
-                <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">ラーメンの種類で絞り込む</label>
+                <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">ラーメンの種類</label>
                 <select id="search-ramen-type">
                     <option value="すべて">すべてのラーメン</option>
                     <option value="こってり">こってり</option>
@@ -215,6 +217,15 @@
                     <option value="その他">その他</option>
                 </select>
             </div>
+
+            <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">現在地からの距離</label>
+            <select id="search-distance">
+                <option value="all">制限なし（すべて表示）</option>
+                <option value="3">3km以内</option>
+                <option value="5">5km以内</option>
+                <option value="10">10km以内</option>
+                <option value="20">20km以内</option>
+            </select>
         </div>
 
         <!-- 投稿フォーム -->
@@ -232,7 +243,7 @@
                     <option value="焼肉">焼肉</option>
                 </select>
 
-                <!-- 投稿用：ラーメンを選択した時だけ現れる種類選択 -->
+                <!-- ラーメン選択時のサブ選択 -->
                 <div id="post-ramen-sub" class="sub-field-group">
                     <label style="font-size: 12px; color: #ff5722; display: block; margin-bottom: 4px; font-weight: bold;">🍜 ラーメンの種類を選択 *</label>
                     <select id="ramen-type">
@@ -256,7 +267,6 @@
                 
                 <input type="text" id="holiday" placeholder="定休日（例：水曜日、不定休）">
 
-                <!-- 利用シーン -->
                 <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">おすすめの利用シーン</label>
                 <select id="target-vibe">
                     <option value="指定なし">利用シーンを選択</option>
@@ -265,7 +275,6 @@
                     <option value="グループ向け">🍻 グループ向け</option>
                 </select>
 
-                <!-- 追加ご要望：駐車場の有無 -->
                 <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">駐車場の有無</label>
                 <select id="parking">
                     <option value="不明・記載なし">駐車場の有無を選択</option>
@@ -273,7 +282,15 @@
                     <option value="駐車場なし">🚫 駐車場なし（近隣コインパーキング等）</option>
                 </select>
 
-                <!-- 予約の可否 -->
+                <!-- 追加：決済方法 -->
+                <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">決済方法</label>
+                <select id="payment">
+                    <option value="不明・記載なし">決済方法を選択</option>
+                    <option value="現金のみ">💵 現金のみ</option>
+                    <option value="キャッシュレス対応">💳 キャッシュレス対応（クレジット・QR等）</option>
+                    <option value="カードのみ">💳 クレジットカードのみ</option>
+                </select>
+
                 <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">予約の可否</label>
                 <select id="reservation">
                     <option value="不明・記載なし">予約の可否を選択</option>
@@ -285,10 +302,12 @@
                 <input type="url" id="hp-url" placeholder="ホームページのURL（https://...）">
                 <input type="url" id="insta-url" placeholder="InstagramのURL（https://...）">
                 <textarea id="comment" placeholder="コメント・おすすめメニューなど" rows="3"></textarea>
-                <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">お店の写真（1枚）</label>
+                
+                <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">お店の写真（1枚・自動圧縮されます）</label>
                 <input type="file" id="image-file" accept="image/*">
+                
                 <input type="text" id="author" placeholder="投稿者名（自動取得）" readonly>
-                <button type="submit">投稿する</button>
+                <button type="submit">📍 現在地を登録して投稿する</button>
             </form>
         </div>
 
@@ -318,8 +337,82 @@
 
         let allPosts = [];
         let selectedGenreForRoulette = "";
+        let currentLat = null;
+        let currentLng = null;
 
-        // --- 投稿フォーム：ラーメン選択時の連動表示 ---
+        // --- ユーザーの現在地を取得しておく ---
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    currentLat = position.coords.latitude;
+                    currentLng = position.coords.longitude;
+                },
+                (error) => {
+                    console.log("位置情報取得エラー: " + error.message);
+                },
+                { enableHighAccuracy: true }
+            );
+        }
+
+        // --- 2地点間の距離（km）を計算する関数（ヒュベニの公式） ---
+        function calcDistance(lat1, lon1, lat2, lon2) {
+            if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+            const radLat1 = lat1 * Math.PI / 180;
+            const radLat2 = lat2 * Math.PI / 180;
+            const radDistLat = (lat1 - lat2) * Math.PI / 180;
+            const radDistLon = (lon1 - lon2) * Math.PI / 180;
+
+            const a = Math.sin(radDistLat / 2) * Math.sin(radDistLat / 2) +
+                      Math.cos(radLat1) * Math.cos(radLat2) *
+                      Math.sin(radDistLon / 2) * Math.sin(radDistLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const r = 6371; // 地球の半径(km)
+            return r * c;
+        }
+
+        // --- 画像圧縮関数（Canvas使用・最大幅800px・画質0.7） ---
+        function compressImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 800;
+                        const MAX_HEIGHT = 800;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        canvas.toBlob((blob) => {
+                            resolve(blob);
+                        }, 'image/jpeg', 0.7);
+                    };
+                    img.onerror = (error) => reject(error);
+                };
+                reader.onerror = (error) => reject(error);
+            });
+        }
+
+        // --- 投稿フォーム：ラーメン選択連動 ---
         document.getElementById('genre').addEventListener('change', (e) => {
             const subField = document.getElementById('post-ramen-sub');
             const ramenSelect = document.getElementById('ramen-type');
@@ -333,7 +426,7 @@
             }
         });
 
-        // --- 検索：ラーメン選択時の連動表示 ---
+        // --- 検索：ラーメン選択連動 ---
         document.getElementById('search-genre').addEventListener('change', (e) => {
             const subField = document.getElementById('search-ramen-sub');
             if (e.target.value === 'ラーメン') {
@@ -378,23 +471,36 @@
             const sorted = [...posts].reverse();
 
             sorted.forEach((post) => {
-                const mapQuery = encodeURIComponent(`${post.state || ''}${post.city || ''} ${post.shopName}`);
-                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+                let mapUrl = "";
+                if (post.lat && post.lng) {
+                    mapUrl = `https://www.google.com/maps/search/?api=1&query=${post.lat},${post.lng}`;
+                } else {
+                    const mapQuery = encodeURIComponent(`${post.state || ''}${post.city || ''} ${post.shopName}`);
+                    mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+                }
 
-                // タグ情報の組み立て
+                let distanceText = "";
+                if (currentLat && currentLng && post.lat && post.lng) {
+                    const dist = calcDistance(currentLat, currentLng, post.lat, post.lng);
+                    if (dist !== null) {
+                        distanceText = `<small style="color: #ff5722; margin-left: 6px;">(約 ${dist.toFixed(1)} km)</small>`;
+                    }
+                }
+
                 let badgesHtml = '';
                 if (post.genre === 'ラーメン' && post.ramenType) badgesHtml += `<span class="badge" style="background:#ff5722; color:#fff;">🍜 ${escapeHtml(post.ramenType)}</span>`;
                 if (post.holiday) badgesHtml += `<span class="badge">店休: ${escapeHtml(post.holiday)}</span>`;
                 if (post.targetVibe && post.targetVibe !== '指定なし') badgesHtml += `<span class="badge">${escapeHtml(post.targetVibe)}</span>`;
                 if (post.parking && post.parking !== '不明・記載なし') badgesHtml += `<span class="badge">${escapeHtml(post.parking)}</span>`;
+                if (post.payment && post.payment !== '不明・記載なし') badgesHtml += `<span class="badge">${escapeHtml(post.payment)}</span>`;
                 if (post.reservation && post.reservation !== '不明・記載なし') badgesHtml += `<span class="badge">${escapeHtml(post.reservation)}</span>`;
 
                 const div = document.createElement('div');
                 div.className = 'post-item';
                 div.innerHTML = `
                     <strong>${escapeHtml(post.shopName)}</strong> (${escapeHtml(post.genre)})<br>
-                    <small>📍 ${escapeHtml(post.state || '')} ${escapeHtml(post.city || '')}</small>
-                    <a href="${mapUrl}" target="_blank" style="font-size: 12px; color: #4fa3ff; margin-left: 8px; text-decoration: none;">🗺️ マップを開く</a><br>
+                    <small>📍 ${escapeHtml(post.state || '')} ${escapeHtml(post.city || '')}</small> ${distanceText}
+                    <a href="${mapUrl}" target="_blank" style="font-size: 12px; color: #4fa3ff; margin-left: 8px; text-decoration: none;">🗺️ 地図アプリで開く</a><br>
                     
                     ${badgesHtml ? `<div class="tags-container">${badgesHtml}</div>` : ''}
                     ${post.comment ? `<p style="margin: 6px 0; color: #ddd;">${escapeHtml(post.comment)}</p>` : ''}
@@ -416,20 +522,28 @@
             const keyword = document.getElementById('search-keyword').value.toLowerCase();
             const genre = document.getElementById('search-genre').value;
             const ramenType = document.getElementById('search-ramen-type').value;
+            const maxDistance = document.getElementById('search-distance').value;
 
             const filtered = allPosts.filter(post => {
                 const matchGenre = (genre === 'すべて' || post.genre === genre);
                 
-                // ラーメンが選ばれていて、かつサブのラーメン種類が指定されている場合の絞り込み
                 let matchRamen = true;
                 if (genre === 'ラーメン' && ramenType !== 'すべて') {
                     matchRamen = (post.ramenType === ramenType);
                 }
 
-                const text = `${post.shopName} ${post.genre} ${post.ramenType || ''} ${post.state} ${post.city} ${post.holiday} ${post.targetVibe} ${post.parking} ${post.reservation} ${post.comment} ${post.author}`.toLowerCase();
+                let matchDistance = true;
+                if (maxDistance !== 'all' && currentLat && currentLng && post.lat && post.lng) {
+                    const dist = calcDistance(currentLat, currentLng, post.lat, post.lng);
+                    if (dist === null || dist > parseFloat(maxDistance)) {
+                        matchDistance = false;
+                    }
+                }
+
+                const text = `${post.shopName} ${post.genre} ${post.ramenType || ''} ${post.state} ${post.city} ${post.holiday} ${post.targetVibe} ${post.parking} ${post.payment || ''} ${post.reservation} ${post.comment} ${post.author}`.toLowerCase();
                 const matchKeyword = text.includes(keyword);
 
-                return matchGenre && matchRamen && matchKeyword;
+                return matchGenre && matchRamen && matchDistance && matchKeyword;
             });
 
             renderPosts(filtered);
@@ -437,6 +551,7 @@
 
         document.getElementById('search-keyword').addEventListener('input', filterPosts);
         document.getElementById('search-ramen-type').addEventListener('change', filterPosts);
+        document.getElementById('search-distance').addEventListener('change', filterPosts);
 
         // --- ルーレット機能（2段階） ---
         document.getElementById('roulette-genre-btn').addEventListener('click', () => {
@@ -483,6 +598,7 @@
             const holiday = document.getElementById('holiday').value;
             const targetVibe = document.getElementById('target-vibe').value;
             const parking = document.getElementById('parking').value;
+            const payment = document.getElementById('payment').value;
             const reservation = document.getElementById('reservation').value;
             const hpUrl = document.getElementById('hp-url').value;
             const instaUrl = document.getElementById('insta-url').value;
@@ -497,11 +613,15 @@
                 let imageUrl = "";
 
                 if (imageFile) {
+                    const compressedBlob = await compressImage(imageFile);
                     const storageRef = storage.ref();
                     const imageRef = storageRef.child('images/' + Date.now() + '_' + imageFile.name);
-                    const snapshot = await imageRef.put(imageFile);
+                    const snapshot = await imageRef.put(compressedBlob);
                     imageUrl = await snapshot.ref.getDownloadURL();
                 }
+
+                const postLat = currentLat;
+                const postLng = currentLng;
 
                 await db.ref('posts').push({
                     genre,
@@ -512,12 +632,15 @@
                     holiday,
                     targetVibe,
                     parking,
+                    payment,
                     reservation,
                     hpUrl,
                     instaUrl,
                     comment,
                     imageUrl,
                     author,
+                    lat: postLat,
+                    lng: postLng,
                     timestamp: Date.now()
                 });
 
@@ -548,7 +671,7 @@
             });
         }
 
-        // --- LIFF初期化 ＆ セキュリティガード ---
+        // --- LIFF初期化 ---
         window.currentLiffName = "ゲスト";
         document.addEventListener("DOMContentLoaded", () => {
             try {
