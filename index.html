@@ -4,10 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>なにクウ？</title>
+  <!-- LIFF SDK の読み込み -->
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     :root { --primary: #ff5722; --bg: #fff9e6; }
     body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #333; }
-    .container { max-width: 480px; margin: 0 auto; }
+    .container { max-width: 480px; margin: 0 auto; display: none; } /* 初期状態は非表示 */
+    
+    /* ブロック画面（外部ブラウザ対策） */
+    #blocked-screen { display: none; text-align: center; padding: 50px 20px; }
+    #blocked-screen h2 { color: #d32f2f; border: none; }
+
     h1 { text-align: center; color: var(--primary); font-size: 1.8rem; margin-bottom: 5px; }
     p.sub { text-align: center; color: #666; font-size: 0.85rem; margin-top: 0; }
     
@@ -45,7 +52,14 @@
 </head>
 <body>
 
-<div class="container">
+<!-- LINE外アクセス時のブロック表示 -->
+<div id="blocked-screen">
+  <h2>🔒 アクセスできません</h2>
+  <p>このアプリはLINEアプリ内限定です。<br>LINEのグループ・トーク画面から開いてください。</p>
+</div>
+
+<!-- メインコンテンツ -->
+<div class="container" id="appContent">
   <h1>なにクウ？</h1>
   <p class="sub">ご飯迷った時の決定＆写真共有アプリ</p>
 
@@ -82,7 +96,46 @@
     </select>
   </div>
 
-  <!-- 2. 迷った時の写真ルーレット -->
+  <!-- 2. おすすめのお店を投稿 -->
+  <div class="card">
+    <h2>📸 おすすめのお店を投稿</h2>
+    <input type="text" id="author" placeholder="投稿者のお名前（LINE名が自動挿入されます）" readonly>
+    
+    <input type="text" id="shopName" placeholder="店名">
+    <input type="text" id="prefecture" placeholder="都道府県（例：愛知県）">
+    <input type="text" id="city" placeholder="市区町村（例：東海市）">
+
+    <select id="shopCategory">
+      <option value="ラーメン">ラーメン</option>
+      <option value="和食">和食</option>
+      <option value="洋食">洋食</option>
+      <option value="中華">中華</option>
+      <option value="定食屋">定食屋</option>
+      <option value="ファミレス">ファミレス</option>
+      <option value="居酒屋">居酒屋</option>
+      <option value="焼肉">焼肉</option>
+    </select>
+    <select id="shopPeople">
+      <option value="1人向け">1人向け</option>
+      <option value="家族向け">家族向け</option>
+      <option value="グループ向け">グループ向け</option>
+    </select>
+    
+    <input type="text" id="holiday" placeholder="定休日（例：水曜日）">
+    
+    <select id="reservation">
+      <option value="予約可">予約可</option>
+      <option value="予約不可">予約不可</option>
+    </select>
+
+    <input type="url" id="hpUrl" placeholder="ホームページURL（任意）">
+    <input type="url" id="instaUrl" placeholder="Instagram URL（任意）">
+    <input type="file" id="photo" accept="image/*">
+
+    <button class="btn btn-secondary" onclick="addPost()">投稿する</button>
+  </div>
+
+  <!-- 3. 迷った時の写真ルーレット -->
   <div class="card">
     <h2>🎯 投稿写真ルーレット</h2>
     <label>対象ジャンルを選択</label>
@@ -104,71 +157,52 @@
     <button class="btn btn-roulette" onclick="spinPhotoRoulette()">ルーレットを回す！</button>
   </div>
 
-  <!-- 3. おすすめのお店を投稿 -->
-  <div class="card">
-    <h2>📸 おすすめのお店を投稿</h2>
-    <input type="text" id="author" placeholder="投稿者のお名前">
-    <input type="text" id="shopName" placeholder="店名">
-    <select id="shopCategory">
-      <option value="ラーメン">ラーメン</option>
-      <option value="和食">和食</option>
-      <option value="洋食">洋食</option>
-      <option value="中華">中華</option>
-      <option value="定食屋">定食屋</option>
-      <option value="ファミレス">ファミレス</option>
-      <option value="居酒屋">居酒屋</option>
-      <option value="焼肉">焼肉</option>
-    </select>
-    <select id="shopPeople">
-      <option value="1人向け">1人向け</option>
-      <option value="家族向け">家族向け</option>
-      <option value="グループ向け">グループ向け</option>
-    </select>
-    <input type="text" id="holiday" placeholder="定休日（例：水曜日）">
-    <input type="url" id="hpUrl" placeholder="ホームページURL（任意）">
-    <input type="url" id="instaUrl" placeholder="Instagram URL（任意）">
-    <input type="file" id="photo" accept="image/*">
-    <button class="btn btn-secondary" onclick="addPost()">投稿する</button>
-  </div>
-
   <h2>みんなの投稿一覧</h2>
   <div id="postsList"></div>
 </div>
 
 <script>
-  // 初期データ（テスト用）
   let posts = [
     {
       author: "たろう",
       shopName: "極旨ラーメン 三河店",
+      prefecture: "愛知県",
+      city: "岡崎市",
       category: "ラーメン",
       people: "1人向け",
       holiday: "月曜日",
+      reservation: "予約不可",
       hp: "https://example.com",
       insta: "https://instagram.com",
       img: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=500&auto=format&fit=crop"
-    },
-    {
-      author: "はなこ",
-      shopName: "極上和食 さくら",
-      category: "和食",
-      people: "家族向け",
-      holiday: "日曜日",
-      hp: "",
-      insta: "",
-      img: "https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56?w=500&auto=format&fit=crop"
     }
   ];
 
-  // 画面初期化
+  // LIFF初期化とアクセス制御
+  document.addEventListener("DOMContentLoaded", () => {
+    liff.init({ liffId: "2011348764-TFzS41F9" }).then(() => {
+      // LINEアプリ内からアクセスされているか判定
+      if (liff.isInClient()) {
+        document.getElementById('appContent').style.display = 'block';
+        if (liff.isLoggedIn()) {
+          liff.getProfile().then(profile => {
+            document.getElementById('author').value = profile.displayName;
+          });
+        }
+      } else {
+        // LINE外（Safari, Chrome等）の場合はブロック画面を表示
+        document.getElementById('blocked-screen').style.display = 'block';
+      }
+    }).catch(err => {
+      document.getElementById('blocked-screen').style.display = 'block';
+    });
+  });
+
   renderPosts();
 
-  // 投稿写真ルーレット機能
   function spinPhotoRoulette() {
     const textDiv = document.getElementById('rouletteText');
     const imgEl = document.getElementById('rouletteImg');
-
-    // チェックされているジャンルを取得
     const checkedCategories = Array.from(document.querySelectorAll('.roulette-opt:checked')).map(cb => cb.value);
 
     if (checkedCategories.length === 0) {
@@ -176,7 +210,6 @@
       return;
     }
 
-    // 選択ジャンルに該当する投稿を抽出
     const filteredPosts = posts.filter(p => checkedCategories.includes(p.category));
 
     if (filteredPosts.length === 0) {
@@ -184,9 +217,8 @@
       return;
     }
 
-    // シャッフル演出
     let count = 0;
-    imgEl.style.display = "block"; // 画像を表示状態にする
+    imgEl.style.display = "block";
 
     const timer = setInterval(() => {
       const randomPost = filteredPosts[Math.floor(Math.random() * filteredPosts.length)];
@@ -196,26 +228,30 @@
       count++;
       if (count > 15) {
         clearInterval(timer);
-        // 最終決定
         const finalPost = filteredPosts[Math.floor(Math.random() * filteredPosts.length)];
         imgEl.src = finalPost.img;
-        const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(finalPost.shopName)}`;
         
+        const locationQuery = `${finalPost.prefecture}${finalPost.city} ${finalPost.shopName}`;
+        const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationQuery)}`;
+        const locText = (finalPost.prefecture || finalPost.city) ? `（${finalPost.prefecture}${finalPost.city}）` : '';
+
         textDiv.innerHTML = `
-          🎉 今日のご飯は <b>【${finalPost.shopName}】</b>！<br>
+          🎉 今日のご飯は <b>【${finalPost.shopName}】</b>${locText}！<br>
           <a href="${mapUrl}" target="_blank" style="color: #1e88e5; font-size: 0.9rem;">📍 Googleマップで見る</a>
         `;
       }
     }, 80);
   }
 
-  // 投稿を追加
   function addPost() {
     const author = document.getElementById('author').value || "匿名";
     const shopName = document.getElementById('shopName').value;
+    const prefecture = document.getElementById('prefecture').value;
+    const city = document.getElementById('city').value;
     const category = document.getElementById('shopCategory').value;
     const people = document.getElementById('shopPeople').value;
     const holiday = document.getElementById('holiday').value || "なし";
+    const reservation = document.getElementById('reservation').value;
     const hp = document.getElementById('hpUrl').value;
     const insta = document.getElementById('instaUrl').value;
     const photoInput = document.getElementById('photo');
@@ -225,32 +261,31 @@
       return;
     }
 
-    // 写真の読み込み処理
-    let imgUrl = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500&auto=format&fit=crop"; // デフォルト写真
+    let imgUrl = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500&auto=format&fit=crop";
     if (photoInput.files && photoInput.files[0]) {
       imgUrl = URL.createObjectURL(photoInput.files[0]);
     }
 
-    posts.unshift({ author, shopName, category, people, holiday, hp, insta, img: imgUrl });
+    posts.unshift({ author, shopName, prefecture, city, category, people, holiday, reservation, hp, insta, img: imgUrl });
     renderPosts();
     alert("投稿しました！ルーレットにも追加されたよ！");
   }
 
-  // 投稿一覧を描画（地図検索連携含む）
   function renderPosts() {
     const list = document.getElementById('postsList');
     list.innerHTML = "";
 
     posts.forEach(post => {
-      // 地図連携リンク（Google Maps検索）
-      const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(post.shopName)}`;
+      const locationQuery = `${post.prefecture}${post.city} ${post.shopName}`;
+      const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationQuery)}`;
+      const locText = (post.prefecture || post.city) ? `📍 ${post.prefecture}${post.city}` : '';
 
       const html = `
         <div class="post-card">
           <img src="${post.img}" class="post-img" alt="店舗写真">
           <div class="post-body">
-            <h3 class="post-title">${post.shopName}</h3>
-            <div class="post-meta">投稿者: <b>${post.author}</b> | 定休日: ${post.holiday}</div>
+            <h3 class="post-title">${post.shopName} <span style="font-size:0.8rem; font-weight:normal; color:#666;">${locText}</span></h3>
+            <div class="post-meta">投稿者: <b>${post.author}</b> | 定休日: ${post.holiday} | 予約: <b>${post.reservation}</b></div>
             <div>
               <span class="tag">${post.category}</span>
               <span class="tag">${post.people}</span>
