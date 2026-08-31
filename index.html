@@ -62,7 +62,7 @@
             align-items: center;
             gap: 8px;
         }
-        input, select, textarea {
+        input[type="text"], input[type="url"], select, textarea {
             width: 100%;
             padding: 10px;
             margin-bottom: 12px;
@@ -132,6 +132,22 @@
         .link-btns a:hover {
             background: #444;
         }
+        .action-btns {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .edit-btn {
+            background-color: #3f51b5;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            width: auto;
+            margin: 0;
+        }
         .no-data {
             text-align: center;
             color: var(--sub-text);
@@ -165,10 +181,136 @@
             margin-bottom: 12px;
             border: 1px dashed var(--border-color);
         }
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: #252525;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border-color);
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-color);
+            cursor: pointer;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent-color);
+            margin: 0;
+            cursor: pointer;
+        }
+        /* モーダルウィンドウ用のスタイル */
+        #edit-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        .modal-content {
+            background-color: var(--card-bg);
+            margin: 20px auto;
+            padding: 20px;
+            width: 100%;
+            max-width: 450px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
     <div id="loading-overlay">画像を圧縮＆アップロード中...</div>
+
+    <!-- 編集モーダル -->
+    <div id="edit-modal">
+        <div class="modal-content">
+            <h2>✏️ 投稿を編集する</h2>
+            <form id="edit-form">
+                <input type="hidden" id="edit-id">
+                <select id="edit-genre" required>
+                    <option value="">ジャンルを選択 *</option>
+                    <option value="和食">和食</option>
+                    <option value="洋食">洋食</option>
+                    <option value="中華">中華</option>
+                    <option value="定食屋">定食屋</option>
+                    <option value="ファミレス">ファミレス</option>
+                    <option value="ラーメン">ラーメン</option>
+                    <option value="焼肉">焼肉</option>
+                </select>
+
+                <div id="edit-ramen-sub" class="sub-field-group">
+                    <label style="font-size: 12px; color: #ff5722; display: block; margin-bottom: 4px; font-weight: bold;">🍜 ラーメンの種類を選択 *</label>
+                    <select id="edit-ramen-type">
+                        <option value="">種類を選択</option>
+                        <option value="こってり">こってり</option>
+                        <option value="あっさり">あっさり</option>
+                        <option value="辛い">辛い</option>
+                        <option value="家系">家系</option>
+                        <option value="二郎系">二郎系</option>
+                        <option value="醤油">醤油</option>
+                        <option value="みそ">みそ</option>
+                        <option value="塩">塩</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+
+                <input type="text" id="edit-shop-name" placeholder="店名 *" required>
+                <input type="text" id="edit-state" placeholder="県名（例：愛知県）">
+                <input type="text" id="edit-city" placeholder="市名（例：東海市）">
+                <input type="text" id="edit-holiday" placeholder="定休日（例：水曜日、不定休）">
+
+                <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">おすすめの利用シーン（複数選択可）</label>
+                <div class="checkbox-group" id="edit-targetVibe-group">
+                    <label><input type="checkbox" name="edit-targetVibe" value="👤 1人向け"> 👤 1人向け</label>
+                    <label><input type="checkbox" name="edit-targetVibe" value="👨‍👩‍👧 ファミリー向け"> 👨‍👩‍👧 ファミリー向け</label>
+                    <label><input type="checkbox" name="edit-targetVibe" value="🍻 グループ向け"> 🍻 グループ向け</label>
+                </div>
+
+                <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">駐車場の有無</label>
+                <select id="edit-parking">
+                    <option value="不明・記載なし">駐車場の有無を選択</option>
+                    <option value="駐車場あり">🅿️ 駐車場あり</option>
+                    <option value="駐車場なし">🚫 駐車場なし（近隣コインパーキング等）</option>
+                </select>
+
+                <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">決済方法（複数選択可）</label>
+                <div class="checkbox-group" id="edit-payment-group">
+                    <label><input type="checkbox" name="edit-payment" value="💵 現金"> 💵 現金</label>
+                    <label><input type="checkbox" name="edit-payment" value="💳 クレジットカード"> 💳 クレジットカード</label>
+                    <label><input type="checkbox" name="edit-payment" value="📱 電子マネー・QR決済"> 📱 電子マネー・QR決済</label>
+                </div>
+
+                <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">予約の可否</label>
+                <select id="edit-reservation">
+                    <option value="不明・記載なし">予約の可否を選択</option>
+                    <option value="予約可能">⭕ 予約可能</option>
+                    <option value="予約不可">❌ 予約不可</option>
+                    <option value="要確認">⚠️ 要確認</option>
+                </select>
+
+                <input type="url" id="edit-hp-url" placeholder="ホームページのURL（https://...）">
+                <input type="url" id="edit-insta-url" placeholder="InstagramのURL（https://...）">
+                <textarea id="edit-comment" placeholder="コメント・おすすめメニューなど" rows="3"></textarea>
+                
+                <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">お店の写真（変更する場合のみ選択）</label>
+                <input type="file" id="edit-image-file" accept="image/*">
+                
+                <button type="submit" style="background-color: #4CAF50;">💾 変更を保存する</button>
+                <button type="button" id="edit-cancel-btn" style="background-color: #555;">キャンセル</button>
+            </form>
+        </div>
+    </div>
 
     <div class="container">
         <header>
@@ -261,19 +403,16 @@
                 </div>
 
                 <input type="text" id="shop-name" placeholder="店名 *" required>
-
                 <input type="text" id="state" placeholder="県名（例：愛知県）">
                 <input type="text" id="city" placeholder="市名（例：東海市）">
-                
                 <input type="text" id="holiday" placeholder="定休日（例：水曜日、不定休）">
 
-                <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">おすすめの利用シーン</label>
-                <select id="target-vibe">
-                    <option value="指定なし">利用シーンを選択</option>
-                    <option value="1人向け">👤 1人向け</option>
-                    <option value="ファミリー向け">👨‍👩‍👧 ファミリー向け</option>
-                    <option value="グループ向け">🍻 グループ向け</option>
-                </select>
+                <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">おすすめの利用シーン（複数選択可）</label>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="targetVibe" value="👤 1人向け"> 👤 1人向け</label>
+                    <label><input type="checkbox" name="targetVibe" value="👨‍👩‍👧 ファミリー向け"> 👨‍👩‍👧 ファミリー向け</label>
+                    <label><input type="checkbox" name="targetVibe" value="🍻 グループ向け"> 🍻 グループ向け</label>
+                </div>
 
                 <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">駐車場の有無</label>
                 <select id="parking">
@@ -282,14 +421,12 @@
                     <option value="駐車場なし">🚫 駐車場なし（近隣コインパーキング等）</option>
                 </select>
 
-                <!-- 追加：決済方法 -->
-                <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">決済方法</label>
-                <select id="payment">
-                    <option value="不明・記載なし">決済方法を選択</option>
-                    <option value="現金のみ">💵 現金のみ</option>
-                    <option value="キャッシュレス対応">💳 キャッシュレス対応（クレジット・QR等）</option>
-                    <option value="カードのみ">💳 クレジットカードのみ</option>
-                </select>
+                <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">決済方法（複数選択可）</label>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="payment" value="💵 現金"> 💵 現金</label>
+                    <label><input type="checkbox" name="payment" value="💳 クレジットカード"> 💳 クレジットカード</label>
+                    <label><input type="checkbox" name="payment" value="📱 電子マネー・QR決済"> 📱 電子マネー・QR決済</label>
+                </div>
 
                 <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">予約の可否</label>
                 <select id="reservation">
@@ -339,6 +476,7 @@
         let selectedGenreForRoulette = "";
         let currentLat = null;
         let currentLng = null;
+        window.currentLiffName = "ゲスト";
 
         // --- ユーザーの現在地を取得しておく ---
         if (navigator.geolocation) {
@@ -426,6 +564,20 @@
             }
         });
 
+        // --- 編集フォーム：ラーメン選択連動 ---
+        document.getElementById('edit-genre').addEventListener('change', (e) => {
+            const subField = document.getElementById('edit-ramen-sub');
+            const ramenSelect = document.getElementById('edit-ramen-type');
+            if (e.target.value === 'ラーメン') {
+                subField.style.display = 'block';
+                ramenSelect.required = true;
+            } else {
+                subField.style.display = 'none';
+                ramenSelect.required = false;
+                ramenSelect.value = '';
+            }
+        });
+
         // --- 検索：ラーメン選択連動 ---
         document.getElementById('search-genre').addEventListener('change', (e) => {
             const subField = document.getElementById('search-ramen-sub');
@@ -490,10 +642,22 @@
                 let badgesHtml = '';
                 if (post.genre === 'ラーメン' && post.ramenType) badgesHtml += `<span class="badge" style="background:#ff5722; color:#fff;">🍜 ${escapeHtml(post.ramenType)}</span>`;
                 if (post.holiday) badgesHtml += `<span class="badge">店休: ${escapeHtml(post.holiday)}</span>`;
-                if (post.targetVibe && post.targetVibe !== '指定なし') badgesHtml += `<span class="badge">${escapeHtml(post.targetVibe)}</span>`;
+                
+                const vibes = Array.isArray(post.targetVibes) ? post.targetVibes : (post.targetVibe && post.targetVibe !== '指定なし' ? [post.targetVibe] : []);
+                vibes.forEach(v => { badgesHtml += `<span class="badge">${escapeHtml(v)}</span>`; });
+
                 if (post.parking && post.parking !== '不明・記載なし') badgesHtml += `<span class="badge">${escapeHtml(post.parking)}</span>`;
-                if (post.payment && post.payment !== '不明・記載なし') badgesHtml += `<span class="badge">${escapeHtml(post.payment)}</span>`;
+                
+                const payments = Array.isArray(post.payments) ? post.payments : (post.payment && post.payment !== '不明・記載なし' ? [post.payment] : []);
+                payments.forEach(p => { badgesHtml += `<span class="badge">${escapeHtml(p)}</span>`; });
+
                 if (post.reservation && post.reservation !== '不明・記載なし') badgesHtml += `<span class="badge">${escapeHtml(post.reservation)}</span>`;
+
+                // 自分の投稿かどうか（投稿者名が一致する場合に編集ボタンを表示）
+                let editButtonHtml = '';
+                if (post.author === window.currentLiffName) {
+                    editButtonHtml = `<button type="button" class="edit-btn" onclick="openEditModal('${post.id}')">✏️ 編集</button>`;
+                }
 
                 const div = document.createElement('div');
                 div.className = 'post-item';
@@ -511,11 +675,127 @@
                         ${post.instaUrl ? `<a href="${escapeHtml(post.instaUrl)}" target="_blank">📷 Instagram</a>` : ''}
                     </div>
 
-                    <small style="color: #a0a0a0; display: block; margin-top: 6px;">投稿者: ${escapeHtml(post.author)}</small>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+                        <small style="color: #a0a0a0;">投稿者: ${escapeHtml(post.author)}</small>
+                        ${editButtonHtml}
+                    </div>
                 `;
                 container.appendChild(div);
             });
         }
+
+        // --- 編集モーダルを開く関数 ---
+        window.openEditModal = function(id) {
+            const post = allPosts.find(p => p.id === id);
+            if (!post) return;
+
+            document.getElementById('edit-id').value = post.id;
+            document.getElementById('edit-genre').value = post.genre;
+            
+            // ラーメンサブ項目の制御
+            const subField = document.getElementById('edit-ramen-sub');
+            const ramenSelect = document.getElementById('edit-ramen-type');
+            if (post.genre === 'ラーメン') {
+                subField.style.display = 'block';
+                ramenSelect.required = true;
+                ramenSelect.value = post.ramenType || '';
+            } else {
+                subField.style.display = 'none';
+                ramenSelect.required = false;
+                ramenSelect.value = '';
+            }
+
+            document.getElementById('edit-shop-name').value = post.shopName || '';
+            document.getElementById('edit-state').value = post.state || '';
+            document.getElementById('edit-city').value = post.city || '';
+            document.getElementById('edit-holiday').value = post.holiday || '';
+            document.getElementById('edit-parking').value = post.parking || '不明・記載なし';
+            document.getElementById('edit-reservation').value = post.reservation || '不明・記載なし';
+            document.getElementById('edit-hp-url').value = post.hpUrl || '';
+            document.getElementById('edit-insta-url').value = post.instaUrl || '';
+            document.getElementById('edit-comment').value = post.comment || '';
+            document.getElementById('edit-image-file').value = '';
+
+            // チェックボックス（利用シーン）の復元
+            const vibes = Array.isArray(post.targetVibes) ? post.targetVibes : [];
+            document.querySelectorAll('input[name="edit-targetVibe"]').forEach(cb => {
+                cb.checked = vibes.includes(cb.value);
+            });
+
+            // チェックボックス（決済方法）の復元
+            const payments = Array.isArray(post.payments) ? post.payments : [];
+            document.querySelectorAll('input[name="edit-payment"]').forEach(cb => {
+                cb.checked = payments.includes(cb.value);
+            });
+
+            document.getElementById('edit-modal').style.display = 'block';
+        };
+
+        // --- 編集モーダルを閉じる ---
+        document.getElementById('edit-cancel-btn').addEventListener('click', () => {
+            document.getElementById('edit-modal').style.display = 'none';
+        });
+
+        // --- 編集内容の保存処理 ---
+        document.getElementById('edit-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('edit-id').value;
+            const genre = document.getElementById('edit-genre').value;
+            const ramenType = genre === 'ラーメン' ? document.getElementById('edit-ramen-type').value : '';
+            const shopName = document.getElementById('edit-shop-name').value;
+            const state = document.getElementById('edit-state').value;
+            const city = document.getElementById('edit-city').value;
+            const holiday = document.getElementById('edit-holiday').value;
+            
+            const targetVibes = Array.from(document.querySelectorAll('input[name="edit-targetVibe"]:checked')).map(el => el.value);
+            const parking = document.getElementById('edit-parking').value;
+            const payments = Array.from(document.querySelectorAll('input[name="edit-payment"]:checked')).map(el => el.value);
+            const reservation = document.getElementById('edit-reservation').value;
+            const hpUrl = document.getElementById('edit-hp-url').value;
+            const instaUrl = document.getElementById('edit-insta-url').value;
+            const comment = document.getElementById('edit-comment').value;
+            const imageFile = document.getElementById('edit-image-file').files[0];
+
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.style.display = 'block';
+
+            try {
+                const post = allPosts.find(p => p.id === id);
+                let imageUrl = post.imageUrl || "";
+
+                if (imageFile) {
+                    const compressedBlob = await compressImage(imageFile);
+                    const storageRef = storage.ref();
+                    const imageRef = storageRef.child('images/' + Date.now() + '_' + imageFile.name);
+                    const snapshot = await imageRef.put(compressedBlob);
+                    imageUrl = await snapshot.ref.getDownloadURL();
+                }
+
+                await db.ref('posts/' + id).update({
+                    genre,
+                    ramenType,
+                    shopName,
+                    state,
+                    city,
+                    holiday,
+                    targetVibes,
+                    parking,
+                    payments,
+                    reservation,
+                    hpUrl,
+                    instaUrl,
+                    comment,
+                    imageUrl
+                });
+
+                alert('編集を保存しました！');
+                document.getElementById('edit-modal').style.display = 'none';
+            } catch (error) {
+                alert('エラーが発生しました: ' + error.message);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        });
 
         // --- 検索・絞り込み機能 ---
         function filterPosts() {
@@ -540,7 +820,10 @@
                     }
                 }
 
-                const text = `${post.shopName} ${post.genre} ${post.ramenType || ''} ${post.state} ${post.city} ${post.holiday} ${post.targetVibe} ${post.parking} ${post.payment || ''} ${post.reservation} ${post.comment} ${post.author}`.toLowerCase();
+                const vibesStr = Array.isArray(post.targetVibes) ? post.targetVibes.join(' ') : (post.targetVibe || '');
+                const paymentsStr = Array.isArray(post.payments) ? post.payments.join(' ') : (post.payment || '');
+
+                const text = `${post.shopName} ${post.genre} ${post.ramenType || ''} ${post.state} ${post.city} ${post.holiday} ${vibesStr} ${post.parking} ${paymentsStr} ${post.reservation} ${post.comment} ${post.author}`.toLowerCase();
                 const matchKeyword = text.includes(keyword);
 
                 return matchGenre && matchRamen && matchDistance && matchKeyword;
@@ -596,9 +879,10 @@
             const state = document.getElementById('state').value;
             const city = document.getElementById('city').value;
             const holiday = document.getElementById('holiday').value;
-            const targetVibe = document.getElementById('target-vibe').value;
+            
+            const targetVibes = Array.from(document.querySelectorAll('input[name="targetVibe"]:checked')).map(el => el.value);
             const parking = document.getElementById('parking').value;
-            const payment = document.getElementById('payment').value;
+            const payments = Array.from(document.querySelectorAll('input[name="payment"]:checked')).map(el => el.value);
             const reservation = document.getElementById('reservation').value;
             const hpUrl = document.getElementById('hp-url').value;
             const instaUrl = document.getElementById('insta-url').value;
@@ -630,9 +914,9 @@
                     state,
                     city,
                     holiday,
-                    targetVibe,
+                    targetVibes,
                     parking,
-                    payment,
+                    payments,
                     reservation,
                     hpUrl,
                     instaUrl,
@@ -672,7 +956,6 @@
         }
 
         // --- LIFF初期化 ---
-        window.currentLiffName = "ゲスト";
         document.addEventListener("DOMContentLoaded", () => {
             try {
                 liff.init({ liffId: "2011348764-TFzS41F9" })
@@ -684,6 +967,8 @@
                                 if (authorInput) {
                                     authorInput.value = window.currentLiffName;
                                 }
+                                // プロフィール取得後に再描画して編集ボタンを正しく表示させる
+                                filterPosts();
                             }).catch(() => {});
                         }
                     })
