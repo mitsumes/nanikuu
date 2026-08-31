@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>なにクウ？</title>
+  <style>
+    :root { --primary: #ff5722; --bg: #fff9e6; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #333; }
+    .container { max-width: 480px; margin: 0 auto; }
+    h1 { text-align: center; color: var(--primary); font-size: 1.8rem; margin-bottom: 5px; }
+    p.sub { text-align: center; color: #666; font-size: 0.85rem; margin-top: 0; }
+    
+    /* カードスタイル */
+    .card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    h2 { font-size: 1.1rem; margin-top: 0; color: #444; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+    
+    /* フォーム要素 */
+    label { font-size: 0.85rem; font-weight: bold; color: #555; display: block; margin-top: 10px; }
+    select, input, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 0.95rem; }
+    
+    /* ボタン */
+    .btn { background: var(--primary); color: white; border: none; width: 100%; padding: 12px; font-size: 1rem; font-weight: bold; border-radius: 25px; cursor: pointer; margin-top: 10px; box-shadow: 0 3px 8px rgba(255,87,34,0.3); }
+    .btn-roulette { background: #e91e63; box-shadow: 0 3px 8px rgba(233,30,99,0.3); font-size: 1.1rem; }
+    .btn-secondary { background: #4caf50; }
+    
+    /* ルーレット結果表示エリア */
+    .roulette-box { background: #fff0eb; border: 2px dashed #ffab91; border-radius: 12px; padding: 15px; text-align: center; font-size: 1.3rem; font-weight: bold; color: var(--primary); min-height: 40px; display: flex; align-items: center; justify-content: center; margin-top: 10px; }
+    
+    /* 投稿カード */
+    .post-card { border: 1px solid #eee; border-radius: 12px; overflow: hidden; margin-top: 15px; background: #fff; }
+    .post-img { width: 100%; height: 200px; object-fit: cover; background: #eee; }
+    .post-body { padding: 12px; }
+    .post-title { font-weight: bold; font-size: 1.1rem; margin: 0 0 5px 0; }
+    .post-meta { font-size: 0.8rem; color: #777; margin-bottom: 8px; }
+    .tag { display: inline-block; background: #eee; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-right: 4px; }
+    .links { margin-top: 10px; font-size: 0.85rem; display: flex; gap: 10px; flex-wrap: wrap; }
+    .links a { color: #1e88e5; text-decoration: none; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>なにクウ？</h1>
+  <p class="sub">ご飯迷った時の決定＆写真共有アプリ</p>
+
+  <div class="card">
+    <h2>🎯 迷った時のルーレット</h2>
+    <div id="rouletteResult" class="roulette-box">何がでるかな？</div>
+    <button class="btn btn-roulette" onclick="spinRoulette()">ルーレットを回す！</button>
+  </div>
+
+  <div class="card">
+    <h2>🔍 条件で絞り込む</h2>
+    <label>ジャンル</label>
+    <select id="filterCategory">
+      <option value="すべて">すべて</option>
+      <option value="ラーメン">ラーメン</option>
+      <option value="和食">和食</option>
+      <option value="洋食">洋食</option>
+      <option value="居酒屋">居酒屋</option>
+      <option value="焼肉">焼肉</option>
+    </select>
+
+    <label>行く人数</label>
+    <select id="filterPeople">
+      <option value="すべて">指定なし</option>
+      <option value="1人向け">1人向け</option>
+      <option value="家族向け">家族向け</option>
+      <option value="グループ向け">グループ向け</option>
+    </select>
+
+    <label>距離制限</label>
+    <select id="filterDistance">
+      <option value="all">指定なし</option>
+      <option value="1">1km以内</option>
+      <option value="3">3km以内</option>
+      <option value="5">5km以内</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h2>📸 おすすめのお店を投稿</h2>
+    <input type="text" id="author" placeholder="投稿者のお名前">
+    <input type="text" id="shopName" placeholder="店名">
+    <select id="shopCategory">
+      <option value="ラーメン">ラーメン</option>
+      <option value="和食">和食</option>
+      <option value="洋食">洋食</option>
+      <option value="居酒屋">居酒屋</option>
+      <option value="焼肉">焼肉</option>
+    </select>
+    <select id="shopPeople">
+      <option value="1人向け">1人向け</option>
+      <option value="家族向け">家族向け</option>
+      <option value="グループ向け">グループ向け</option>
+    </select>
+    <input type="text" id="holiday" placeholder="定休日（例：水曜日）">
+    <input type="url" id="hpUrl" placeholder="ホームページURL（任意）">
+    <input type="url" id="instaUrl" placeholder="Instagram URL（任意）">
+    <input type="file" id="photo" accept="image/*">
+    <button class="btn btn-secondary" onclick="addPost()">投稿する</button>
+  </div>
+
+  <h2>みんなの投稿一覧</h2>
+  <div id="postsList"></div>
+</div>
+
+<script>
+  // ダミーの初期データ
+  let posts = [
+    {
+      author: "たろう",
+      shopName: "極旨ラーメン 三河店",
+      category: "ラーメン",
+      people: "1人向け",
+      holiday: "月曜日",
+      hp: "https://example.com",
+      insta: "https://instagram.com",
+      img: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=500&auto=format&fit=crop"
+    }
+  ];
+
+  // 画面初期化
+  renderPosts();
+
+  // ルーレット機能
+  function spinRoulette() {
+    const box = document.getElementById('rouletteResult');
+    const categories = ["🍜 ラーメン", "🍱 和食", "🍝 洋食", "🍻 居酒屋", "🥩 焼肉"];
+    let count = 0;
+    
+    const timer = setInterval(() => {
+      box.innerText = categories[Math.floor(Math.random() * categories.length)];
+      count++;
+      if (count > 12) {
+        clearInterval(timer);
+      }
+    }, 50);
+  }
+
+  // 投稿を追加
+  function addPost() {
+    const author = document.getElementById('author').value || "匿名";
+    const shopName = document.getElementById('shopName').value;
+    const category = document.getElementById('shopCategory').value;
+    const people = document.getElementById('shopPeople').value;
+    const holiday = document.getElementById('holiday').value || "なし";
+    const hp = document.getElementById('hpUrl').value;
+    const insta = document.getElementById('instaUrl').value;
+    const photoInput = document.getElementById('photo');
+
+    if (!shopName) {
+      alert("店名を入力してください！");
+      return;
+    }
+
+    // 写真の読み込み処理
+    let imgUrl = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500&auto=format&fit=crop"; // デフォルト写真
+    if (photoInput.files && photoInput.files[0]) {
+      imgUrl = URL.createObjectURL(photoInput.files[0]);
+    }
+
+    posts.unshift({ author, shopName, category, people, holiday, hp, insta, img: imgUrl });
+    renderPosts();
+    alert("投稿しました！");
+  }
+
+  // 投稿一覧を描画（地図検索連携含む）
+  function renderPosts() {
+    const list = document.getElementById('postsList');
+    list.innerHTML = "";
+
+    posts.forEach(post => {
+      // 地図連携リンク（Google Maps検索）
+      const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(post.shopName)}`;
+
+      const html = `
+        <div class="post-card">
+          <img src="${post.img}" class="post-img" alt="店舗写真">
+          <div class="post-body">
+            <h3 class="post-title">${post.shopName}</h3>
+            <div class="post-meta">投稿者: <b>${post.author}</b> | 定休日: ${post.holiday}</div>
+            <div>
+              <span class="tag">${post.category}</span>
+              <span class="tag">${post.people}</span>
+            </div>
+            <div class="links">
+              <a href="${mapUrl}" target="_blank">📍 現在地から地図で探す</a>
+              ${post.hp ? `<a href="${post.hp}" target="_blank">🌐 公式HP</a>` : ''}
+              ${post.insta ? `<a href="${post.insta}" target="_blank">📷 Instagram</a>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+      list.innerHTML += html;
+    });
+  }
+</script>
+
+</body>
+</html>
