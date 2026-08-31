@@ -4,10 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>なにクウ？</title>
-  <!-- LIFF SDK の読み込み -->
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
-  <!-- Firebase SDK (v9) の読み込み -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
     import { getDatabase, ref, push, update, onValue } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
@@ -35,7 +33,7 @@
     window.update = update;
     window.ref = ref;
 
-    // データベースの変更を監視（リアルタイム反映＆消えない保存）
+    // データベースの変更を監視（リアルタイム反映）
     onValue(postsRef, (snapshot) => {
       const data = snapshot.val();
       window.posts = [];
@@ -64,10 +62,10 @@
       --input-bg: #2a2a2a;
       --input-border: #3d3d3d;
     }
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: var(--text); }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: var(--text); overflow-x: hidden; }
     .container { max-width: 480px; margin: 0 auto; display: none; }
     
-    /* ブロック画面（外部ブラウザ対策） */
+    /* ブロック画面 */
     #blocked-screen { display: none; text-align: center; padding: 50px 20px; }
     #blocked-screen h2 { color: #ff5252; border: none; }
 
@@ -94,7 +92,7 @@
     .btn-cancel { background: #666; margin-top: 5px; }
     .btn-detail { background: #00897b; color: white; border: none; padding: 6px 12px; border-radius: 15px; font-size: 0.8rem; cursor: pointer; margin-top: 8px; font-weight: bold; }
     
-    /* ルーレット結果表示エリア */
+    /* ルーレット表示エリア */
     .roulette-box { background: #261c1a; border: 2px dashed #ff7043; border-radius: 12px; padding: 15px; text-align: center; font-size: 1.1rem; font-weight: bold; color: var(--primary); min-height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; }
     .roulette-result-img { width: 100%; max-height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; display: none; }
     
@@ -122,24 +120,20 @@
 </head>
 <body>
 
-<!-- LINE外アクセス時のブロック表示 -->
 <div id="blocked-screen">
   <h2>🔒 アクセスできません</h2>
   <p>このアプリはLINEアプリ内限定です。<br>LINEのグループ・トーク画面から開いてください。</p>
 </div>
 
-<!-- メインコンテンツ -->
 <div class="container" id="appContent">
   <h1>なにクウ？</h1>
   <p class="sub">ご飯迷った時の決定＆写真共有アプリ</p>
 
-  <!-- 1. みんなの投稿一覧 -->
   <div class="card">
     <h2>🍽️ みんなの投稿一覧</h2>
     <div id="postsList"></div>
   </div>
 
-  <!-- 2. 検索＆条件で絞り込む -->
   <div class="card">
     <h2>🔍 お店を探す・絞り込む</h2>
     <label>店名、メニュー、コメントで検索</label>
@@ -166,7 +160,6 @@
     </div>
   </div>
 
-  <!-- 3. 迷った時の写真ルーレット -->
   <div class="card">
     <h2>🎯 投稿写真ルーレット</h2>
     <label>対象ジャンルを選択</label>
@@ -188,7 +181,6 @@
     <button class="btn btn-roulette" onclick="spinPhotoRoulette()">ルーレットを回す！</button>
   </div>
 
-  <!-- 4. おすすめのお店を投稿 / 編集 -->
   <div class="card" id="formCard">
     <h2 id="formTitle">📸 おすすめのお店を投稿</h2>
     <input type="hidden" id="editingPostId" value="">
@@ -254,10 +246,9 @@
   </div>
 </div>
 
-<!-- 写真・コメント確認モーダル -->
 <div id="detailModal" class="modal">
   <div class="modal-content">
-    <span class="modal-close" onclick="closeModal()">&times;</span>
+    <span class="modal-close" onclick="closeModal()">×</span>
     <h3 id="modalShopName" style="margin-top:0; color:#fff;"></h3>
     <div id="modalMenuName" style="color:var(--primary); font-weight:bold; margin-bottom: 8px;"></div>
     
@@ -359,7 +350,7 @@
     }, 80);
   }
 
-  // 画像圧縮＆リサイズ処理（リミッター①）
+  // 画像圧縮＆リサイズ処理（容量制限ガード）
   function compressImage(file, maxWidth = 800, quality = 0.7) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -387,7 +378,6 @@
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
 
-          // CanvasをJPEGに変換しデータサイズを削減
           const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
           resolve(compressedBase64);
         };
@@ -397,7 +387,7 @@
     });
   }
 
-  // 投稿作成・更新処理
+  // 投稿保存
   async function savePost() {
     const editingId = document.getElementById('editingPostId').value;
     const author = document.getElementById('author').value || "ゲスト";
@@ -428,10 +418,7 @@
     let mainImgUrl = null;
     if (photoInput.files && photoInput.files[0]) {
       try {
-        // 画像のリサイズ＆圧縮を実行
         mainImgUrl = await compressImage(photoInput.files[0], 800, 0.7);
-
-        // データ容量上限チェック（リミッター②: 約500KBを超える場合は制限）
         if (mainImgUrl.length > 700000) {
           alert("画像サイズが大きすぎます。別の画像を選択してください。");
           return;
@@ -468,10 +455,18 @@
     }
   }
 
-  // 編集モードに入る
+  // 編集モード
   function editPost(id) {
     const post = window.posts.find(p => p.id === id);
     if (!post) return;
 
     document.getElementById('editingPostId').value = post.id;
-    document.getElementById('shopName').va
+    document.getElementById('shopName').value = post.shopName || '';
+    document.getElementById('menuName').value = post.menuName || '';
+    document.getElementById('comment').value = post.comment || '';
+    
+    const cType = post.countryType || '日本';
+    document.getElementById('countryType').value = cType;
+    toggleCountryInput();
+
+    document.getElementById('prefecture').value = post.prefec
