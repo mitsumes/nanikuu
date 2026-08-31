@@ -12,9 +12,9 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
     import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
-    // スクリーンショットより取得したFirebase設定
+    // Firebase設定
     const firebaseConfig = {
-      apiKey: "AIzaSyDpani9pMAqzS4KhctYUXH...", // 自動設定済み
+      apiKey: "AIzaSyDpani9pMAqzS4KhctYUXH...",
       authDomain: "nanikuu.firebaseapp.com",
       databaseURL: "https://nanikuu-default-rtdb.firebaseio.com",
       projectId: "nanikuu",
@@ -49,47 +49,57 @@
   </script>
 
   <style>
-    :root { --primary: #ff5722; --bg: #fff9e6; }
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #333; }
+    :root { 
+      --primary: #ff7043; 
+      --bg: #121212; 
+      --card-bg: #1e1e1e; 
+      --card-border: #2c2c2c;
+      --text: #e0e0e0;
+      --text-sub: #a0a0a0;
+      --input-bg: #2a2a2a;
+      --input-border: #3d3d3d;
+    }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: var(--text); }
     .container { max-width: 480px; margin: 0 auto; display: none; }
     
     /* ブロック画面（外部ブラウザ対策） */
     #blocked-screen { display: none; text-align: center; padding: 50px 20px; }
-    #blocked-screen h2 { color: #d32f2f; border: none; }
+    #blocked-screen h2 { color: #ff5252; border: none; }
 
     h1 { text-align: center; color: var(--primary); font-size: 1.8rem; margin-bottom: 5px; }
-    p.sub { text-align: center; color: #666; font-size: 0.85rem; margin-top: 0; }
+    p.sub { text-align: center; color: var(--text-sub); font-size: 0.85rem; margin-top: 0; }
     
     /* カードスタイル */
-    .card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-    h2 { font-size: 1.1rem; margin-top: 0; color: #444; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    h2 { font-size: 1.1rem; margin-top: 0; color: #fff; border-bottom: 1px solid var(--card-border); padding-bottom: 8px; }
     
     /* フォーム要素 */
-    label { font-size: 0.85rem; font-weight: bold; color: #555; display: block; margin-top: 10px; }
-    select, input, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 0.95rem; }
+    label { font-size: 0.85rem; font-weight: bold; color: var(--text-sub); display: block; margin-top: 10px; }
+    select, input, textarea { width: 100%; padding: 10px; margin-top: 5px; background: var(--input-bg); color: #fff; border: 1px solid var(--input-border); border-radius: 8px; box-sizing: border-box; font-size: 0.95rem; }
+    select option { background: var(--card-bg); color: #fff; }
     
     /* チェックボックスグループ */
     .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
-    .checkbox-group label { display: flex; align-items: center; gap: 4px; margin-top: 0; font-weight: normal; font-size: 0.9rem; cursor: pointer; }
+    .checkbox-group label { display: flex; align-items: center; gap: 4px; margin-top: 0; font-weight: normal; font-size: 0.9rem; color: var(--text); cursor: pointer; }
     
     /* ボタン */
-    .btn { background: var(--primary); color: white; border: none; width: 100%; padding: 12px; font-size: 1rem; font-weight: bold; border-radius: 25px; cursor: pointer; margin-top: 10px; box-shadow: 0 3px 8px rgba(255,87,34,0.3); }
+    .btn { background: var(--primary); color: white; border: none; width: 100%; padding: 12px; font-size: 1rem; font-weight: bold; border-radius: 25px; cursor: pointer; margin-top: 10px; box-shadow: 0 3px 8px rgba(255,112,67,0.3); }
     .btn-roulette { background: #e91e63; box-shadow: 0 3px 8px rgba(233,30,99,0.3); font-size: 1.1rem; }
-    .btn-secondary { background: #4caf50; }
+    .btn-secondary { background: #388e3c; }
     
     /* ルーレット結果表示エリア */
-    .roulette-box { background: #fff0eb; border: 2px dashed #ffab91; border-radius: 12px; padding: 15px; text-align: center; font-size: 1.1rem; font-weight: bold; color: var(--primary); min-height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; }
+    .roulette-box { background: #261c1a; border: 2px dashed #ff7043; border-radius: 12px; padding: 15px; text-align: center; font-size: 1.1rem; font-weight: bold; color: var(--primary); min-height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; }
     .roulette-result-img { width: 100%; max-height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; display: none; }
     
     /* 投稿カード */
-    .post-card { border: 1px solid #eee; border-radius: 12px; overflow: hidden; margin-top: 15px; background: #fff; }
-    .post-img { width: 100%; height: 200px; object-fit: cover; background: #eee; }
+    .post-card { border: 1px solid var(--card-border); border-radius: 12px; overflow: hidden; margin-top: 10px; background: var(--card-bg); }
+    .post-img { width: 100%; height: 200px; object-fit: cover; background: #2a2a2a; }
     .post-body { padding: 12px; }
-    .post-title { font-weight: bold; font-size: 1.1rem; margin: 0 0 5px 0; }
-    .post-meta { font-size: 0.8rem; color: #777; margin-bottom: 8px; }
-    .tag { display: inline-block; background: #eee; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-right: 4px; }
+    .post-title { font-weight: bold; font-size: 1.1rem; margin: 0 0 5px 0; color: #fff; }
+    .post-meta { font-size: 0.8rem; color: var(--text-sub); margin-bottom: 8px; }
+    .tag { display: inline-block; background: #333; color: #ddd; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-right: 4px; }
     .links { margin-top: 10px; font-size: 0.85rem; display: flex; gap: 10px; flex-wrap: wrap; }
-    .links a { color: #1e88e5; text-decoration: none; font-weight: bold; }
+    .links a { color: #64b5f6; text-decoration: none; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -105,7 +115,35 @@
   <h1>なにクウ？</h1>
   <p class="sub">ご飯迷った時の決定＆写真共有アプリ</p>
 
-  <!-- 1. 条件で絞り込む -->
+  <!-- 1. みんなの投稿一覧（一番上配置） -->
+  <div class="card">
+    <h2>🍽️ みんなの投稿一覧</h2>
+    <div id="postsList"></div>
+  </div>
+
+  <!-- 2. 迷った時の写真ルーレット -->
+  <div class="card">
+    <h2>🎯 投稿写真ルーレット</h2>
+    <label>対象ジャンルを選択</label>
+    <div class="checkbox-group">
+      <label><input type="checkbox" class="roulette-opt" value="和食" checked> 和食</label>
+      <label><input type="checkbox" class="roulette-opt" value="洋食" checked> 洋食</label>
+      <label><input type="checkbox" class="roulette-opt" value="中華" checked> 中華</label>
+      <label><input type="checkbox" class="roulette-opt" value="定食屋" checked> 定食屋</label>
+      <label><input type="checkbox" class="roulette-opt" value="ファミレス" checked> ファミレス</label>
+      <label><input type="checkbox" class="roulette-opt" value="ラーメン" checked> ラーメン</label>
+      <label><input type="checkbox" class="roulette-opt" value="焼肉" checked> 焼肉</label>
+      <label><input type="checkbox" class="roulette-opt" value="居酒屋" checked> 居酒屋</label>
+    </div>
+
+    <div class="roulette-box">
+      <img id="rouletteImg" class="roulette-result-img" src="" alt="決定写真">
+      <div id="rouletteText">投稿されたお店から決めるよ！</div>
+    </div>
+    <button class="btn btn-roulette" onclick="spinPhotoRoulette()">ルーレットを回す！</button>
+  </div>
+
+  <!-- 3. 条件で絞り込む -->
   <div class="card">
     <h2>🔍 条件で絞り込む</h2>
     <label>ジャンル</label>
@@ -130,7 +168,7 @@
     </select>
   </div>
 
-  <!-- 2. おすすめのお店を投稿 -->
+  <!-- 4. おすすめのお店を投稿 -->
   <div class="card">
     <h2>📸 おすすめのお店を投稿</h2>
     <input type="text" id="author" placeholder="投稿者のお名前（LINE名が自動挿入されます）" readonly>
@@ -168,31 +206,6 @@
 
     <button class="btn btn-secondary" onclick="addPost()">投稿する</button>
   </div>
-
-  <!-- 3. 迷った時の写真ルーレット -->
-  <div class="card">
-    <h2>🎯 投稿写真ルーレット</h2>
-    <label>対象ジャンルを選択</label>
-    <div class="checkbox-group">
-      <label><input type="checkbox" class="roulette-opt" value="和食" checked> 和食</label>
-      <label><input type="checkbox" class="roulette-opt" value="洋食" checked> 洋食</label>
-      <label><input type="checkbox" class="roulette-opt" value="中華" checked> 中華</label>
-      <label><input type="checkbox" class="roulette-opt" value="定食屋" checked> 定食屋</label>
-      <label><input type="checkbox" class="roulette-opt" value="ファミレス" checked> ファミレス</label>
-      <label><input type="checkbox" class="roulette-opt" value="ラーメン" checked> ラーメン</label>
-      <label><input type="checkbox" class="roulette-opt" value="焼肉" checked> 焼肉</label>
-      <label><input type="checkbox" class="roulette-opt" value="居酒屋" checked> 居酒屋</label>
-    </div>
-
-    <div class="roulette-box">
-      <img id="rouletteImg" class="roulette-result-img" src="" alt="決定写真">
-      <div id="rouletteText">投稿されたお店から決めるよ！</div>
-    </div>
-    <button class="btn btn-roulette" onclick="spinPhotoRoulette()">ルーレットを回す！</button>
-  </div>
-
-  <h2>みんなの投稿一覧</h2>
-  <div id="postsList"></div>
 </div>
 
 <script>
@@ -258,7 +271,7 @@
 
         textDiv.innerHTML = `
           🎉 今日のご飯は <b>【${finalPost.shopName}】</b>${locText}！<br>
-          <a href="${mapUrl}" target="_blank" style="color: #1e88e5; font-size: 0.9rem;">📍 Googleマップで見る</a>
+          <a href="${mapUrl}" target="_blank" style="color: #64b5f6; font-size: 0.9rem;">📍 Googleマップで見る</a>
         `;
       }
     }, 80);
@@ -289,7 +302,6 @@
         createdAt: Date.now()
       };
 
-      // Firebaseに保存（保存した瞬間にグループ全員へ共有されます）
       window.push(window.postsRef, newPost).then(() => {
         alert("投稿しました！グループ全員に共有されたよ！");
         document.getElementById('shopName').value = "";
@@ -319,7 +331,7 @@
     list.innerHTML = "";
 
     if (window.posts.length === 0) {
-      list.innerHTML = "<p style='text-align:center; color:#888;'>まだ投稿がありません。おすすめのお店を投稿してみてね！</p>";
+      list.innerHTML = "<p style='text-align:center; color:var(--text-sub);'>まだ投稿がありません。下からおすすめのお店を投稿してみてね！</p>";
       return;
     }
 
@@ -332,7 +344,7 @@
         <div class="post-card">
           <img src="${post.img}" class="post-img" alt="店舗写真">
           <div class="post-body">
-            <h3 class="post-title">${post.shopName} <span style="font-size:0.8rem; font-weight:normal; color:#666;">${locText}</span></h3>
+            <h3 class="post-title">${post.shopName} <span style="font-size:0.8rem; font-weight:normal; color:var(--text-sub);">${locText}</span></h3>
             <div class="post-meta">投稿者: <b>${post.author}</b> | 定休日: ${post.holiday} | 予約: <b>${post.reservation}</b></div>
             <div>
               <span class="tag">${post.category}</span>
