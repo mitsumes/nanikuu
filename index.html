@@ -132,11 +132,6 @@
         .link-btns a:hover {
             background: #444;
         }
-        .action-btns {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-        }
         .edit-btn {
             background-color: #3f51b5;
             color: white;
@@ -267,11 +262,11 @@
 
                 <input type="text" id="edit-shop-name" placeholder="店名 *" required>
                 <input type="text" id="edit-state" placeholder="県名（例：愛知県）">
-                <input type="text" id="edit-city" placeholder="市名（例：東海市）">
+                <input type="text" id="edit-city" placeholder="市名・区名（例：東海市）">
                 <input type="text" id="edit-holiday" placeholder="定休日（例：水曜日、不定休）">
 
                 <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">おすすめの利用シーン（複数選択可）</label>
-                <div class="checkbox-group" id="edit-targetVibe-group">
+                <div class="checkbox-group">
                     <label><input type="checkbox" name="edit-targetVibe" value="👤 1人向け"> 👤 1人向け</label>
                     <label><input type="checkbox" name="edit-targetVibe" value="👨‍👩‍👧 ファミリー向け"> 👨‍👩‍👧 ファミリー向け</label>
                     <label><input type="checkbox" name="edit-targetVibe" value="🍻 グループ向け"> 🍻 グループ向け</label>
@@ -285,7 +280,7 @@
                 </select>
 
                 <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">決済方法（複数選択可）</label>
-                <div class="checkbox-group" id="edit-payment-group">
+                <div class="checkbox-group">
                     <label><input type="checkbox" name="edit-payment" value="💵 現金"> 💵 現金</label>
                     <label><input type="checkbox" name="edit-payment" value="💳 クレジットカード"> 💳 クレジットカード</label>
                     <label><input type="checkbox" name="edit-payment" value="📱 電子マネー・QR決済"> 📱 電子マネー・QR決済</label>
@@ -330,6 +325,7 @@
         <div class="card">
             <h2>🔍 お店を探す・絞り込む</h2>
             <input type="text" id="search-keyword" placeholder="検索ワード（例：おしゃれ、美味しい）">
+            <input type="text" id="search-city" placeholder="市名・区名で絞り込む（例：東海市）">
             
             <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">ジャンルで絞り込む</label>
             <select id="search-genre">
@@ -359,15 +355,6 @@
                     <option value="その他">その他</option>
                 </select>
             </div>
-
-            <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">現在地からの距離</label>
-            <select id="search-distance">
-                <option value="all">制限なし（すべて表示）</option>
-                <option value="3">3km以内</option>
-                <option value="5">5km以内</option>
-                <option value="10">10km以内</option>
-                <option value="20">20km以内</option>
-            </select>
         </div>
 
         <!-- 投稿フォーム -->
@@ -404,7 +391,7 @@
 
                 <input type="text" id="shop-name" placeholder="店名 *" required>
                 <input type="text" id="state" placeholder="県名（例：愛知県）">
-                <input type="text" id="city" placeholder="市名（例：東海市）">
+                <input type="text" id="city" placeholder="市名・区名（例：東海市）" required>
                 <input type="text" id="holiday" placeholder="定休日（例：水曜日、不定休）">
 
                 <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">おすすめの利用シーン（複数選択可）</label>
@@ -444,7 +431,7 @@
                 <input type="file" id="image-file" accept="image/*">
                 
                 <input type="text" id="author" placeholder="投稿者名（自動取得）" readonly>
-                <button type="submit">📍 現在地を登録して投稿する</button>
+                <button type="submit">✏️ お店を登録する</button>
             </form>
         </div>
 
@@ -474,39 +461,7 @@
 
         let allPosts = [];
         let selectedGenreForRoulette = "";
-        let currentLat = null;
-        let currentLng = null;
         window.currentLiffName = "ゲスト";
-
-        // --- ユーザーの現在地を取得しておく ---
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    currentLat = position.coords.latitude;
-                    currentLng = position.coords.longitude;
-                },
-                (error) => {
-                    console.log("位置情報取得エラー: " + error.message);
-                },
-                { enableHighAccuracy: true }
-            );
-        }
-
-        // --- 2地点間の距離（km）を計算する関数（ヒュベニの公式） ---
-        function calcDistance(lat1, lon1, lat2, lon2) {
-            if (!lat1 || !lon1 || !lat2 || !lon2) return null;
-            const radLat1 = lat1 * Math.PI / 180;
-            const radLat2 = lat2 * Math.PI / 180;
-            const radDistLat = (lat1 - lat2) * Math.PI / 180;
-            const radDistLon = (lon1 - lon2) * Math.PI / 180;
-
-            const a = Math.sin(radDistLat / 2) * Math.sin(radDistLat / 2) +
-                      Math.cos(radLat1) * Math.cos(radLat2) *
-                      Math.sin(radDistLon / 2) * Math.sin(radDistLon / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            const r = 6371; // 地球の半径(km)
-            return r * c;
-        }
 
         // --- 画像圧縮関数（Canvas使用・最大幅800px・画質0.7） ---
         function compressImage(file) {
@@ -623,37 +578,23 @@
             const sorted = [...posts].reverse();
 
             sorted.forEach((post) => {
-                let mapUrl = "";
-                if (post.lat && post.lng) {
-                    mapUrl = `https://www.google.com/maps/search/?api=1&query=${post.lat},${post.lng}`;
-                } else {
-                    const mapQuery = encodeURIComponent(`${post.state || ''}${post.city || ''} ${post.shopName}`);
-                    mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
-                }
-
-                let distanceText = "";
-                if (currentLat && currentLng && post.lat && post.lng) {
-                    const dist = calcDistance(currentLat, currentLng, post.lat, post.lng);
-                    if (dist !== null) {
-                        distanceText = `<small style="color: #ff5722; margin-left: 6px;">(約 ${dist.toFixed(1)} km)</small>`;
-                    }
-                }
+                const mapQuery = encodeURIComponent(`${post.state || ''}${post.city || ''} ${post.shopName}`);
+                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 
                 let badgesHtml = '';
                 if (post.genre === 'ラーメン' && post.ramenType) badgesHtml += `<span class="badge" style="background:#ff5722; color:#fff;">🍜 ${escapeHtml(post.ramenType)}</span>`;
                 if (post.holiday) badgesHtml += `<span class="badge">店休: ${escapeHtml(post.holiday)}</span>`;
                 
-                const vibes = Array.isArray(post.targetVibes) ? post.targetVibes : (post.targetVibe && post.targetVibe !== '指定なし' ? [post.targetVibe] : []);
+                const vibes = Array.isArray(post.targetVibes) ? post.targetVibes : [];
                 vibes.forEach(v => { badgesHtml += `<span class="badge">${escapeHtml(v)}</span>`; });
 
                 if (post.parking && post.parking !== '不明・記載なし') badgesHtml += `<span class="badge">${escapeHtml(post.parking)}</span>`;
                 
-                const payments = Array.isArray(post.payments) ? post.payments : (post.payment && post.payment !== '不明・記載なし' ? [post.payment] : []);
+                const payments = Array.isArray(post.payments) ? post.payments : [];
                 payments.forEach(p => { badgesHtml += `<span class="badge">${escapeHtml(p)}</span>`; });
 
                 if (post.reservation && post.reservation !== '不明・記載なし') badgesHtml += `<span class="badge">${escapeHtml(post.reservation)}</span>`;
 
-                // 自分の投稿かどうか（投稿者名が一致する場合に編集ボタンを表示）
                 let editButtonHtml = '';
                 if (post.author === window.currentLiffName) {
                     editButtonHtml = `<button type="button" class="edit-btn" onclick="openEditModal('${post.id}')">✏️ 編集</button>`;
@@ -663,7 +604,7 @@
                 div.className = 'post-item';
                 div.innerHTML = `
                     <strong>${escapeHtml(post.shopName)}</strong> (${escapeHtml(post.genre)})<br>
-                    <small>📍 ${escapeHtml(post.state || '')} ${escapeHtml(post.city || '')}</small> ${distanceText}
+                    <small>📍 ${escapeHtml(post.state || '')} ${escapeHtml(post.city || '')}</small>
                     <a href="${mapUrl}" target="_blank" style="font-size: 12px; color: #4fa3ff; margin-left: 8px; text-decoration: none;">🗺️ 地図アプリで開く</a><br>
                     
                     ${badgesHtml ? `<div class="tags-container">${badgesHtml}</div>` : ''}
@@ -692,7 +633,6 @@
             document.getElementById('edit-id').value = post.id;
             document.getElementById('edit-genre').value = post.genre;
             
-            // ラーメンサブ項目の制御
             const subField = document.getElementById('edit-ramen-sub');
             const ramenSelect = document.getElementById('edit-ramen-type');
             if (post.genre === 'ラーメン') {
@@ -716,13 +656,11 @@
             document.getElementById('edit-comment').value = post.comment || '';
             document.getElementById('edit-image-file').value = '';
 
-            // チェックボックス（利用シーン）の復元
             const vibes = Array.isArray(post.targetVibes) ? post.targetVibes : [];
             document.querySelectorAll('input[name="edit-targetVibe"]').forEach(cb => {
                 cb.checked = vibes.includes(cb.value);
             });
 
-            // チェックボックス（決済方法）の復元
             const payments = Array.isArray(post.payments) ? post.payments : [];
             document.querySelectorAll('input[name="edit-payment"]').forEach(cb => {
                 cb.checked = payments.includes(cb.value);
@@ -731,7 +669,6 @@
             document.getElementById('edit-modal').style.display = 'block';
         };
 
-        // --- 編集モーダルを閉じる ---
         document.getElementById('edit-cancel-btn').addEventListener('click', () => {
             document.getElementById('edit-modal').style.display = 'none';
         });
@@ -800,9 +737,9 @@
         // --- 検索・絞り込み機能 ---
         function filterPosts() {
             const keyword = document.getElementById('search-keyword').value.toLowerCase();
+            const searchCity = document.getElementById('search-city').value.toLowerCase();
             const genre = document.getElementById('search-genre').value;
             const ramenType = document.getElementById('search-ramen-type').value;
-            const maxDistance = document.getElementById('search-distance').value;
 
             const filtered = allPosts.filter(post => {
                 const matchGenre = (genre === 'すべて' || post.genre === genre);
@@ -812,29 +749,27 @@
                     matchRamen = (post.ramenType === ramenType);
                 }
 
-                let matchDistance = true;
-                if (maxDistance !== 'all' && currentLat && currentLng && post.lat && post.lng) {
-                    const dist = calcDistance(currentLat, currentLng, post.lat, post.lng);
-                    if (dist === null || dist > parseFloat(maxDistance)) {
-                        matchDistance = false;
-                    }
+                let matchCity = true;
+                if (searchCity) {
+                    const postCity = (post.city || '').toLowerCase();
+                    matchCity = postCity.includes(searchCity);
                 }
 
-                const vibesStr = Array.isArray(post.targetVibes) ? post.targetVibes.join(' ') : (post.targetVibe || '');
-                const paymentsStr = Array.isArray(post.payments) ? post.payments.join(' ') : (post.payment || '');
+                const vibesStr = Array.isArray(post.targetVibes) ? post.targetVibes.join(' ') : '';
+                const paymentsStr = Array.isArray(post.payments) ? post.payments.join(' ') : '';
 
                 const text = `${post.shopName} ${post.genre} ${post.ramenType || ''} ${post.state} ${post.city} ${post.holiday} ${vibesStr} ${post.parking} ${paymentsStr} ${post.reservation} ${post.comment} ${post.author}`.toLowerCase();
                 const matchKeyword = text.includes(keyword);
 
-                return matchGenre && matchRamen && matchDistance && matchKeyword;
+                return matchGenre && matchRamen && matchCity && matchKeyword;
             });
 
             renderPosts(filtered);
         }
 
         document.getElementById('search-keyword').addEventListener('input', filterPosts);
+        document.getElementById('search-city').addEventListener('input', filterPosts);
         document.getElementById('search-ramen-type').addEventListener('change', filterPosts);
-        document.getElementById('search-distance').addEventListener('change', filterPosts);
 
         // --- ルーレット機能（2段階） ---
         document.getElementById('roulette-genre-btn').addEventListener('click', () => {
@@ -904,9 +839,6 @@
                     imageUrl = await snapshot.ref.getDownloadURL();
                 }
 
-                const postLat = currentLat;
-                const postLng = currentLng;
-
                 await db.ref('posts').push({
                     genre,
                     ramenType,
@@ -923,8 +855,6 @@
                     comment,
                     imageUrl,
                     author,
-                    lat: postLat,
-                    lng: postLng,
                     timestamp: Date.now()
                 });
 
@@ -967,7 +897,6 @@
                                 if (authorInput) {
                                     authorInput.value = window.currentLiffName;
                                 }
-                                // プロフィール取得後に再描画して編集ボタンを正しく表示させる
                                 filterPosts();
                             }).catch(() => {});
                         }
