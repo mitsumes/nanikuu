@@ -448,7 +448,7 @@
     </div>
 
     <script>
-        // --- Firebaseの設定（修正済み） ---
+        // --- Firebaseの設定 ---
         const firebaseConfig = {
             databaseURL: "https://nanikuu-default-rtdb.firebaseio.com/",
             storageBucket: "nanikuu.firebasestorage.app"
@@ -463,7 +463,7 @@
         let selectedGenreForRoulette = "";
         window.currentLiffName = "ゲスト";
 
-        // --- 画像圧縮関数（Canvas使用・最大幅800px・画質0.7） ---
+        // --- 画像圧縮関数 ---
         function compressImage(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -505,7 +505,128 @@
             });
         }
 
-        // 以降のスクリプト処理（そのまま維持）
+        // --- LIFF初期化 ---
+        async function initializeLiff() {
+            try {
+                if (typeof liff !== 'undefined') {
+                    await liff.init({ liffId: "YOUR_LIFF_ID" }); // ご自身のLIFF IDに置き換わっているかご確認ください
+                    if (liff.isLoggedIn()) {
+                        const profile = await liff.getProfile();
+                        window.currentLiffName = profile.displayName;
+                        document.getElementById('author').value = window.currentLiffName;
+                    } else {
+                        document.getElementById('author').value = "ゲスト";
+                    }
+                }
+            } catch (error) {
+                console.error("LIFF initialization failed", error);
+                document.getElementById('author').value = "ゲスト";
+            }
+        }
+
+        // --- 投稿フォームの送信処理 ---
+        document.getElementById('post-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.style.display = 'block';
+
+            try {
+                const genre = document.getElementById('genre').value;
+                const ramenType = genre === 'ラーメン' ? document.getElementById('ramen-type').value : '';
+                const shopName = document.getElementById('shop-name').value;
+                const state = document.getElementById('state').value;
+                const city = document.getElementById('city').value;
+                const holiday = document.getElementById('holiday').value;
+                
+                const targetVibe = Array.from(document.querySelectorAll('input[name="targetVibe"]:checked')).map(el => el.value);
+                const parking = document.getElementById('parking').value;
+                const payment = Array.from(document.querySelectorAll('input[name="payment"]:checked')).map(el => el.value);
+                const reservation = document.getElementById('reservation').value;
+                
+                const hpUrl = document.getElementById('hp-url').value;
+                const instaUrl = document.getElementById('insta-url').value;
+                const comment = document.getElementById('comment').value;
+                const author = document.getElementById('author').value || "ゲスト";
+
+                const imageFile = document.getElementById('image-file').files[0];
+                let imageUrl = '';
+
+                if (imageFile) {
+                    const compressedBlob = await compressImage(imageFile);
+                    const storageRef = storage.ref().child('images/' + Date.now() + '_' + imageFile.name);
+                    const snapshot = await storageRef.put(compressedBlob);
+                    imageUrl = await snapshot.ref.getDownloadURL();
+                }
+
+                const newPostRef = db.ref('posts').push();
+                await newPostRef.set({
+                    genre,
+                    ramenType,
+                    shopName,
+                    state,
+                    city,
+                    holiday,
+                    targetVibe,
+                    parking,
+                    payment,
+                    reservation,
+                    hpUrl,
+                    instaUrl,
+                    comment,
+                    imageUrl,
+                    author,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                });
+
+                alert('お店を投稿しました！');
+                document.getElementById('post-form').reset();
+                if(document.getElementById('author')) {
+                    document.getElementById('author').value = window.currentLiffName;
+                }
+            } catch (error) {
+                console.error(error);
+                alert('投稿に失敗しました: ' + error.message);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        });
+
+        // --- データの読み込みと表示 ---
+        db.ref('posts').on('value', (snapshot) => {
+            const data = snapshot.val();
+            allPosts = [];
+            const container = document.getElementById('posts-container');
+            container.innerHTML = '';
+
+            if (!data) {
+                container.innerHTML = '<div class="no-data">条件に合う投稿がありません</div>';
+                return;
+            }
+
+            Object.keys(data).forEach((key) => {
+                allPosts.push({ id: key, ...data[key] });
+            });
+
+            // 新しい順に並び替え
+            allPosts.sort((a, b) => b.createdAt - a.createdAt);
+
+            allPosts.forEach((post) => {
+                const div = document.createElement('div');
+                div.className = 'post-item';
+                
+                let html = `<strong>${post.genre}</strong>: ${post.shopName} (${post.city})`;
+                if (post.imageUrl) {
+                    html += `<img src="${post.imageUrl}" class="post-image" alt="お店の写真">`;
+                }
+                div.innerHTML = html;
+                container.appendChild(div);
+            });
+        });
+
+        // ページ読み込み時にLIFF初期化を実行
+        window.addEventListener('DOMContentLoaded', () => {
+            initializeLiff();
+        });
     </script>
 </body>
 </html>
