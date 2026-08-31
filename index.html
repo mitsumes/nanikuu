@@ -64,11 +64,10 @@
       --input-border: #3d3d3d;
     }
     body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: var(--text); overflow-x: hidden; }
-    .container { max-width: 480px; margin: 0 auto; display: none; }
+    .container { max-width: 480px; margin: 0 auto; display: block; } /* 常に表示するように変更 */
     
-    /* ブロック画面 */
+    /* ブロック画面（今回は非表示にして強制突破） */
     #blocked-screen { display: none; text-align: center; padding: 50px 20px; }
-    #blocked-screen h2 { color: #ff5252; border: none; }
 
     h1 { text-align: center; color: var(--primary); font-size: 1.8rem; margin-bottom: 5px; }
     p.sub { text-align: center; color: var(--text-sub); font-size: 0.85rem; margin-top: 0; }
@@ -121,11 +120,6 @@
   </style>
 </head>
 <body>
-
-<div id="blocked-screen">
-  <h2>🔒 アクセスできません</h2>
-  <p>このアプリはLINEアプリ内限定です。<br>LINEのグループ・トーク画面から開いてください。</p>
-</div>
 
 <div class="container" id="appContent">
   <h1>なにクウ？</h1>
@@ -187,7 +181,7 @@
     <h2 id="formTitle">📸 おすすめのお店を投稿</h2>
     <input type="hidden" id="editingPostId" value="">
     
-    <input type="text" id="author" placeholder="投稿者のお名前" readonly>
+    <input type="text" id="author" value="ゲストユーザー">
     
     <input type="text" id="shopName" placeholder="店名（必須）">
     <input type="text" id="menuName" placeholder="おすすめメニュー名（例：特製豚骨ラーメン）">
@@ -268,38 +262,24 @@
 
 <script>
   window.posts = [];
-  let currentUserName = "ゲスト";
+  let currentUserName = "ゲストユーザー";
 
-  // LIFF初期化とアクセス制御
+  // 安全にLIFFを初期化（失敗しても画面が消えないように修正）
   document.addEventListener("DOMContentLoaded", () => {
-    liff.init({ liffId: "2011348764-TFzS41F9" }).then(() => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const isDev = urlParams.get('dev') === 'true';
-
-      if (liff.isInClient() || isDev) {
-        document.getElementById('appContent').style.display = 'block';
+    try {
+      liff.init({ liffId: "2011348764-TFzS41F9" }).then(() => {
         if (liff.isLoggedIn()) {
           liff.getProfile().then(profile => {
             currentUserName = profile.displayName;
             document.getElementById('author').value = currentUserName;
-          });
-        } else {
-          currentUserName = "開発者";
-          document.getElementById('author').value = currentUserName;
+          }).catch(() => {});
         }
-      } else {
-        document.getElementById('blocked-screen').style.display = 'block';
-      }
-    }).catch(() => {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('dev') === 'true') {
-        document.getElementById('appContent').style.display = 'block';
-        currentUserName = "開発者";
-        document.getElementById('author').value = currentUserName;
-      } else {
-        document.getElementById('blocked-screen').style.display = 'block';
-      }
-    });
+      }).catch((err) => {
+        console.log("LIFF initialization skipped/failed: ", err);
+      });
+    } catch (e) {
+      console.log("LIFF not available");
+    }
   });
 
   // 国切り替え制御
@@ -346,15 +326,12 @@
       if (p.hp) linksHtml += `<a href="${p.hp}" target="_blank">🌐 HP</a>`;
       if (p.insta) linksHtml += `<a href="${p.insta}" target="_blank">📸 Instagram</a>`;
 
-      let actionButtons = '';
-      if (p.author === currentUserName || currentUserName === "開発者") {
-        actionButtons = `
-          <div style="margin-top: 10px;">
-            <button class="btn-edit" onclick="editPost('${p.id}')">編集</button>
-            <button class="btn-delete" onclick="deletePost('${p.id}')">削除</button>
-          </div>
-        `;
-      }
+      let actionButtons = `
+        <div style="margin-top: 10px;">
+          <button class="btn-edit" onclick="editPost('${p.id}')">編集</button>
+          <button class="btn-delete" onclick="deletePost('${p.id}')">削除</button>
+        </div>
+      `;
 
       html += `
         <div class="post-card">
@@ -454,3 +431,178 @@
               width = maxWidth;
             } else {
               width = Math.round((width * maxWidth) / height);
+              height = maxWidth;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedBase64);
+        };
+        img.onerror = (err) => reject(err);
+      };
+      reader.onerror = (err) => reject(err);
+    });
+  }
+
+  // 投稿保存
+  async function savePost() {
+    const editingId = document.getElementById('editingPostId').value;
+    const author = document.getElementById('author').value || currentUserName;
+    const shopName = document.getElementById('shopName').value.trim();
+    const menuName = document.getElementById('menuName').value.trim();
+    const comment = document.getElementById('comment').value.trim();
+    const countryType = document.getElementById('countryType').value;
+    const prefecture = document.getElementById('prefecture').value.trim();
+    const city = document.getElementById('city').value.trim();
+    const countryName = document.getElementById('countryName').value.trim();
+    const foreignCity = document.getElementById('foreignCity').value.trim();
+    
+    const category = document.getElementById('shopCategory').value;
+    const people = Array.from(document.querySelectorAll('.post-people-opt:checked')).map(cb => cb.value);
+    
+    const holiday = document.getElementById('holiday').value.trim() || "なし";
+    const reservation = document.getElementById('reservation').value;
+    const hp = document.getElementById('hpUrl').value.trim();
+    const insta = document.getElementById('instaUrl').value.trim();
+    
+    const photoInput = document.getElementById('photo');
+
+    if (!shopName) {
+      alert("店名を入力してください！");
+      return;
+    }
+
+    let mainImgUrl = null;
+    if (photoInput.files && photoInput.files[0]) {
+      try {
+        mainImgUrl = await compressImage(photoInput.files[0], 800, 0.7);
+        if (mainImgUrl.length > 700000) {
+          alert("画像サイズが大きすぎます。別の画像を選択してください。");
+          return;
+        }
+      } catch (e) {
+        alert("画像の処理に失敗しました。");
+        return;
+      }
+    }
+
+    const postData = {
+      author, shopName, menuName, comment, countryType, prefecture, city, countryName, foreignCity,
+      category, people, holiday, reservation, hp, insta,
+      updatedAt: Date.now()
+    };
+
+    if (mainImgUrl) postData.img = mainImgUrl;
+
+    if (editingId) {
+      const targetRef = window.ref(window.db, `posts/${editingId}`);
+      window.update(targetRef, postData).then(() => {
+        alert("投稿を更新しました！");
+        resetForm();
+      }).catch(err => alert("更新失敗: " + err.message));
+    } else {
+      postData.createdAt = Date.now();
+      if (!postData.img) {
+        postData.img = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500&auto=format&fit=crop";
+      }
+      window.push(window.postsRef, postData).then(() => {
+        alert("投稿しました！グループ全員に共有されたよ！");
+        resetForm();
+      }).catch(err => alert("保存失敗: " + err.message));
+    }
+  }
+
+  // 編集モード
+  function editPost(id) {
+    const post = window.posts.find(p => p.id === id);
+    if (!post) return;
+
+    document.getElementById('editingPostId').value = post.id;
+    document.getElementById('shopName').value = post.shopName || '';
+    document.getElementById('menuName').value = post.menuName || '';
+    document.getElementById('comment').value = post.comment || '';
+    
+    const cType = post.countryType || '日本';
+    document.getElementById('countryType').value = cType;
+    toggleCountryInput();
+
+    document.getElementById('prefecture').value = post.prefecture || '';
+    document.getElementById('city').value = post.city || '';
+    document.getElementById('countryName').value = post.countryName || '';
+    document.getElementById('foreignCity').value = post.foreignCity || '';
+    document.getElementById('shopCategory').value = post.category || 'ラーメン';
+    
+    document.querySelectorAll('.post-people-opt').forEach(cb => {
+      cb.checked = post.people && post.people.includes(cb.value);
+    });
+
+    document.getElementById('holiday').value = post.holiday || '';
+    document.getElementById('reservation').value = post.reservation || '予約可';
+    document.getElementById('hpUrl').value = post.hp || '';
+    document.getElementById('instaUrl').value = post.insta || '';
+
+    document.getElementById('formTitle').innerText = "✏️ 投稿を編集";
+    document.getElementById('submitBtn').innerText = "更新する";
+    document.getElementById('cancelBtn').style.display = "block";
+    
+    window.scrollTo({ top: document.getElementById('formCard').offsetTop, behavior: 'smooth' });
+  }
+
+  // 削除
+  function deletePost(id) {
+    if (confirm("本当にこの投稿を削除しますか？")) {
+      const targetRef = window.ref(window.db, `posts/${id}`);
+      window.remove(targetRef).then(() => {
+        alert("削除しました。");
+      }).catch(err => alert("削除失敗: " + err.message));
+    }
+  }
+
+  // フォームリセット
+  function resetForm() {
+    document.getElementById('editingPostId').value = "";
+    document.getElementById('shopName').value = "";
+    document.getElementById('menuName').value = "";
+    document.getElementById('comment').value = "";
+    document.getElementById('prefecture').value = "";
+    document.getElementById('city').value = "";
+    document.getElementById('countryName').value = "";
+    document.getElementById('foreignCity').value = "";
+    document.getElementById('holiday').value = "";
+    document.getElementById('hpUrl').value = "";
+    document.getElementById('instaUrl').value = "";
+    document.getElementById('photo').value = "";
+    document.querySelectorAll('.post-people-opt').forEach(cb => cb.checked = false);
+
+    document.getElementById('formTitle').innerText = "📸 おすすめのお店を投稿";
+    document.getElementById('submitBtn').innerText = "投稿する";
+    document.getElementById('cancelBtn').style.display = "none";
+  }
+
+  // モーダル詳細表示
+  function openModal(id) {
+    const post = window.posts.find(p => p.id === id);
+    if (!post) return;
+
+    document.getElementById('modalShopName').innerText = post.shopName;
+    document.getElementById('modalMenuName').innerText = post.menuName ? `🥢 ${post.menuName}` : '';
+    document.getElementById('modalAuthor').innerText = `投稿者: ${post.author || 'ゲスト'}`;
+    document.getElementById('modalComment').innerText = post.comment || 'コメントなし';
+    document.getElementById('modalImg').src = post.img;
+
+    document.getElementById('detailModal').style.display = 'block';
+  }
+
+  function closeModal() {
+    document.getElementById('detailModal').style.display = 'none';
+  }
+</script>
+
+</body>
+</html>
