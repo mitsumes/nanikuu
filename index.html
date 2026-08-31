@@ -47,6 +47,33 @@
             margin: 0;
             font-size: 14px;
         }
+        .group-name-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            background: #252525;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .group-name-display {
+            font-size: 15px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .group-edit-btn {
+            background: #444;
+            color: #fff;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            width: auto;
+            margin: 0;
+        }
         .card {
             background-color: var(--card-bg);
             border-radius: 12px;
@@ -171,16 +198,22 @@
             margin-top: 8px;
             margin-bottom: 12px;
         }
-        #loading-overlay {
+        #loading-overlay, #error-screen {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            z-index: 999;
+            background: rgba(0,0,0,0.9);
+            z-index: 9999;
             color: white;
             text-align: center;
-            padding-top: 50vh;
-            font-size: 18px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #error-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
         .sub-field-group {
             display: none;
@@ -215,7 +248,6 @@
             margin: 0;
             cursor: pointer;
         }
-        /* モーダルウィンドウ */
         #edit-modal {
             display: none;
             position: fixed;
@@ -239,7 +271,16 @@
     </style>
 </head>
 <body>
-    <div id="loading-overlay">画像を圧縮＆アップロード中...</div>
+    <div id="loading-overlay" style="padding-top: 50vh; font-size: 18px;">画像を圧縮＆アップロード中...</div>
+
+    <!-- グループ外アクセス制限用のエラー画面 -->
+    <div id="error-screen">
+        <h2 style="color: #ff5722; font-size: 22px; margin-bottom: 12px;">⚠️ アクセス制限</h2>
+        <p style="font-size: 15px; line-height: 1.6; max-width: 400px;">
+            এইアプリは<strong>LINEグループ内</strong>からのみご利用いただけます。<br>
+            指定のLINEグループトーク内にあるリンクからアクセスしてください。
+        </p>
+    </div>
 
     <!-- 編集モーダル -->
     <div id="edit-modal">
@@ -325,6 +366,11 @@
         <header>
             <h1>なにクウ？</h1>
             <p>ご飯迷った時の決定＆写真共有アプリ</p>
+            <div class="group-name-section">
+                <span>🏠 グループ名:</span>
+                <span id="group-name-text" class="group-name-display">読み込み中...</span>
+                <button type="button" class="group-edit-btn" onclick="editGroupName()">✏️ 変更</button>
+            </div>
         </header>
 
         <!-- 1. みんなの投稿一覧 -->
@@ -442,7 +488,8 @@
                 <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">お店の写真（1枚・自動圧縮されます）</label>
                 <input type="file" id="image-file" accept="image/*">
                 
-                <input type="text" id="author" placeholder="投稿者名（自動取得）" readonly>
+                <label style="font-size: 12px; color: var(--accent-color); display: block; margin-bottom: 4px; font-weight: bold;">👤 投稿者名（LINE名自動取得）</label>
+                <input type="text" id="author" placeholder="取得中..." readonly>
                 <button type="submit">✏️ お店を登録する</button>
             </form>
         </div>
@@ -473,6 +520,7 @@
         let allPosts = [];
         let selectedGenreForRoulette = "";
         window.currentLiffName = "ゲスト";
+        let currentGroupId = "";
 
         // --- 画像圧縮関数 ---
         function compressImage(file) {
@@ -516,26 +564,84 @@
             });
         }
 
-        // --- LIFF初期化 ---
+        // --- LIFF初期化 & グループID取得・制限 ---
         async function initializeLiff() {
             try {
                 if (typeof liff !== 'undefined') {
-                    await liff.init({ liffId: "YOUR_LIFF_ID" });
+                    await liff.init({ liffId: "2011348764-TFzS41F9" });
+
+                    const context = liff.getContext();
+                    if (!context || (context.type !== 'group' && context.type !== 'room')) {
+                        document.getElementById('error-screen').style.display = 'flex';
+                        return;
+                    }
+
+                    currentGroupId = context.groupId || context.roomId;
+
                     if (liff.isLoggedIn()) {
                         const profile = await liff.getProfile();
                         window.currentLiffName = profile.displayName;
                         document.getElementById('author').value = window.currentLiffName;
                     } else {
-                        document.getElementById('author').value = "ゲスト";
+                        liff.login();
                     }
+
+                    // グループのデータ（投稿＆グループ名）を監視開始
+                    setupDatabaseListeners();
                 }
             } catch (error) {
                 console.error("LIFF initialization failed", error);
-                document.getElementById('author').value = "ゲスト";
             }
-            // 投稿者名が決まったら一覧を再描画してボタンの表示を切り替える
-            filterPosts();
         }
+
+        // --- データベース監視（投稿一覧 ＆ グループ名） ---
+        function setupDatabaseListeners() {
+            if (!currentGroupId) return;
+
+            // グループ名の監視
+            db.ref('groups/' + currentGroupId + '/groupName').on('value', (snapshot) => {
+                const name = snapshot.val();
+                const nameEl = document.getElementById('group-name-text');
+                if (name) {
+                    nameEl.textContent = name;
+                } else {
+                    nameEl.textContent = 'マイグループ（未設定）';
+                }
+            });
+
+            // 投稿一覧の監視
+            db.ref('groups/' + currentGroupId + '/posts').on('value', (snapshot) => {
+                const data = snapshot.val();
+                allPosts = [];
+
+                if (data) {
+                    Object.keys(data).forEach((key) => {
+                        allPosts.push({ id: key, ...data[key] });
+                    });
+                    allPosts.sort((a, b) => b.createdAt - a.createdAt);
+                }
+                filterPosts();
+            });
+        }
+
+        // --- グループ名の編集関数 ---
+        window.editGroupName = async function() {
+            if (!currentGroupId) return;
+            const currentName = document.getElementById('group-name-text').textContent;
+            const newName = prompt('新しいグループ名を入力してください:', currentName === 'マイグループ（未設定）' ? '' : currentName);
+            
+            if (newName !== null && newName.trim() !== '') {
+                try {
+                    await db.ref('groups/' + currentGroupId).update({
+                        groupName: newName.trim()
+                    });
+                    alert('グループ名を更新しました！');
+                } catch (error) {
+                    console.error(error);
+                    alert('グループ名の更新に失敗しました: ' + error.message);
+                }
+            }
+        };
 
         // --- ジャンル選択によるラーメンサブ項目の切り替え ---
         document.getElementById('genre').addEventListener('change', (e) => {
@@ -581,6 +687,11 @@
         // --- 投稿処理 ---
         document.getElementById('post-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!currentGroupId) {
+                alert('グループIDが取得できませんでした。');
+                return;
+            }
+
             const loadingOverlay = document.getElementById('loading-overlay');
             loadingOverlay.style.display = 'block';
 
@@ -600,19 +711,19 @@
                 const hpUrl = document.getElementById('hp-url').value;
                 const instaUrl = document.getElementById('insta-url').value;
                 const comment = document.getElementById('comment').value;
-                const author = document.getElementById('author').value || "ゲスト";
+                const author = document.getElementById('author').value || window.currentLiffName;
 
                 const imageFile = document.getElementById('image-file').files[0];
                 let imageUrl = '';
 
                 if (imageFile) {
                     const compressedBlob = await compressImage(imageFile);
-                    const storageRef = storage.ref().child('images/' + Date.now() + '_' + imageFile.name);
+                    const storageRef = storage.ref().child('images/' + currentGroupId + '/' + Date.now() + '_' + imageFile.name);
                     const snapshot = await storageRef.put(compressedBlob);
                     imageUrl = await snapshot.ref.getDownloadURL();
                 }
 
-                const newPostRef = db.ref('posts').push();
+                const newPostRef = db.ref('groups/' + currentGroupId + '/posts').push();
                 await newPostRef.set({
                     genre,
                     ramenType,
@@ -635,29 +746,13 @@
                 alert('お店を投稿しました！');
                 document.getElementById('post-form').reset();
                 document.getElementById('post-ramen-sub').style.display = 'none';
-                if(document.getElementById('author')) {
-                    document.getElementById('author').value = window.currentLiffName;
-                }
+                document.getElementById('author').value = window.currentLiffName;
             } catch (error) {
                 console.error(error);
                 alert('投稿に失敗しました: ' + error.message);
             } finally {
                 loadingOverlay.style.display = 'none';
             }
-        });
-
-        // --- データの読み込みと表示（検索対応） ---
-        db.ref('posts').on('value', (snapshot) => {
-            const data = snapshot.val();
-            allPosts = [];
-
-            if (data) {
-                Object.keys(data).forEach((key) => {
-                    allPosts.push({ id: key, ...data[key] });
-                });
-                allPosts.sort((a, b) => b.createdAt - a.createdAt);
-            }
-            filterPosts();
         });
 
         function filterPosts() {
@@ -685,7 +780,7 @@
             container.innerHTML = '';
 
             if (posts.length === 0) {
-                container.innerHTML = '<div class="no-data">条件に合う投稿者がいません</div>';
+                container.innerHTML = '<div class="no-data">条件に合う投稿がありません</div>';
                 return;
             }
 
@@ -712,7 +807,6 @@
                     genreDisplay += ` (${post.ramenType})`;
                 }
 
-                // 投稿者本人の場合のみ編集・削除ボタンを表示する制御
                 const isAuthor = (post.author && post.author === window.currentLiffName);
                 let actionBtnsHtml = '';
                 if (isAuthor) {
@@ -740,7 +834,7 @@
             });
         }
 
-        // --- 削除処理（本人確認付き） ---
+        // --- 削除処理 ---
         window.deletePost = async function(id, imageUrl) {
             const post = allPosts.find(p => p.id === id);
             if (!post || post.author !== window.currentLiffName) {
@@ -749,7 +843,7 @@
             }
             if (!confirm('本当にこの投稿を削除しますか？')) return;
             try {
-                await db.ref('posts/' + id).remove();
+                await db.ref('groups/' + currentGroupId + '/posts/' + id).remove();
                 if (imageUrl) {
                     try {
                         const imageRef = storage.refFromURL(imageUrl);
@@ -765,7 +859,7 @@
             }
         };
 
-        // --- 編集モーダルを開く（本人確認付き） ---
+        // --- 編集モーダルを開く ---
         window.openEditModal = function(id) {
             const post = allPosts.find(p => p.id === id);
             if (!post || post.author !== window.currentLiffName) {
@@ -792,7 +886,6 @@
             document.getElementById('edit-city').value = post.city || '';
             document.getElementById('edit-holiday').value = post.holiday || '';
 
-            // チェックボックスの復元
             document.querySelectorAll('input[name="edit-targetVibe"]').forEach(el => {
                 el.checked = post.targetVibe && post.targetVibe.includes(el.value);
             });
@@ -810,12 +903,10 @@
             document.getElementById('edit-modal').style.display = 'block';
         };
 
-        // 編集キャンセル
         document.getElementById('edit-cancel-btn').addEventListener('click', () => {
             document.getElementById('edit-modal').style.display = 'none';
         });
 
-        // 編集保存処理
         document.getElementById('edit-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('edit-id').value;
@@ -850,12 +941,12 @@
                 const imageFile = document.getElementById('edit-image-file').files[0];
                 if (imageFile) {
                     const compressedBlob = await compressImage(imageFile);
-                    const storageRef = storage.ref().child('images/' + Date.now() + '_' + imageFile.name);
+                    const storageRef = storage.ref().child('images/' + currentGroupId + '/' + Date.now() + '_' + imageFile.name);
                     const snapshot = await storageRef.put(compressedBlob);
                     imageUrl = await snapshot.ref.getDownloadURL();
                 }
 
-                await db.ref('posts/' + id).update({
+                await db.ref('groups/' + currentGroupId + '/posts/' + id).update({
                     genre,
                     ramenType,
                     shopName,
@@ -924,7 +1015,6 @@
             }, 100);
         });
 
-        // ページ読み込み時にLIFF初期化を実行
         window.addEventListener('DOMContentLoaded', () => {
             initializeLiff();
         });
