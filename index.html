@@ -62,12 +62,6 @@
             align-items: center;
             gap: 8px;
         }
-        .post-item, .no-data {
-            text-align: center;
-            color: var(--sub-text);
-            padding: 12px;
-            font-size: 14px;
-        }
         input, select, textarea {
             width: 100%;
             padding: 10px;
@@ -92,21 +86,61 @@
         button:active {
             opacity: 0.8;
         }
+        .post-item {
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 0;
+        }
+        .post-item:last-child {
+            border-bottom: none;
+        }
+        .post-image {
+            width: 100%;
+            max-height: 250px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+        .no-data {
+            text-align: center;
+            color: var(--sub-text);
+            padding: 12px;
+            font-size: 14px;
+        }
+        #roulette-result {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-top: 12px;
+        }
+        /* ローディング中の表示 */
+        #loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 999;
+            color: white;
+            text-align: center;
+            padding-top: 50vh;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
+    <div id="loading-overlay">画像をアップロード中...</div>
+
     <div class="container">
         <header>
             <h1>なにクウ？</h1>
             <p>ご飯迷った時の決定＆写真共有アプリ</p>
         </header>
 
-        <!-- みんなの投稿一覧 -->
+        <!-- ルーレット機能 -->
         <div class="card">
-            <h2>🍴 みんなの投稿一覧</h2>
-            <div id="posts-container">
-                <div class="no-data">条件に合う投稿がありません</div>
-            </div>
+            <h2>🎰 ご飯決めルーレット</h2>
+            <button id="roulette-btn" type="button">今日のゴハンを決定する！</button>
+            <div id="roulette-result">ボタンを押してね！</div>
         </div>
 
         <!-- お店を探す・絞り込む -->
@@ -125,13 +159,21 @@
             </select>
         </div>
 
+        <!-- みんなの投稿一覧 -->
+        <div class="card">
+            <h2>🍴 みんなの投稿一覧</h2>
+            <div id="posts-container">
+                <div class="no-data">条件に合う投稿がありません</div>
+            </div>
+        </div>
+
         <!-- 投稿フォーム -->
         <div class="card">
             <h2>✏️ お店を投稿する</h2>
             <form id="post-form">
-                <input type="text" id="shop-name" placeholder="店名" required>
+                <input type="text" id="shop-name" placeholder="店名 *" required>
                 <select id="genre" required>
-                    <option value="">ジャンルを選択</option>
+                    <option value="">ジャンルを選択 *</option>
                     <option value="和食">和食</option>
                     <option value="洋食">洋食</option>
                     <option value="中華">中華</option>
@@ -140,6 +182,13 @@
                     <option value="ラーメン">ラーメン</option>
                     <option value="焼肉">焼肉</option>
                 </select>
+                <input type="text" id="country" placeholder="国（例：日本）">
+                <input type="text" id="state" placeholder="県名（例：愛知県）">
+                <input type="text" id="city" placeholder="市名（例：東海市）">
+                <input type="text" id="address" placeholder="詳細住所">
+                <textarea id="comment" placeholder="コメント・おすすめメニューなど" rows="3"></textarea>
+                <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">お店の写真（1枚）</label>
+                <input type="file" id="image-file" accept="image/*">
                 <input type="text" id="author" placeholder="投稿者名（自動取得）" readonly>
                 <button type="submit">投稿する</button>
             </form>
@@ -147,39 +196,24 @@
     </div>
 
     <script>
-        // --- Firebaseの設定（ご自身の環境のものを入れてください） ---
+        // --- Firebaseの設定 ---
         const firebaseConfig = {
-            databaseURL: "https://nanikuu-default-rtdb.firebaseio.com/"
+            databaseURL: "https://nanikuu-default-rtdb.firebaseio.com/",
+            storageBucket: "nanikuu.appspot.com" // ※ご自身のFirebase Storageバケット名に変更してください
         };
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.database();
+        const storage = firebase.storage();
 
-        // --- フォーム送信処理 ---
-        document.getElementById('post-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const shopName = document.getElementById('shop-name').value;
-            const genre = document.getElementById('genre').value;
-            const author = document.getElementById('author').value || "ゲスト";
-
-            db.ref('posts').push({
-                shopName,
-                genre,
-                author,
-                timestamp: Date.now()
-            }).then(() => {
-                alert('投稿しました！');
-                document.getElementById('post-form').reset();
-            }).catch((error) => {
-                alert('エラーが発生しました: ' + error.message);
-            });
-        });
+        let allPosts = [];
 
         // --- データのリアルタイム取得 ---
         db.ref('posts').on('value', (snapshot) => {
             const container = document.getElementById('posts-container');
             container.innerHTML = '';
+            allPosts = [];
             
             if (!snapshot.exists()) {
                 container.innerHTML = '<div class="no-data">条件に合う投稿がありません</div>';
@@ -188,25 +222,147 @@
 
             snapshot.forEach((childSnapshot) => {
                 const post = childSnapshot.val();
-                const div = document.createElement('div');
-                div.className = 'post-item';
-                div.style.borderBottom = '1px solid #333';
-                div.style.padding = '8px 0';
-                div.innerHTML = `<strong>${post.shopName}</strong> (${post.genre}) <br><small>投稿者: ${post.author}</small>`;
-                container.appendChild(div);
+                post.id = childSnapshot.key;
+                allPosts.push(post);
             });
+
+            renderPosts(allPosts);
         });
 
-        // --- 絶対に止まらない安全なLIFF初期化処理 ---
+        // --- 投稿一覧の描画関数 ---
+        function renderPosts(posts) {
+            const container = document.getElementById('posts-container');
+            container.innerHTML = '';
+
+            if (posts.length === 0) {
+                container.innerHTML = '<div class="no-data">条件に合う投稿がありません</div>';
+                return;
+            }
+
+            const sorted = [...posts].reverse();
+
+            sorted.forEach((post) => {
+                const div = document.createElement('div');
+                div.className = 'post-item';
+                div.innerHTML = `
+                    <strong>${escapeHtml(post.shopName)}</strong> (${escapeHtml(post.genre)})<br>
+                    <small>📍 ${escapeHtml(post.state || '')} ${escapeHtml(post.city || '')} ${escapeHtml(post.address || '')}</small><br>
+                    ${post.comment ? `<p style="margin: 4px 0; color: #ddd;">${escapeHtml(post.comment)}</p>` : ''}
+                    ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-image" alt="投稿画像">` : ''}
+                    <small style="color: #a0a0a0; display: block; margin-top: 4px;">投稿者: ${escapeHtml(post.author)}</small>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- 検索・絞り込み機能 ---
+        function filterPosts() {
+            const keyword = document.getElementById('search-keyword').value.toLowerCase();
+            const genre = document.getElementById('search-genre').value;
+
+            const filtered = allPosts.filter(post => {
+                const matchGenre = (genre === 'all' || genre === 'すべて' || post.genre === genre);
+                const text = `${post.shopName} ${post.genre} ${post.state} ${post.city} ${post.address} ${post.comment} ${post.author}`.toLowerCase();
+                const matchKeyword = text.includes(keyword);
+                return matchGenre && matchKeyword;
+            });
+
+            renderPosts(filtered);
+        }
+
+        document.getElementById('search-keyword').addEventListener('input', filterPosts);
+        document.getElementById('search-genre').addEventListener('change', filterPosts);
+
+        // --- ルーレット機能 ---
+        document.getElementById('roulette-btn').addEventListener('click', () => {
+            if (allPosts.length === 0) {
+                document.getElementById('roulette-result').innerText = '投稿がまだありません！';
+                return;
+            }
+            const randomIndex = Math.floor(Math.random() * allPosts.length);
+            const picked = allPosts[randomIndex];
+            document.getElementById('roulette-result').innerText = `🎉 ${picked.shopName} (${picked.genre}) に決定！`;
+        });
+
+        // --- 投稿フォーム送信処理（画像アップロード対応） ---
+        document.getElementById('post-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const shopName = document.getElementById('shop-name').value;
+            const genre = document.getElementById('genre').value;
+            const country = document.getElementById('country').value;
+            const state = document.getElementById('state').value;
+            const city = document.getElementById('city').value;
+            const address = document.getElementById('address').value;
+            const comment = document.getElementById('comment').value;
+            const author = document.getElementById('author').value || "ゲスト";
+            const imageFile = document.getElementById('image-file').files[0];
+
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.style.display = 'block';
+
+            try {
+                let imageUrl = "";
+
+                // 画像が選択されている場合はFirebase Storageにアップロード
+                if (imageFile) {
+                    const storageRef = storage.ref();
+                    const imageRef = storageRef.child('images/' + Date.now() + '_' + imageFile.name);
+                    const snapshot = await imageRef.put(imageFile);
+                    imageUrl = await snapshot.ref.getDownloadURL();
+                }
+
+                // データベースにデータを保存
+                await db.ref('posts').push({
+                    shopName,
+                    genre,
+                    country,
+                    state,
+                    city,
+                    address,
+                    comment,
+                    imageUrl,
+                    author,
+                    timestamp: Date.now()
+                });
+
+                alert('投稿しました！');
+                document.getElementById('post-form').reset();
+                if (window.currentLiffName) {
+                    document.getElementById('author').value = window.currentLiffName;
+                }
+            } catch (error) {
+                alert('エラーが発生しました: ' + error.message);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        });
+
+        // --- XSS対策のエスケープ関数 ---
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&'`<>]/g, function(match) {
+                return {
+                    '&': '&amp;',
+                    "'": '&#x27;',
+                    '`': '&#x60;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                }[match];
+            });
+        }
+
+        // --- LIFF初期化 ＆ セキュリティガード ---
+        window.currentLiffName = "ゲスト";
         document.addEventListener("DOMContentLoaded", () => {
             try {
                 liff.init({ liffId: "2011348764-TFzS41F9" })
                     .then(() => {
                         if (liff.isLoggedIn()) {
                             liff.getProfile().then(profile => {
+                                window.currentLiffName = profile.displayName;
                                 const authorInput = document.getElementById('author');
                                 if (authorInput) {
-                                    authorInput.value = profile.displayName;
+                                    authorInput.value = window.currentLiffName;
                                 }
                             }).catch(() => {});
                         }
