@@ -10,7 +10,7 @@
   <!-- Firebase SDK (v9) の読み込み -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-    import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+    import { getDatabase, ref, push, update, onValue } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
     // Firebase設定
     const firebaseConfig = {
@@ -32,6 +32,8 @@
     window.db = db;
     window.postsRef = postsRef;
     window.push = push;
+    window.update = update;
+    window.ref = ref;
 
     // データベースの変更を監視（リアルタイム反映＆消えない保存）
     onValue(postsRef, (snapshot) => {
@@ -39,7 +41,10 @@
       window.posts = [];
       if (data) {
         Object.keys(data).forEach(key => {
-          window.posts.unshift(data[key]);
+          window.posts.unshift({
+            id: key,
+            ...data[key]
+          });
         });
       }
       if (typeof window.renderPosts === "function") {
@@ -86,20 +91,25 @@
     .btn { background: var(--primary); color: white; border: none; width: 100%; padding: 12px; font-size: 1rem; font-weight: bold; border-radius: 25px; cursor: pointer; margin-top: 10px; box-shadow: 0 3px 8px rgba(255,112,67,0.3); }
     .btn-roulette { background: #e91e63; box-shadow: 0 3px 8px rgba(233,30,99,0.3); font-size: 1.1rem; }
     .btn-secondary { background: #388e3c; }
+    .btn-cancel { background: #666; margin-top: 5px; }
     
     /* ルーレット結果表示エリア */
     .roulette-box { background: #261c1a; border: 2px dashed #ff7043; border-radius: 12px; padding: 15px; text-align: center; font-size: 1.1rem; font-weight: bold; color: var(--primary); min-height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; }
     .roulette-result-img { width: 100%; max-height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; display: none; }
     
     /* 投稿カード */
-    .post-card { border: 1px solid var(--card-border); border-radius: 12px; overflow: hidden; margin-top: 10px; background: var(--card-bg); }
+    .post-card { border: 1px solid var(--card-border); border-radius: 12px; overflow: hidden; margin-top: 10px; background: var(--card-bg); position: relative; }
     .post-img { width: 100%; height: 200px; object-fit: cover; background: #2a2a2a; }
     .post-body { padding: 12px; }
+    .post-header { display: flex; justify-content: space-between; align-items: flex-start; }
     .post-title { font-weight: bold; font-size: 1.1rem; margin: 0 0 5px 0; color: #fff; }
     .post-meta { font-size: 0.8rem; color: var(--text-sub); margin-bottom: 8px; }
     .tag { display: inline-block; background: #333; color: #ddd; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-right: 4px; }
     .links { margin-top: 10px; font-size: 0.85rem; display: flex; gap: 10px; flex-wrap: wrap; }
     .links a { color: #64b5f6; text-decoration: none; font-weight: bold; }
+    
+    .btn-edit { background: #444; color: #fff; border: 1px solid #666; padding: 4px 10px; font-size: 0.75rem; border-radius: 12px; cursor: pointer; }
+    .btn-edit:hover { background: #555; }
   </style>
 </head>
 <body>
@@ -115,13 +125,41 @@
   <h1>なにクウ？</h1>
   <p class="sub">ご飯迷った時の決定＆写真共有アプリ</p>
 
-  <!-- 1. みんなの投稿一覧（一番上配置） -->
+  <!-- 1. みんなの投稿一覧 -->
   <div class="card">
     <h2>🍽️ みんなの投稿一覧</h2>
     <div id="postsList"></div>
   </div>
 
-  <!-- 2. 迷った時の写真ルーレット -->
+  <!-- 2. 検索＆条件で絞り込む -->
+  <div class="card">
+    <h2>🔍 お店を探す・絞り込む</h2>
+    <label>店名で検索</label>
+    <input type="text" id="searchKeyword" placeholder="店名を入力（例：ラーメン天一）" oninput="renderPosts()">
+
+    <label>ジャンル</label>
+    <select id="filterCategory" onchange="renderPosts()">
+      <option value="すべて">すべて</option>
+      <option value="ラーメン">ラーメン</option>
+      <option value="和食">和食</option>
+      <option value="洋食">洋食</option>
+      <option value="中華">中華</option>
+      <option value="定食屋">定食屋</option>
+      <option value="ファミレス">ファミレス</option>
+      <option value="居酒屋">居酒屋</option>
+      <option value="焼肉">焼肉</option>
+    </select>
+
+    <label>行く人数</label>
+    <select id="filterPeople" onchange="renderPosts()">
+      <option value="すべて">指定なし</option>
+      <option value="1人向け">1人向け</option>
+      <option value="家族向け">家族向け</option>
+      <option value="グループ向け">グループ向け</option>
+    </select>
+  </div>
+
+  <!-- 3. 迷った時の写真ルーレット -->
   <div class="card">
     <h2>🎯 投稿写真ルーレット</h2>
     <label>対象ジャンルを選択</label>
@@ -143,37 +181,14 @@
     <button class="btn btn-roulette" onclick="spinPhotoRoulette()">ルーレットを回す！</button>
   </div>
 
-  <!-- 3. 条件で絞り込む -->
-  <div class="card">
-    <h2>🔍 条件で絞り込む</h2>
-    <label>ジャンル</label>
-    <select id="filterCategory">
-      <option value="すべて">すべて</option>
-      <option value="ラーメン">ラーメン</option>
-      <option value="和食">和食</option>
-      <option value="洋食">洋食</option>
-      <option value="中華">中華</option>
-      <option value="定食屋">定食屋</option>
-      <option value="ファミレス">ファミレス</option>
-      <option value="居酒屋">居酒屋</option>
-      <option value="焼肉">焼肉</option>
-    </select>
-
-    <label>行く人数</label>
-    <select id="filterPeople">
-      <option value="すべて">指定なし</option>
-      <option value="1人向け">1人向け</option>
-      <option value="家族向け">家族向け</option>
-      <option value="グループ向け">グループ向け</option>
-    </select>
-  </div>
-
-  <!-- 4. おすすめのお店を投稿 -->
-  <div class="card">
-    <h2>📸 おすすめのお店を投稿</h2>
+  <!-- 4. おすすめのお店を投稿 / 編集 -->
+  <div class="card" id="formCard">
+    <h2 id="formTitle">📸 おすすめのお店を投稿</h2>
+    <input type="hidden" id="editingPostId" value="">
+    
     <input type="text" id="author" placeholder="投稿者のお名前（LINE名が自動挿入されます）" readonly>
     
-    <input type="text" id="shopName" placeholder="店名">
+    <input type="text" id="shopName" placeholder="店名（必須）">
     <input type="text" id="prefecture" placeholder="都道府県（例：愛知県）">
     <input type="text" id="city" placeholder="市区町村（例：東海市）">
 
@@ -202,9 +217,11 @@
 
     <input type="url" id="hpUrl" placeholder="ホームページURL（任意）">
     <input type="url" id="instaUrl" placeholder="Instagram URL（任意）">
+    <label>店舗写真（変更する場合のみ選択）</label>
     <input type="file" id="photo" accept="image/*">
 
-    <button class="btn btn-secondary" onclick="addPost()">投稿する</button>
+    <button class="btn btn-secondary" id="submitBtn" onclick="savePost()">投稿する</button>
+    <button class="btn btn-cancel" id="cancelBtn" onclick="resetForm()" style="display:none;">編集をキャンセル</button>
   </div>
 </div>
 
@@ -265,9 +282,9 @@
         const finalPost = filteredPosts[Math.floor(Math.random() * filteredPosts.length)];
         imgEl.src = finalPost.img;
         
-        const locationQuery = `${finalPost.prefecture}${finalPost.city} ${finalPost.shopName}`;
+        const locationQuery = `${finalPost.prefecture || ''}${finalPost.city || ''} ${finalPost.shopName}`;
         const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationQuery)}`;
-        const locText = (finalPost.prefecture || finalPost.city) ? `（${finalPost.prefecture}${finalPost.city}）` : '';
+        const locText = (finalPost.prefecture || finalPost.city) ? `（${finalPost.prefecture || ''}${finalPost.city || ''}）` : '';
 
         textDiv.innerHTML = `
           🎉 今日のご飯は <b>【${finalPost.shopName}】</b>${locText}！<br>
@@ -277,17 +294,19 @@
     }, 80);
   }
 
-  function addPost() {
+  // 投稿作成・更新処理
+  function savePost() {
+    const editingId = document.getElementById('editingPostId').value;
     const author = document.getElementById('author').value || "ゲスト";
-    const shopName = document.getElementById('shopName').value;
-    const prefecture = document.getElementById('prefecture').value;
-    const city = document.getElementById('city').value;
+    const shopName = document.getElementById('shopName').value.trim();
+    const prefecture = document.getElementById('prefecture').value.trim();
+    const city = document.getElementById('city').value.trim();
     const category = document.getElementById('shopCategory').value;
     const people = document.getElementById('shopPeople').value;
-    const holiday = document.getElementById('holiday').value || "なし";
+    const holiday = document.getElementById('holiday').value.trim() || "なし";
     const reservation = document.getElementById('reservation').value;
-    const hp = document.getElementById('hpUrl').value;
-    const insta = document.getElementById('instaUrl').value;
+    const hp = document.getElementById('hpUrl').value.trim();
+    const insta = document.getElementById('instaUrl').value.trim();
     const photoInput = document.getElementById('photo');
 
     if (!shopName) {
@@ -295,60 +314,126 @@
       return;
     }
 
-    const saveToFirebase = (imgUrl) => {
-      const newPost = {
+    const processSave = (imgUrl) => {
+      const postData = {
         author, shopName, prefecture, city, category, people, holiday, reservation, hp, insta,
-        img: imgUrl,
-        createdAt: Date.now()
+        updatedAt: Date.now()
       };
 
-      window.push(window.postsRef, newPost).then(() => {
-        alert("投稿しました！グループ全員に共有されたよ！");
-        document.getElementById('shopName').value = "";
-        document.getElementById('prefecture').value = "";
-        document.getElementById('city').value = "";
-        document.getElementById('hpUrl').value = "";
-        document.getElementById('instaUrl').value = "";
-        document.getElementById('photo').value = "";
-      }).catch(err => {
-        alert("保存に失敗しました: " + err.message);
-      });
+      if (imgUrl) {
+        postData.img = imgUrl;
+      }
+
+      if (editingId) {
+        // 更新処理
+        const targetRef = window.ref(window.db, `posts/${editingId}`);
+        window.update(targetRef, postData).then(() => {
+          alert("投稿を更新しました！");
+          resetForm();
+        }).catch(err => alert("更新失敗: " + err.message));
+      } else {
+        // 新規追加処理
+        postData.createdAt = Date.now();
+        if (!postData.img) {
+          postData.img = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500&auto=format&fit=crop";
+        }
+        window.push(window.postsRef, postData).then(() => {
+          alert("投稿しました！グループ全員に共有されたよ！");
+          resetForm();
+        }).catch(err => alert("保存失敗: " + err.message));
+      }
     };
 
     if (photoInput.files && photoInput.files[0]) {
       const reader = new FileReader();
       reader.onload = function(e) {
-        saveToFirebase(e.target.result);
+        processSave(e.target.result);
       };
       reader.readAsDataURL(photoInput.files[0]);
     } else {
-      saveToFirebase("https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500&auto=format&fit=crop");
+      processSave(null);
     }
   }
 
+  // 編集モードに入る
+  function editPost(id) {
+    const post = window.posts.find(p => p.id === id);
+    if (!post) return;
+
+    document.getElementById('editingPostId').value = post.id;
+    document.getElementById('shopName').value = post.shopName || '';
+    document.getElementById('prefecture').value = post.prefecture || '';
+    document.getElementById('city').value = post.city || '';
+    document.getElementById('shopCategory').value = post.category || 'ラーメン';
+    document.getElementById('shopPeople').value = post.people || '1人向け';
+    document.getElementById('holiday').value = post.holiday === "なし" ? "" : (post.holiday || '');
+    document.getElementById('reservation').value = post.reservation || '予約可';
+    document.getElementById('hpUrl').value = post.hp || '';
+    document.getElementById('instaUrl').value = post.insta || '';
+
+    document.getElementById('formTitle').innerText = "✏️ 投稿を編集";
+    document.getElementById('submitBtn').innerText = "更新する";
+    document.getElementById('cancelBtn').style.display = "block";
+
+    // フォーム位置までスクロール
+    document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // フォームリセット
+  function resetForm() {
+    document.getElementById('editingPostId').value = "";
+    document.getElementById('shopName').value = "";
+    document.getElementById('prefecture').value = "";
+    document.getElementById('city').value = "";
+    document.getElementById('holiday').value = "";
+    document.getElementById('hpUrl').value = "";
+    document.getElementById('instaUrl').value = "";
+    document.getElementById('photo').value = "";
+
+    document.getElementById('formTitle').innerText = "📸 おすすめのお店を投稿";
+    document.getElementById('submitBtn').innerText = "投稿する";
+    document.getElementById('cancelBtn').style.display = "none";
+  }
+
+  // 投稿一覧描画（キーワード・条件フィルタ対応）
   window.renderPosts = function() {
     const list = document.getElementById('postsList');
     list.innerHTML = "";
 
-    if (window.posts.length === 0) {
-      list.innerHTML = "<p style='text-align:center; color:var(--text-sub);'>まだ投稿がありません。下からおすすめのお店を投稿してみてね！</p>";
+    const keyword = document.getElementById('searchKeyword').value.toLowerCase().trim();
+    const category = document.getElementById('filterCategory').value;
+    const people = document.getElementById('filterPeople').value;
+
+    let filtered = window.posts.filter(post => {
+      const matchKeyword = !keyword || (post.shopName && post.shopName.toLowerCase().includes(keyword));
+      const matchCategory = category === "すべて" || post.category === category;
+      const matchPeople = people === "すべて" || post.people === people;
+      return matchKeyword && matchCategory && matchPeople;
+    });
+
+    if (filtered.length === 0) {
+      list.innerHTML = "<p style='text-align:center; color:var(--text-sub);'>該当する投稿が見つかりません。</p>";
       return;
     }
 
-    window.posts.forEach(post => {
+    filtered.forEach(post => {
       const locationQuery = `${post.prefecture || ''}${post.city || ''} ${post.shopName}`;
       const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationQuery)}`;
-      const locText = (post.prefecture || post.city) ? `📍 ${post.prefecture}${post.city}` : '';
+      const locText = (post.prefecture || post.city) ? `📍 ${post.prefecture || ''}${post.city || ''}` : '';
 
       const html = `
         <div class="post-card">
-          <img src="${post.img}" class="post-img" alt="店舗写真">
+          <img src="${post.img || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500&auto=format&fit=crop'}" class="post-img" alt="店舗写真">
           <div class="post-body">
-            <h3 class="post-title">${post.shopName} <span style="font-size:0.8rem; font-weight:normal; color:var(--text-sub);">${locText}</span></h3>
-            <div class="post-meta">投稿者: <b>${post.author}</b> | 定休日: ${post.holiday} | 予約: <b>${post.reservation}</b></div>
+            <div class="post-header">
+              <h3 class="post-title">${post.shopName}</h3>
+              <button class="btn-edit" onclick="editPost('${post.id}')">✏️ 編集</button>
+            </div>
+            <div style="font-size:0.8rem; color:var(--text-sub); margin-bottom: 5px;">${locText}</div>
+            <div class="post-meta">投稿者: <b>${post.author || '不明'}</b> | 定休日: ${post.holiday || 'なし'} | 予約: <b>${post.reservation || '不明'}</b></div>
             <div>
-              <span class="tag">${post.category}</span>
-              <span class="tag">${post.people}</span>
+              <span class="tag">${post.category || '未設定'}</span>
+              <span class="tag">${post.people || '未設定'}</span>
             </div>
             <div class="links">
               <a href="${mapUrl}" target="_blank">📍 現在地から地図で探す</a>
