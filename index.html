@@ -275,7 +275,7 @@
                 </div>
 
                 <input type="text" id="edit-shop-name" placeholder="店名 *" required>
-                <input type="text" id="edit-state" placeholder="県名（例：愛知県）">
+                <input type="text" id="edit-state" placeholder="国名 / 県名（例：日本 / 愛知県）">
                 <input type="text" id="edit-city" placeholder="市名・区名（例：東海市）">
                 <input type="text" id="edit-holiday" placeholder="定休日（例：水曜日、不定休）">
 
@@ -402,7 +402,7 @@
                 </div>
 
                 <input type="text" id="shop-name" placeholder="店名 *" required>
-                <input type="text" id="state" placeholder="県名（例：愛知県）">
+                <input type="text" id="state" placeholder="国名 / 県名（例：日本 / 愛知県）">
                 <input type="text" id="city" placeholder="市名・区名（例：東海市）" required>
                 <input type="text" id="holiday" placeholder="定休日（例：水曜日、不定休）">
 
@@ -533,6 +533,8 @@
                 console.error("LIFF initialization failed", error);
                 document.getElementById('author').value = "ゲスト";
             }
+            // 投稿者名が決まったら一覧を再描画してボタンの表示を切り替える
+            filterPosts();
         }
 
         // --- ジャンル選択によるラーメンサブ項目の切り替え ---
@@ -683,7 +685,7 @@
             container.innerHTML = '';
 
             if (posts.length === 0) {
-                container.innerHTML = '<div class="no-data">条件に合う投稿がありません</div>';
+                container.innerHTML = '<div class="no-data">条件に合う投稿者がいません</div>';
                 return;
             }
 
@@ -710,6 +712,18 @@
                     genreDisplay += ` (${post.ramenType})`;
                 }
 
+                // 投稿者本人の場合のみ編集・削除ボタンを表示する制御
+                const isAuthor = (post.author && post.author === window.currentLiffName);
+                let actionBtnsHtml = '';
+                if (isAuthor) {
+                    actionBtnsHtml = `
+                        <div class="action-btns">
+                            <button class="edit-btn" onclick="openEditModal('${post.id}')">✏️ 編集</button>
+                            <button class="delete-btn" onclick="deletePost('${post.id}', '${post.imageUrl || ''}')">🗑️ 削除</button>
+                        </div>
+                    `;
+                }
+
                 div.innerHTML = `
                     <div style="font-size: 14px; color: var(--accent-color); font-weight: bold;">${genreDisplay}</div>
                     <div style="font-size: 18px; font-weight: bold; margin: 4px 0;">${post.shopName}</div>
@@ -720,17 +734,19 @@
                     ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-image" alt="お店の写真">` : ''}
                     ${linksHtml}
                     <div style="font-size: 11px; color: var(--sub-text); margin-top: 8px;">投稿者: ${post.author || 'ゲスト'}</div>
-                    <div class="action-btns">
-                        <button class="edit-btn" onclick="openEditModal('${post.id}')">✏️ 編集</button>
-                        <button class="delete-btn" onclick="deletePost('${post.id}', '${post.imageUrl || ''}')">🗑️ 削除</button>
-                    </div>
+                    ${actionBtnsHtml}
                 `;
                 container.appendChild(div);
             });
         }
 
-        // --- 削除処理 ---
+        // --- 削除処理（本人確認付き） ---
         window.deletePost = async function(id, imageUrl) {
+            const post = allPosts.find(p => p.id === id);
+            if (!post || post.author !== window.currentLiffName) {
+                alert('ご自身の投稿のみ削除できます。');
+                return;
+            }
             if (!confirm('本当にこの投稿を削除しますか？')) return;
             try {
                 await db.ref('posts/' + id).remove();
@@ -749,10 +765,13 @@
             }
         };
 
-        // --- 編集モーダルを開く ---
+        // --- 編集モーダルを開く（本人確認付き） ---
         window.openEditModal = function(id) {
             const post = allPosts.find(p => p.id === id);
-            if (!post) return;
+            if (!post || post.author !== window.currentLiffName) {
+                alert('ご自身の投稿のみ編集できます。');
+                return;
+            }
 
             document.getElementById('edit-id').value = post.id;
             document.getElementById('edit-genre').value = post.genre || '';
@@ -800,6 +819,12 @@
         document.getElementById('edit-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('edit-id').value;
+            const post = allPosts.find(p => p.id === id);
+            if (!post || post.author !== window.currentLiffName) {
+                alert('ご自身の投稿のみ編集できます。');
+                return;
+            }
+
             const loadingOverlay = document.getElementById('loading-overlay');
             loadingOverlay.style.display = 'block';
 
@@ -820,7 +845,6 @@
                 const instaUrl = document.getElementById('edit-insta-url').value;
                 const comment = document.getElementById('edit-comment').value;
 
-                const post = allPosts.find(p => p.id === id);
                 let imageUrl = post.imageUrl || '';
 
                 const imageFile = document.getElementById('edit-image-file').files[0];
