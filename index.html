@@ -89,7 +89,7 @@
         }
         .post-item {
             border-bottom: 1px solid var(--border-color);
-            padding: 12px 0;
+            padding: 16px 0;
         }
         .post-item:last-child {
             border-bottom: none;
@@ -105,24 +105,24 @@
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
-            margin: 6px 0;
+            margin: 8px 0;
         }
         .badge {
             background-color: #333;
             color: #ccc;
             font-size: 11px;
-            padding: 3px 8px;
+            padding: 4px 8px;
             border-radius: 4px;
         }
         .link-btns {
             display: flex;
             gap: 8px;
-            margin-top: 8px;
+            margin-top: 10px;
         }
         .link-btns a {
             flex: 1;
             text-align: center;
-            padding: 6px;
+            padding: 8px;
             background: #333;
             color: #fff;
             border-radius: 6px;
@@ -132,6 +132,11 @@
         .link-btns a:hover {
             background: #444;
         }
+        .action-btns {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
         .edit-btn {
             background-color: #3f51b5;
             color: white;
@@ -140,8 +145,17 @@
             border-radius: 6px;
             font-size: 12px;
             cursor: pointer;
-            width: auto;
-            margin: 0;
+            flex: 1;
+        }
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            flex: 1;
         }
         .no-data {
             text-align: center;
@@ -201,7 +215,7 @@
             margin: 0;
             cursor: pointer;
         }
-        /* モーダルウィンドウ用のスタイル */
+        /* モーダルウィンドウ */
         #edit-modal {
             display: none;
             position: fixed;
@@ -313,7 +327,7 @@
             <p>ご飯迷った時の決定＆写真共有アプリ</p>
         </header>
 
-        <!-- 1. みんなの投稿一覧（一番上） -->
+        <!-- 1. みんなの投稿一覧 -->
         <div class="card">
             <h2>🍴 みんなの投稿一覧</h2>
             <div id="posts-container">
@@ -339,7 +353,6 @@
                 <option value="焼肉">焼肉</option>
             </select>
 
-            <!-- 検索用：ラーメンの種類サブ選択 -->
             <div id="search-ramen-sub" class="sub-field-group">
                 <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">ラーメンの種類</label>
                 <select id="search-ramen-type">
@@ -372,7 +385,6 @@
                     <option value="焼肉">焼肉</option>
                 </select>
 
-                <!-- ラーメン選択時のサブ選択 -->
                 <div id="post-ramen-sub" class="sub-field-group">
                     <label style="font-size: 12px; color: #ff5722; display: block; margin-bottom: 4px; font-weight: bold;">🍜 ラーメンの種類を選択 *</label>
                     <select id="ramen-type">
@@ -435,10 +447,9 @@
             </form>
         </div>
 
-        <!-- 2. ルーレット機能（一番下） -->
+        <!-- 2. ルーレット機能 -->
         <div class="card">
             <h2>🎰 2段階ルーレットで決める</h2>
-            
             <button id="roulette-genre-btn" type="button">1. ジャンルを決める！</button>
             <div id="roulette-genre-result" class="roulette-result">ジャンル未選択</div>
 
@@ -509,7 +520,7 @@
         async function initializeLiff() {
             try {
                 if (typeof liff !== 'undefined') {
-                    await liff.init({ liffId: "YOUR_LIFF_ID" }); // ご自身のLIFF IDに置き換わっているかご確認ください
+                    await liff.init({ liffId: "YOUR_LIFF_ID" });
                     if (liff.isLoggedIn()) {
                         const profile = await liff.getProfile();
                         window.currentLiffName = profile.displayName;
@@ -524,7 +535,48 @@
             }
         }
 
-        // --- 投稿フォームの送信処理 ---
+        // --- ジャンル選択によるラーメンサブ項目の切り替え ---
+        document.getElementById('genre').addEventListener('change', (e) => {
+            const sub = document.getElementById('post-ramen-sub');
+            if (e.target.value === 'ラーメン') {
+                sub.style.display = 'block';
+                document.getElementById('ramen-type').required = true;
+            } else {
+                sub.style.display = 'none';
+                document.getElementById('ramen-type').required = false;
+                document.getElementById('ramen-type').value = '';
+            }
+        });
+
+        document.getElementById('edit-genre').addEventListener('change', (e) => {
+            const sub = document.getElementById('edit-ramen-sub');
+            if (e.target.value === 'ラーメン') {
+                sub.style.display = 'block';
+                document.getElementById('edit-ramen-type').required = true;
+            } else {
+                sub.style.display = 'none';
+                document.getElementById('edit-ramen-type').required = false;
+                document.getElementById('edit-ramen-type').value = '';
+            }
+        });
+
+        document.getElementById('search-genre').addEventListener('change', (e) => {
+            const sub = document.getElementById('search-ramen-sub');
+            if (e.target.value === 'ラーメン') {
+                sub.style.display = 'block';
+            } else {
+                sub.style.display = 'none';
+                document.getElementById('search-ramen-type').value = 'すべて';
+            }
+            filterPosts();
+        });
+
+        // --- 検索フィルターのイベント ---
+        document.getElementById('search-keyword').addEventListener('input', filterPosts);
+        document.getElementById('search-city').addEventListener('input', filterPosts);
+        document.getElementById('search-ramen-type').addEventListener('change', filterPosts);
+
+        // --- 投稿処理 ---
         document.getElementById('post-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const loadingOverlay = document.getElementById('loading-overlay');
@@ -580,6 +632,7 @@
 
                 alert('お店を投稿しました！');
                 document.getElementById('post-form').reset();
+                document.getElementById('post-ramen-sub').style.display = 'none';
                 if(document.getElementById('author')) {
                     document.getElementById('author').value = window.currentLiffName;
                 }
@@ -591,36 +644,260 @@
             }
         });
 
-        // --- データの読み込みと表示 ---
+        // --- データの読み込みと表示（検索対応） ---
         db.ref('posts').on('value', (snapshot) => {
             const data = snapshot.val();
             allPosts = [];
+
+            if (data) {
+                Object.keys(data).forEach((key) => {
+                    allPosts.push({ id: key, ...data[key] });
+                });
+                allPosts.sort((a, b) => b.createdAt - a.createdAt);
+            }
+            filterPosts();
+        });
+
+        function filterPosts() {
+            const keyword = document.getElementById('search-keyword').value.toLowerCase();
+            const searchCity = document.getElementById('search-city').value.toLowerCase();
+            const searchGenre = document.getElementById('search-genre').value;
+            const searchRamenType = document.getElementById('search-ramen-type').value;
+
+            const filtered = allPosts.filter(post => {
+                const matchGenre = (searchGenre === 'すべて' || post.genre === searchGenre);
+                const matchRamen = (searchGenre !== 'ラーメン' || searchRamenType === 'すべて' || post.ramenType === searchRamenType);
+                const matchCity = (!searchCity || (post.city && post.city.toLowerCase().includes(searchCity)) || (post.state && post.state.toLowerCase().includes(searchCity)));
+                
+                const targetText = `${post.shopName} ${post.city} ${post.state} ${post.comment} ${post.genre} ${post.ramenType || ''}`.toLowerCase();
+                const matchKeyword = (!keyword || targetText.includes(keyword));
+
+                return matchGenre && matchRamen && matchCity && matchKeyword;
+            });
+
+            renderPosts(filtered);
+        }
+
+        function renderPosts(posts) {
             const container = document.getElementById('posts-container');
             container.innerHTML = '';
 
-            if (!data) {
+            if (posts.length === 0) {
                 container.innerHTML = '<div class="no-data">条件に合う投稿がありません</div>';
                 return;
             }
 
-            Object.keys(data).forEach((key) => {
-                allPosts.push({ id: key, ...data[key] });
-            });
-
-            // 新しい順に並び替え
-            allPosts.sort((a, b) => b.createdAt - a.createdAt);
-
-            allPosts.forEach((post) => {
+            posts.forEach((post) => {
                 const div = document.createElement('div');
                 div.className = 'post-item';
-                
-                let html = `<strong>${post.genre}</strong>: ${post.shopName} (${post.city})`;
-                if (post.imageUrl) {
-                    html += `<img src="${post.imageUrl}" class="post-image" alt="お店の写真">`;
+
+                let tagsHtml = '';
+                if (post.targetVibe) post.targetVibe.forEach(v => tagsHtml += `<span class="badge">${v}</span>`);
+                if (post.parking && post.parking !== '不明・記載なし') tagsHtml += `<span class="badge">${post.parking}</span>`;
+                if (post.payment) post.payment.forEach(p => tagsHtml += `<span class="badge">${p}</span>`);
+                if (post.reservation && post.reservation !== '不明・記載なし') tagsHtml += `<span class="badge">${post.reservation}</span>`;
+
+                let linksHtml = '';
+                if (post.hpUrl || post.instaUrl) {
+                    linksHtml += '<div class="link-btns">';
+                    if (post.hpUrl) linksHtml += `<a href="${post.hpUrl}" target="_blank">🌐 HPを見る</a>`;
+                    if (post.instaUrl) linksHtml += `<a href="${post.instaUrl}" target="_blank">📸 Instagram</a>`;
+                    linksHtml += '</div>';
                 }
-                div.innerHTML = html;
+
+                let genreDisplay = post.genre;
+                if (post.genre === 'ラーメン' && post.ramenType) {
+                    genreDisplay += ` (${post.ramenType})`;
+                }
+
+                div.innerHTML = `
+                    <div style="font-size: 14px; color: var(--accent-color); font-weight: bold;">${genreDisplay}</div>
+                    <div style="font-size: 18px; font-weight: bold; margin: 4px 0;">${post.shopName}</div>
+                    <div style="font-size: 13px; color: var(--sub-text);">📍 ${post.state || ''} ${post.city || ''}</div>
+                    ${post.holiday ? `<div style="font-size: 12px; color: var(--sub-text);">定休日: ${post.holiday}</div>` : ''}
+                    <div class="tags-container">${tagsHtml}</div>
+                    ${post.comment ? `<div style="font-size: 14px; margin: 8px 0; white-space: pre-wrap;">${post.comment}</div>` : ''}
+                    ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-image" alt="お店の写真">` : ''}
+                    ${linksHtml}
+                    <div style="font-size: 11px; color: var(--sub-text); margin-top: 8px;">投稿者: ${post.author || 'ゲスト'}</div>
+                    <div class="action-btns">
+                        <button class="edit-btn" onclick="openEditModal('${post.id}')">✏️ 編集</button>
+                        <button class="delete-btn" onclick="deletePost('${post.id}', '${post.imageUrl || ''}')">🗑️ 削除</button>
+                    </div>
+                `;
                 container.appendChild(div);
             });
+        }
+
+        // --- 削除処理 ---
+        window.deletePost = async function(id, imageUrl) {
+            if (!confirm('本当にこの投稿を削除しますか？')) return;
+            try {
+                await db.ref('posts/' + id).remove();
+                if (imageUrl) {
+                    try {
+                        const imageRef = storage.refFromURL(imageUrl);
+                        await imageRef.delete();
+                    } catch (err) {
+                        console.error("画像ファイルの削除に失敗しました", err);
+                    }
+                }
+                alert('投稿を削除しました');
+            } catch (error) {
+                console.error(error);
+                alert('削除に失敗しました: ' + error.message);
+            }
+        };
+
+        // --- 編集モーダルを開く ---
+        window.openEditModal = function(id) {
+            const post = allPosts.find(p => p.id === id);
+            if (!post) return;
+
+            document.getElementById('edit-id').value = post.id;
+            document.getElementById('edit-genre').value = post.genre || '';
+            
+            const editRamenSub = document.getElementById('edit-ramen-sub');
+            if (post.genre === 'ラーメン') {
+                editRamenSub.style.display = 'block';
+                document.getElementById('edit-ramen-type').value = post.ramenType || '';
+                document.getElementById('edit-ramen-type').required = true;
+            } else {
+                editRamenSub.style.display = 'none';
+                document.getElementById('edit-ramen-type').value = '';
+                document.getElementById('edit-ramen-type').required = false;
+            }
+
+            document.getElementById('edit-shop-name').value = post.shopName || '';
+            document.getElementById('edit-state').value = post.state || '';
+            document.getElementById('edit-city').value = post.city || '';
+            document.getElementById('edit-holiday').value = post.holiday || '';
+
+            // チェックボックスの復元
+            document.querySelectorAll('input[name="edit-targetVibe"]').forEach(el => {
+                el.checked = post.targetVibe && post.targetVibe.includes(el.value);
+            });
+            document.getElementById('edit-parking').value = post.parking || '不明・記載なし';
+            document.querySelectorAll('input[name="edit-payment"]').forEach(el => {
+                el.checked = post.payment && post.payment.includes(el.value);
+            });
+            document.getElementById('edit-reservation').value = post.reservation || '不明・記載なし';
+
+            document.getElementById('edit-hp-url').value = post.hpUrl || '';
+            document.getElementById('edit-insta-url').value = post.instaUrl || '';
+            document.getElementById('edit-comment').value = post.comment || '';
+            document.getElementById('edit-image-file').value = '';
+
+            document.getElementById('edit-modal').style.display = 'block';
+        };
+
+        // 編集キャンセル
+        document.getElementById('edit-cancel-btn').addEventListener('click', () => {
+            document.getElementById('edit-modal').style.display = 'none';
+        });
+
+        // 編集保存処理
+        document.getElementById('edit-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('edit-id').value;
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.style.display = 'block';
+
+            try {
+                const genre = document.getElementById('edit-genre').value;
+                const ramenType = genre === 'ラーメン' ? document.getElementById('edit-ramen-type').value : '';
+                const shopName = document.getElementById('edit-shop-name').value;
+                const state = document.getElementById('edit-state').value;
+                const city = document.getElementById('edit-city').value;
+                const holiday = document.getElementById('edit-holiday').value;
+                
+                const targetVibe = Array.from(document.querySelectorAll('input[name="edit-targetVibe"]:checked')).map(el => el.value);
+                const parking = document.getElementById('edit-parking').value;
+                const payment = Array.from(document.querySelectorAll('input[name="edit-payment"]:checked')).map(el => el.value);
+                const reservation = document.getElementById('edit-reservation').value;
+                
+                const hpUrl = document.getElementById('edit-hp-url').value;
+                const instaUrl = document.getElementById('edit-insta-url').value;
+                const comment = document.getElementById('edit-comment').value;
+
+                const post = allPosts.find(p => p.id === id);
+                let imageUrl = post.imageUrl || '';
+
+                const imageFile = document.getElementById('edit-image-file').files[0];
+                if (imageFile) {
+                    const compressedBlob = await compressImage(imageFile);
+                    const storageRef = storage.ref().child('images/' + Date.now() + '_' + imageFile.name);
+                    const snapshot = await storageRef.put(compressedBlob);
+                    imageUrl = await snapshot.ref.getDownloadURL();
+                }
+
+                await db.ref('posts/' + id).update({
+                    genre,
+                    ramenType,
+                    shopName,
+                    state,
+                    city,
+                    holiday,
+                    targetVibe,
+                    parking,
+                    payment,
+                    reservation,
+                    hpUrl,
+                    instaUrl,
+                    comment,
+                    imageUrl
+                });
+
+                alert('投稿を更新しました！');
+                document.getElementById('edit-modal').style.display = 'none';
+            } catch (error) {
+                console.error(error);
+                alert('更新に失敗しました: ' + error.message);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        });
+
+        // --- ルーレット機能 ---
+        document.getElementById('roulette-genre-btn').addEventListener('click', () => {
+            const genres = [...new Set(allPosts.map(p => p.genre))];
+            const resultEl = document.getElementById('roulette-genre-result');
+            if (genres.length === 0) {
+                resultEl.textContent = '投稿がありません';
+                return;
+            }
+            let count = 0;
+            const interval = setInterval(() => {
+                const randomGenre = genres[Math.floor(Math.random() * genres.length)];
+                resultEl.textContent = randomGenre;
+                count++;
+                if (count > 10) {
+                    clearInterval(interval);
+                    selectedGenreForRoulette = resultEl.textContent;
+                }
+            }, 100);
+        });
+
+        document.getElementById('roulette-shop-btn').addEventListener('click', () => {
+            const resultEl = document.getElementById('roulette-shop-result');
+            if (!selectedGenreForRoulette) {
+                resultEl.textContent = '先にジャンルを決めてください！';
+                return;
+            }
+            const targetPosts = allPosts.filter(p => p.genre === selectedGenreForRoulette);
+            if (targetPosts.length === 0) {
+                resultEl.textContent = '該当するお店がありません';
+                return;
+            }
+            let count = 0;
+            const interval = setInterval(() => {
+                const randomShop = targetPosts[Math.floor(Math.random() * targetPosts.length)];
+                resultEl.textContent = randomShop.shopName + ' (' + randomShop.city + ')';
+                count++;
+                if (count > 10) {
+                    clearInterval(interval);
+                }
+            }, 100);
         });
 
         // ページ読み込み時にLIFF初期化を実行
