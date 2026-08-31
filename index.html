@@ -113,7 +113,6 @@
             color: var(--accent-color);
             margin-top: 12px;
         }
-        /* ローディング中の表示 */
         #loading-overlay {
             display: none;
             position: fixed;
@@ -136,11 +135,12 @@
             <p>ご飯迷った時の決定＆写真共有アプリ</p>
         </header>
 
-        <!-- ルーレット機能 -->
+        <!-- 1. みんなの投稿一覧（一番上） -->
         <div class="card">
-            <h2>🎰 ご飯決めルーレット</h2>
-            <button id="roulette-btn" type="button">今日のゴハンを決定する！</button>
-            <div id="roulette-result">ボタンを押してね！</div>
+            <h2>🍴 みんなの投稿一覧</h2>
+            <div id="posts-container">
+                <div class="no-data">条件に合う投稿がありません</div>
+            </div>
         </div>
 
         <!-- お店を探す・絞り込む -->
@@ -157,14 +157,6 @@
                 <option value="ラーメン">ラーメン</option>
                 <option value="焼肉">焼肉</option>
             </select>
-        </div>
-
-        <!-- みんなの投稿一覧 -->
-        <div class="card">
-            <h2>🍴 みんなの投稿一覧</h2>
-            <div id="posts-container">
-                <div class="no-data">条件に合う投稿がありません</div>
-            </div>
         </div>
 
         <!-- 投稿フォーム -->
@@ -193,13 +185,20 @@
                 <button type="submit">投稿する</button>
             </form>
         </div>
+
+        <!-- 2. ルーレット機能（一番下） -->
+        <div class="card">
+            <h2>🎰 ご飯決めルーレット</h2>
+            <button id="roulette-btn" type="button">今日のゴハンを決定する！</button>
+            <div id="roulette-result">ボタンを押してね！</div>
+        </div>
     </div>
 
     <script>
         // --- Firebaseの設定 ---
         const firebaseConfig = {
             databaseURL: "https://nanikuu-default-rtdb.firebaseio.com/",
-            storageBucket: "nanikuu.appspot.com" // ※ご自身のFirebase Storageバケット名に変更してください
+            storageBucket: "nanikuu.appspot.com"
         };
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
@@ -303,7 +302,6 @@
             try {
                 let imageUrl = "";
 
-                // 画像が選択されている場合はFirebase Storageにアップロード
                 if (imageFile) {
                     const storageRef = storage.ref();
                     const imageRef = storageRef.child('images/' + Date.now() + '_' + imageFile.name);
@@ -311,7 +309,6 @@
                     imageUrl = await snapshot.ref.getDownloadURL();
                 }
 
-                // データベースにデータを保存
                 await db.ref('posts').push({
                     shopName,
                     genre,
