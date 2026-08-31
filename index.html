@@ -198,7 +198,7 @@
             margin-top: 8px;
             margin-bottom: 12px;
         }
-        #loading-overlay, #error-screen {
+        #loading-overlay {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -206,14 +206,9 @@
             z-index: 9999;
             color: white;
             text-align: center;
-            padding: 20px;
+            padding-top: 50vh;
+            font-size: 18px;
             box-sizing: border-box;
-        }
-        #error-screen {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
         }
         .sub-field-group {
             display: none;
@@ -268,16 +263,30 @@
             border: 1px solid var(--border-color);
             box-sizing: border-box;
         }
+        #error-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #121212;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 99999;
+        }
     </style>
 </head>
 <body>
-    <div id="loading-overlay" style="padding-top: 50vh; font-size: 18px;">画像を圧縮＆アップロード中...</div>
+    <div id="loading-overlay">画像を圧縮＆アップロード中...</div>
 
-    <!-- グループ外アクセス制限用のエラー画面 -->
+    <!-- アクセス制限画面 -->
     <div id="error-screen">
-        <h2 style="color: #ff5722; font-size: 22px; margin-bottom: 12px;">⚠️ アクセス制限</h2>
-        <p style="font-size: 15px; line-height: 1.6; max-width: 400px;">
-            এইアプリは<strong>LINEグループ内</strong>からのみご利用いただけます。<br>
+        <h2 style="color: #ff5722; font-size: 24px; margin-bottom: 10px;">⚠️ アクセス制限</h2>
+        <p style="font-size: 14px; color: #a0a0a0; line-height: 1.6;">
+            このアプリはLINEグループ内からのみご利用いただけます。<br>
             指定のLINEグループトーク内にあるリンクからアクセスしてください。
         </p>
     </div>
@@ -564,29 +573,34 @@
             });
         }
 
-        // --- LIFF初期化 & グループID取得・制限 ---
+        // --- LIFF初期化 & グループID取得（厳格版） ---
         async function initializeLiff() {
             try {
                 if (typeof liff !== 'undefined') {
-                    await liff.init({ liffId: "2011348764-TFzS41F9" });
+                    // ★新しく発行されたLIFF IDを設定
+                    await liff.init({ liffId: "2011348764-dl9CNIS4" });
 
                     const context = liff.getContext();
+                    
+                    // グループまたはルーム内からのアクセスかチェック
                     if (!context || (context.type !== 'group' && context.type !== 'room')) {
-                        document.getElementById('error-screen').style.display = 'flex';
+                        // グループ外から開かれた場合はエラー画面を表示したままにする
                         return;
                     }
 
+                    // グループIDを正しく取得
                     currentGroupId = context.groupId || context.roomId;
 
                     if (liff.isLoggedIn()) {
                         const profile = await liff.getProfile();
                         window.currentLiffName = profile.displayName;
                         document.getElementById('author').value = window.currentLiffName;
-                    } else {
-                        liff.login();
                     }
 
-                    // グループのデータ（投稿＆グループ名）を監視開始
+                    // 条件をクリアしたのでエラー画面を非表示にする
+                    document.getElementById('error-screen').style.display = 'none';
+
+                    // データの監視を開始
                     setupDatabaseListeners();
                 }
             } catch (error) {
