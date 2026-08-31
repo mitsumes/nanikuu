@@ -157,6 +157,14 @@
             padding-top: 50vh;
             font-size: 18px;
         }
+        .sub-field-group {
+            display: none;
+            background: #252525;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 1px dashed var(--border-color);
+        }
     </style>
 </head>
 <body>
@@ -179,9 +187,9 @@
         <!-- お店を探す・絞り込む -->
         <div class="card">
             <h2>🔍 お店を探す・絞り込む</h2>
-            <input type="text" id="search-keyword" placeholder="検索ワード（例：ラーメン、おしゃれ）">
+            <input type="text" id="search-keyword" placeholder="検索ワード（例：おしゃれ、美味しい）">
             <select id="search-genre">
-                <option value="すべて">すべて</option>
+                <option value="すべて">すべてのジャンル</option>
                 <option value="和食">和食</option>
                 <option value="洋食">洋食</option>
                 <option value="中華">中華</option>
@@ -190,13 +198,29 @@
                 <option value="ラーメン">ラーメン</option>
                 <option value="焼肉">焼肉</option>
             </select>
+
+            <!-- 検索用：ラーメンの種類サブ選択 -->
+            <div id="search-ramen-sub" class="sub-field-group">
+                <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">ラーメンの種類で絞り込む</label>
+                <select id="search-ramen-type">
+                    <option value="すべて">すべてのラーメン</option>
+                    <option value="こってり">こってり</option>
+                    <option value="あっさり">あっさり</option>
+                    <option value="辛い">辛い</option>
+                    <option value="家系">家系</option>
+                    <option value="二郎系">二郎系</option>
+                    <option value="醤油">醤油</option>
+                    <option value="みそ">みそ</option>
+                    <option value="塩">塩</option>
+                    <option value="その他">その他</option>
+                </select>
+            </div>
         </div>
 
         <!-- 投稿フォーム -->
         <div class="card">
             <h2>✏️ お店を投稿する</h2>
             <form id="post-form">
-                <!-- ご要望：ジャンル選択を店の上に -->
                 <select id="genre" required>
                     <option value="">ジャンルを選択 *</option>
                     <option value="和食">和食</option>
@@ -207,15 +231,32 @@
                     <option value="ラーメン">ラーメン</option>
                     <option value="焼肉">焼肉</option>
                 </select>
+
+                <!-- 投稿用：ラーメンを選択した時だけ現れる種類選択 -->
+                <div id="post-ramen-sub" class="sub-field-group">
+                    <label style="font-size: 12px; color: #ff5722; display: block; margin-bottom: 4px; font-weight: bold;">🍜 ラーメンの種類を選択 *</label>
+                    <select id="ramen-type">
+                        <option value="">種類を選択</option>
+                        <option value="こってり">こってり</option>
+                        <option value="あっさり">あっさり</option>
+                        <option value="辛い">辛い</option>
+                        <option value="家系">家系</option>
+                        <option value="二郎系">二郎系</option>
+                        <option value="醤油">醤油</option>
+                        <option value="みそ">みそ</option>
+                        <option value="塩">塩</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+
                 <input type="text" id="shop-name" placeholder="店名 *" required>
 
                 <input type="text" id="state" placeholder="県名（例：愛知県）">
                 <input type="text" id="city" placeholder="市名（例：東海市）">
                 
-                <!-- ご要望：市町村の下に定休日入力 -->
                 <input type="text" id="holiday" placeholder="定休日（例：水曜日、不定休）">
 
-                <!-- ご要望：利用シーン（1人向け、ファミリー向け、グループ向け） -->
+                <!-- 利用シーン -->
                 <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">おすすめの利用シーン</label>
                 <select id="target-vibe">
                     <option value="指定なし">利用シーンを選択</option>
@@ -224,7 +265,15 @@
                     <option value="グループ向け">🍻 グループ向け</option>
                 </select>
 
-                <!-- ご要望：予約の可否タブ -->
+                <!-- 追加ご要望：駐車場の有無 -->
+                <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">駐車場の有無</label>
+                <select id="parking">
+                    <option value="不明・記載なし">駐車場の有無を選択</option>
+                    <option value="駐車場あり">🅿️ 駐車場あり</option>
+                    <option value="駐車場なし">🚫 駐車場なし（近隣コインパーキング等）</option>
+                </select>
+
+                <!-- 予約の可否 -->
                 <label style="font-size: 12px; color: #a0a0a0; display: block; margin-bottom: 4px;">予約の可否</label>
                 <select id="reservation">
                     <option value="不明・記載なし">予約の可否を選択</option>
@@ -270,6 +319,32 @@
         let allPosts = [];
         let selectedGenreForRoulette = "";
 
+        // --- 投稿フォーム：ラーメン選択時の連動表示 ---
+        document.getElementById('genre').addEventListener('change', (e) => {
+            const subField = document.getElementById('post-ramen-sub');
+            const ramenSelect = document.getElementById('ramen-type');
+            if (e.target.value === 'ラーメン') {
+                subField.style.display = 'block';
+                ramenSelect.required = true;
+            } else {
+                subField.style.display = 'none';
+                ramenSelect.required = false;
+                ramenSelect.value = '';
+            }
+        });
+
+        // --- 検索：ラーメン選択時の連動表示 ---
+        document.getElementById('search-genre').addEventListener('change', (e) => {
+            const subField = document.getElementById('search-ramen-sub');
+            if (e.target.value === 'ラーメン') {
+                subField.style.display = 'block';
+            } else {
+                subField.style.display = 'none';
+                document.getElementById('search-ramen-type').value = 'すべて';
+            }
+            filterPosts();
+        });
+
         // --- データのリアルタイム取得 ---
         db.ref('posts').on('value', (snapshot) => {
             const container = document.getElementById('posts-container');
@@ -287,7 +362,7 @@
                 allPosts.push(post);
             });
 
-            renderPosts(allPosts);
+            filterPosts();
         });
 
         // --- 投稿一覧の描画関数 ---
@@ -308,8 +383,10 @@
 
                 // タグ情報の組み立て
                 let badgesHtml = '';
+                if (post.genre === 'ラーメン' && post.ramenType) badgesHtml += `<span class="badge" style="background:#ff5722; color:#fff;">🍜 ${escapeHtml(post.ramenType)}</span>`;
                 if (post.holiday) badgesHtml += `<span class="badge">店休: ${escapeHtml(post.holiday)}</span>`;
                 if (post.targetVibe && post.targetVibe !== '指定なし') badgesHtml += `<span class="badge">${escapeHtml(post.targetVibe)}</span>`;
+                if (post.parking && post.parking !== '不明・記載なし') badgesHtml += `<span class="badge">${escapeHtml(post.parking)}</span>`;
                 if (post.reservation && post.reservation !== '不明・記載なし') badgesHtml += `<span class="badge">${escapeHtml(post.reservation)}</span>`;
 
                 const div = document.createElement('div');
@@ -338,19 +415,28 @@
         function filterPosts() {
             const keyword = document.getElementById('search-keyword').value.toLowerCase();
             const genre = document.getElementById('search-genre').value;
+            const ramenType = document.getElementById('search-ramen-type').value;
 
             const filtered = allPosts.filter(post => {
-                const matchGenre = (genre === 'all' || genre === 'すべて' || post.genre === genre);
-                const text = `${post.shopName} ${post.genre} ${post.state} ${post.city} ${post.holiday} ${post.targetVibe} ${post.reservation} ${post.comment} ${post.author}`.toLowerCase();
+                const matchGenre = (genre === 'すべて' || post.genre === genre);
+                
+                // ラーメンが選ばれていて、かつサブのラーメン種類が指定されている場合の絞り込み
+                let matchRamen = true;
+                if (genre === 'ラーメン' && ramenType !== 'すべて') {
+                    matchRamen = (post.ramenType === ramenType);
+                }
+
+                const text = `${post.shopName} ${post.genre} ${post.ramenType || ''} ${post.state} ${post.city} ${post.holiday} ${post.targetVibe} ${post.parking} ${post.reservation} ${post.comment} ${post.author}`.toLowerCase();
                 const matchKeyword = text.includes(keyword);
-                return matchGenre && matchKeyword;
+
+                return matchGenre && matchRamen && matchKeyword;
             });
 
             renderPosts(filtered);
         }
 
         document.getElementById('search-keyword').addEventListener('input', filterPosts);
-        document.getElementById('search-genre').addEventListener('change', filterPosts);
+        document.getElementById('search-ramen-type').addEventListener('change', filterPosts);
 
         // --- ルーレット機能（2段階） ---
         document.getElementById('roulette-genre-btn').addEventListener('click', () => {
@@ -390,11 +476,13 @@
         document.getElementById('post-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const genre = document.getElementById('genre').value;
+            const ramenType = genre === 'ラーメン' ? document.getElementById('ramen-type').value : '';
             const shopName = document.getElementById('shop-name').value;
             const state = document.getElementById('state').value;
             const city = document.getElementById('city').value;
             const holiday = document.getElementById('holiday').value;
             const targetVibe = document.getElementById('target-vibe').value;
+            const parking = document.getElementById('parking').value;
             const reservation = document.getElementById('reservation').value;
             const hpUrl = document.getElementById('hp-url').value;
             const instaUrl = document.getElementById('insta-url').value;
@@ -417,11 +505,13 @@
 
                 await db.ref('posts').push({
                     genre,
+                    ramenType,
                     shopName,
                     state,
                     city,
                     holiday,
                     targetVibe,
+                    parking,
                     reservation,
                     hpUrl,
                     instaUrl,
@@ -433,6 +523,7 @@
 
                 alert('投稿しました！');
                 document.getElementById('post-form').reset();
+                document.getElementById('post-ramen-sub').style.display = 'none';
                 if (window.currentLiffName) {
                     document.getElementById('author').value = window.currentLiffName;
                 }
