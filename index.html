@@ -265,35 +265,42 @@
 
                 // LINEアプリ内からのアクセスかチェック
                 if (!liff.isInClient()) {
-                    // 外部ブラウザの場合はアクセス制限画面のままにする
-                    return;
+                    return; // 外部ブラウザの場合は制限画面のまま
                 }
 
                 const context = liff.getContext();
+                
+                // グループID、またはトークルームの種類に応じた固有IDを確実に取得する
                 if (context && context.groupId) {
                     currentGroupId = context.groupId;
+                } else if (context && context.roomId) {
+                    currentGroupId = context.roomId;
                 } else if (context && context.type === "utou") {
-                    currentGroupId = "individual_" + (await liff.getProfile()).userId;
+                    const profile = await liff.getProfile();
+                    currentGroupId = "dm_" + profile.userId;
                 } else {
-                    currentGroupId = "default_line_group";
+                    // コンテキストが取得できない特殊なケースではエラー画面にして混ざるのを防ぐ
+                    document.getElementById("access-restrict").innerHTML = `
+                        <h2 class="text-xl font-bold text-orange-500 mb-2">⚠️ グループ情報の取得エラー</h2>
+                        <p class="text-sm text-gray-300">正しいLINEグループのトークルームから開き直してください。</p>
+                    `;
+                    return;
                 }
 
                 const profile = await liff.getProfile();
                 currentUserId = profile.userId;
 
-                // LINE内からのアクセスを確認できたため制限を解除してアプリを表示
+                // LINE内からのアクセスかつグループIDが確定したためアプリを表示
                 document.getElementById("access-restrict").classList.add("hidden");
                 document.getElementById("main-content").classList.remove("hidden");
 
                 initApp();
             } catch (error) {
                 console.error("LIFF initialization failed", error);
-                // エラー時もLINE内であればフォールバックで起動させる
-                document.getElementById("access-restrict").classList.add("hidden");
-                document.getElementById("main-content").classList.remove("hidden");
-                currentGroupId = "default_line_group";
-                currentUserId = "user_fallback";
-                initApp();
+                document.getElementById("access-restrict").innerHTML = `
+                    <h2 class="text-xl font-bold text-orange-500 mb-2">⚠️ 起動エラー</h2>
+                    <p class="text-sm text-gray-300">LINEアプリのトークルームから再度お試しください。</p>
+                `;
             }
         });
 
@@ -304,7 +311,7 @@
 
         function loadGroupName() {
             db.ref(`groups/${currentGroupId}/name`).on("value", (snapshot) => {
-                const name = snapshot.val() || "グループ1";
+                const name = snapshot.val() || "マイグループ";
                 document.getElementById("group-name-display").textContent = name;
             });
         }
