@@ -32,12 +32,6 @@
         // DOM要素の取得と安全な初期化
         document.addEventListener("DOMContentLoaded", () => {
             const groupNameDisplay = document.getElementById("group-name-display");
-            const editGroupBtn = document.getElementById("edit-group-btn");
-            const groupEditContainer = document.getElementById("group-edit-container");
-            const groupInput = document.getElementById("group-input");
-            const saveGroupBtn = document.getElementById("save-group-btn");
-            const cancelGroupBtn = document.getElementById("cancel-group-btn");
-            
             const latestListEl = document.getElementById("latest-restaurant-list");
             const allListEl = document.getElementById("all-restaurant-list");
             const loadingEl = document.getElementById("loading");
@@ -92,62 +86,59 @@
             const startRouletteBtn = document.getElementById("start-roulette");
             const rouletteResult = document.getElementById("roulette-result");
 
-            // 初期化処理（LIFF & ユーザー名取得）
+            // 初期化処理（LIFF & ユーザー名取得 ＆ LINEグループ限定ガード）
             async function initLiff() {
                 try {
                     await liff.init({ liffId: "2011348764-dl9CNIS4" });
-                    if (liff.isLoggedIn()) {
-                        const profile = await liff.getProfile();
-                        currentUserName = profile.displayName;
+
+                    // 1. ログインしていなければLINEログインを促す
+                    if (!liff.isLoggedIn()) {
+                        liff.login();
+                        return;
                     }
-                    if (liff.isInClient()) {
-                        const context = liff.getContext();
-                        if (context && context.groupId) {
-                            currentGroupId = context.groupId;
-                        }
+
+                    const profile = await liff.getProfile();
+                    currentUserName = profile.displayName;
+
+                    // 2. LINEアプリ内から開いているかチェック
+                    if (!liff.isInClient()) {
+                        document.body.innerHTML = `
+                            <div class="flex items-center justify-center min-h-screen bg-zinc-950 text-zinc-100 p-6 text-center">
+                                <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl max-w-sm space-y-3 shadow-xl">
+                                    <h2 class="text-base font-bold text-amber-400">LINEアプリから開いてください</h2>
+                                    <p class="text-xs text-zinc-400 leading-relaxed">このアプリはセキュリティ保護のため、LINEグループのトークルームからのみ利用できます。</p>
+                                </div>
+                            </div>
+                        `;
+                        return;
                     }
+
+                    // 3. トークルーム（グループまたはマルチトーク）から開かれているかチェック
+                    const context = liff.getContext();
+                    if (context && context.groupId) {
+                        currentGroupId = context.groupId; // LINEの実際のグループIDを自動適用
+                    } else {
+                        document.body.innerHTML = `
+                            <div class="flex items-center justify-center min-h-screen bg-zinc-950 text-zinc-100 p-6 text-center">
+                                <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl max-w-sm space-y-3 shadow-xl">
+                                    <h2 class="text-base font-bold text-amber-400">LINEグループから開いてください</h2>
+                                    <p class="text-xs text-zinc-400 leading-relaxed">このアプリは、特定のLINEグループのトークルーム内で共有されたリンクから開く必要があります。</p>
+                                </div>
+                            </div>
+                        `;
+                        return;
+                    }
+
                 } catch (error) {
                     console.error("LIFF Initialization failed", error);
-                }
-                
-                const savedGroup = localStorage.getItem("nanikuu_group_id");
-                if (savedGroup) {
-                    currentGroupId = savedGroup;
+                    if (loadingEl) loadingEl.textContent = "初期化に失敗しました。";
+                    return;
                 }
 
-                if (groupNameDisplay) groupNameDisplay.textContent = currentGroupId;
-                if (groupInput) groupInput.value = currentGroupId;
+                if (groupNameDisplay) groupNameDisplay.textContent = "グループ共有中";
                 loadRestaurants();
             }
             initLiff();
-
-            if (editGroupBtn) {
-                editGroupBtn.addEventListener("click", () => {
-                    groupEditContainer.classList.toggle("hidden");
-                    groupInput.value = currentGroupId;
-                });
-            }
-
-            if (cancelGroupBtn) {
-                cancelGroupBtn.addEventListener("click", () => {
-                    groupEditContainer.classList.add("hidden");
-                });
-            }
-
-            if (saveGroupBtn) {
-                saveGroupBtn.addEventListener("click", () => {
-                    const val = groupInput.value.trim();
-                    if (!val) {
-                        alert("グループ名を入力してください");
-                        return;
-                    }
-                    currentGroupId = val;
-                    localStorage.setItem("nanikuu_group_id", currentGroupId);
-                    groupNameDisplay.textContent = currentGroupId;
-                    groupEditContainer.classList.add("hidden");
-                    loadRestaurants();
-                });
-            }
 
             // データのリアルタイム読み込み
             function loadRestaurants() {
@@ -281,7 +272,6 @@
                     openDetail(item.id);
                 };
                 
-                // カード内からは投稿者名を削除
                 card.innerHTML = `
                     <div class="h-32 overflow-hidden bg-zinc-950 relative flex items-center justify-center">
                         <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover">
@@ -376,7 +366,7 @@
                 if (detailScenes) detailScenes.textContent = item.scenes && item.scenes.length > 0 ? item.scenes.join(', ') : '未設定';
                 if (detailParking) detailParking.textContent = item.parking || '未設定';
                 if (detailReservation) detailReservation.textContent = item.reservation || '未設定';
-                if (detailAuthor) detailAuthor.textContent = item.author || '不明'; // 詳細を開いたときに投稿者を表示
+                if (detailAuthor) detailAuthor.textContent = item.author || '不明';
                 
                 if (detailHp) {
                     if (item.hpUrl) {
@@ -701,20 +691,9 @@
                 <p class="text-[10px] text-zinc-400">グループ飲食店共有アプリ</p>
             </div>
             <div class="flex items-center gap-1.5">
-                <span id="group-name-display" class="text-xs bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded-lg text-zinc-300 font-mono">読み込み中...</span>
-                <button id="edit-group-btn" class="text-xs bg-zinc-900 border border-zinc-800 p-1.5 rounded-lg text-amber-400 hover:bg-zinc-800 transition" title="グループ切替">✏️</button>
+                <span id="group-name-display" class="text-xs bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded-lg text-zinc-300 font-mono">認証中...</span>
             </div>
         </header>
-
-        <!-- グループ変更コンテナ -->
-        <div id="group-edit-container" class="hidden bg-zinc-900 border border-zinc-800 p-3 rounded-xl mb-6">
-            <label class="block text-[10px] text-zinc-400 mb-1">グループIDを入力</label>
-            <div class="flex gap-2">
-                <input type="text" id="group-input" class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white">
-                <button id="save-group-btn" class="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold px-3 py-1.5 rounded-lg text-xs">保存</button>
-                <button id="cancel-group-btn" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2 py-1.5 rounded-lg text-xs">✕</button>
-            </div>
-        </div>
 
         <!-- ローディング -->
         <div id="loading" class="text-center py-12 text-zinc-500 text-xs">データを読み込んでいます...</div>
@@ -923,7 +902,6 @@
                     <span class="text-zinc-500 block text-[10px] mb-1">メモ</span>
                     <p id="detail-memo" class="text-xs text-zinc-300 bg-zinc-950/50 p-3 rounded-xl border border-zinc-800/60 whitespace-pre-wrap"></p>
                 </div>
-                <!-- 詳細モーダル内でのみ投稿者を表示 -->
                 <div class="text-[10px] text-zinc-400 text-right">投稿者: <span id="detail-author" class="text-zinc-200 font-bold"></span></div>
                 <div id="detail-action-buttons"></div>
             </div>
