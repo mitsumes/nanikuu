@@ -25,7 +25,8 @@
         const db = getDatabase(app);
         const storage = getStorage(app);
 
-        let currentGroupId = "default_group";
+        // ★ 過去の6件データが入っている「error_fallback」をデフォルトとして強制指定
+        let currentGroupId = "error_fallback";
         let allRestaurants = [];
         let currentUserName = "ゲスト";
 
@@ -57,18 +58,18 @@
         let targetDeleteId = null;
         let targetDeletePhotoPath = null;
 
-        // 初期化処理（以前の確実に動いていたロジックに復元）
+        // 初期化処理
         async function initLiff() {
             try {
                 await liff.init({ liffId: "2011348764-dl9CNIS4" });
                 if (liff.isInClient()) {
                     const context = liff.getContext();
                     if (context && (context.groupId || context.roomId)) {
-                        currentGroupId = context.groupId || context.roomId;
-                        groupNameEl.textContent = "LINEグループ専用なにクウ？";
-                    } else {
-                        groupNameEl.textContent = "個人チャット（デフォルト）";
+                        // もしLINEのグループIDが取れても、今回はデータがある error_fallback を優先、
+                        // もしくは必要に応じて切り替えるようにします
+                        // currentGroupId = context.groupId || context.roomId; 
                     }
+                    groupNameEl.textContent = "ラーメン部（復旧モード）";
                     try {
                         const profile = await liff.getProfile();
                         currentUserName = profile.displayName;
@@ -76,12 +77,7 @@
                         console.log("プロフィール取得失敗", e);
                     }
                 } else {
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const groupParam = urlParams.get('group');
-                    if (groupParam) {
-                        currentGroupId = groupParam;
-                    }
-                    groupNameEl.textContent = "ブラウザテストモード (" + currentGroupId + ")";
+                    groupNameEl.textContent = "ブラウザテストモード (error_fallback)";
                 }
             } catch (error) {
                 console.error("LIFF Initialization failed", error);
@@ -93,7 +89,9 @@
         // データの読み込み
         function loadRestaurants() {
             const sanitizedGroupId = currentGroupId.replace(/[.#$[\]]/g, "_");
-            const dbRef = ref(db, 'groups/' + sanitizedGroupId + '/restaurants');
+            
+            // ★ データベースの構造に合わせて `groups/${sanitizedGroupId}/posts` を見るように修正
+            const dbRef = ref(db, 'groups/' + sanitizedGroupId + '/posts');
             
             onValue(dbRef, (snapshot) => {
                 allRestaurants = [];
@@ -115,7 +113,7 @@
         function renderRestaurants(list) {
             restaurantListEl.innerHTML = "";
             if (list.length === 0) {
-                restaurantListEl.innerHTML = `<div class=\"col-span-full text-center py-8 text-gray-500\">登録されているお店がありません。<br>下から追加してみよう！</div>`;
+                restaurantListEl.innerHTML = `<div class="col-span-full text-center py-8 text-gray-500">登録されているお店がありません。<br>下から追加してみよう！</div>`;
                 return;
             }
 
@@ -126,26 +124,26 @@
                 const imageUrl = item.photoUrl || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=500&q=60";
                 
                 card.innerHTML = `
-                    <div class=\"cursor-pointer\" onclick=\"openDetail('${item.id}')\">
-                        <div class=\"h-40 overflow-hidden bg-gray-100 relative\">
-                            <img src=\"${imageUrl}\" alt=\"${item.name}\" class=\"w-full h-full object-cover\">
-                            <span class=\"absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full\">${item.genre || 'その他'}</span>
+                    <div class="cursor-pointer" onclick="openDetail('${item.id}')">
+                        <div class="h-40 overflow-hidden bg-gray-100 relative">
+                            <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover">
+                            <span class="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">${item.genre || 'その他'}</span>
                         </div>
-                        <div class=\"p-4\">
-                            <h3 class=\"font-bold text-lg text-gray-800 truncate\">${item.name}</h3>
-                            <p class=\"text-xs text-gray-500 mt-1\">📍 ${item.region || '未設定'}</p>
+                        <div class="p-4">
+                            <h3 class="font-bold text-lg text-gray-800 truncate">${item.name}</h3>
+                            <p class="text-xs text-gray-500 mt-1">📍 ${item.region || '未設定'}</p>
                         </div>
                     </div>
-                    <div class=\"px-4 pb-4 pt-0 flex justify-end gap-2 border-t border-gray-50 pt-3\">
-                        <button onclick=\"startEdit('${item.id}')\" class=\"text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg font-medium transition\">編集</button>
-                        <button onclick=\"promptDelete('${item.id}', '${item.photoPath || ''}')\" class=\"text-xs bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg font-medium transition\">削除</button>
+                    <div class="px-4 pb-4 pt-0 flex justify-end gap-2 border-t border-gray-50 pt-3">
+                        <button onclick="startEdit('${item.id}')" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg font-medium transition">編集</button>
+                        <button onclick="promptDelete('${item.id}', '${item.photoPath || ''}')" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg font-medium transition">削除</button>
                     </div>
                 `;
                 restaurantListEl.appendChild(card);
             });
         }
 
-        // 詳細モーダルを開く（投稿者名が表示される機能付き）
+        // 詳細モーダルを開く
         window.openDetail = function(id) {
             const item = allRestaurants.find(r => r.id === id);
             if (!item) return;
@@ -199,10 +197,10 @@
                 }
 
                 const sanitizedGroupId = currentGroupId.replace(/[.#$[\]]/g, "_");
-                const dbRef = ref(db, `groups/${sanitizedGroupId}/restaurants`);
+                const dbRef = ref(db, `groups/${sanitizedGroupId}/posts`);
                 
                 if (editId) {
-                    const updateRef = ref(db, `groups/${sanitizedGroupId}/restaurants/${editId}`);
+                    const updateRef = ref(db, `groups/${sanitizedGroupId}/posts/${editId}`);
                     await update(updateRef, {
                         name, genre, region, memo, photoUrl, photoPath,
                         updatedAt: Date.now()
@@ -288,7 +286,7 @@
                 }
 
                 const sanitizedGroupId = currentGroupId.replace(/[.#$[\]]/g, "_");
-                const itemRef = ref(db, `groups/${sanitizedGroupId}/restaurants/${targetDeleteId}`);
+                const itemRef = ref(db, `groups/${sanitizedGroupId}/posts/${targetDeleteId}`);
                 await remove(itemRef);
 
                 deleteModal.classList.add("hidden");
@@ -333,9 +331,9 @@
                 const randomIndex = Math.floor(Math.random() * allRestaurants.length);
                 const pick = allRestaurants[randomIndex];
                 rouletteResult.innerHTML = `
-                    <div class=\"animate-pulse\">
-                        <h4 class=\"text-xl font-bold text-orange-600\">${pick.name}</h4>
-                        <p class=\"text-sm text-gray-500 mt-1\">${pick.genre || 'その他'} / ${pick.region || '未設定'}</p>
+                    <div class="animate-pulse">
+                        <h4 class="text-xl font-bold text-orange-600">${pick.name}</h4>
+                        <p class="text-sm text-gray-500 mt-1">${pick.genre || 'その他'} / ${pick.region || '未設定'}</p>
                     </div>
                 `;
                 count++;
@@ -343,11 +341,11 @@
                     clearInterval(timer);
                     const finalPick = allRestaurants[Math.floor(Math.random() * allRestaurants.length)];
                     rouletteResult.innerHTML = `
-                        <div class=\"bg-orange-50 border border-orange-200 p-4 rounded-xl\">
-                            <span class=\"text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full font-bold\">決定！🎉</span>
-                            <h4 class=\"text-2xl font-black text-gray-800 mt-2\">${finalPick.name}</h4>
-                            <p class=\"text-sm text-gray-600 mt-1\">📍 ${finalPick.region || '未設定'} | 🍽️ ${finalPick.genre || 'その他'}</p>
-                            <p class=\"text-xs text-gray-500 mt-2\">メモ: ${finalPick.memo || 'なし'}</p>
+                        <div class="bg-orange-50 border border-orange-200 p-4 rounded-xl">
+                            <span class="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full font-bold">決定！🎉</span>
+                            <h4 class="text-2xl font-black text-gray-800 mt-2">${finalPick.name}</h4>
+                            <p class="text-sm text-gray-600 mt-1">📍 ${finalPick.region || '未設定'} | 🍽️ ${finalPick.genre || 'その他'}</p>
+                            <p class="text-xs text-gray-500 mt-2">メモ: ${finalPick.memo || 'なし'}</p>
                         </div>
                     `;
                     startRouletteBtn.disabled = false;
@@ -422,61 +420,57 @@
                 </div>
 
                 <div class="flex gap-2 pt-2">
-                    <button type="submit" id="submit-btn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 px-4 rounded-xl text-sm shadow transition">登録する</button>
-                    <button type="button" id="cancel-edit" class="hidden bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2.5 px-4 rounded-xl text-sm transition">キャンセル</button>
+                    <button type="submit" id="submit-btn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl shadow-md transition text-sm">登録する</button>
+                    <button type="button" id="cancel-edit" class="hidden bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-3 rounded-xl transition text-sm">キャンセル</button>
                 </div>
             </form>
         </section>
-
     </main>
 
     <!-- 詳細モーダル -->
-    <div id="detail-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl animate-scaleIn">
+    <div id="detail-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-xl">
             <div class="h-48 bg-gray-100 relative">
                 <img id="detail-image" src="" alt="" class="w-full h-full object-cover">
+                <span id="detail-genre" class="absolute top-3 right-3 bg-black/60 text-white text-xs px-2.5 py-1 rounded-full">ジャンル</span>
             </div>
             <div class="p-5 space-y-3">
                 <div>
-                    <span id="detail-genre" class="text-xs bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full font-medium"></span>
-                    <h3 id="detail-name" class="text-xl font-bold text-gray-800 mt-2"></h3>
+                    <h3 id="detail-name" class="text-xl font-black text-gray-800">店名</h3>
+                    <p id="detail-region" class="text-xs text-gray-500 mt-0.5">エリア</p>
                 </div>
-                <div class="text-xs text-gray-600 space-y-1">
-                    <p>📍 エリア: <span id="detail-region" class="font-medium text-gray-800"></span></p>
-                    <p>👤 投稿者: <span id="detail-author" class="font-medium text-gray-800"></span></p>
+                <div class="bg-gray-50 p-3 rounded-xl text-sm">
+                    <p class="text-xs font-bold text-gray-400 mb-1">メモ</p>
+                    <p id="detail-memo" class="text-gray-700 whitespace-pre-wrap">メモ内容</p>
                 </div>
-                <div class="bg-gray-50 p-3 rounded-xl">
-                    <p class="text-xs font-bold text-gray-500 mb-1">メモ</p>
-                    <p id="detail-memo" class="text-sm text-gray-700 whitespace-pre-wrap"></p>
-                </div>
-                <button id="close-detail" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl text-sm transition mt-2">閉じる</button>
+                <p class="text-xs text-gray-400 text-right">投稿者: <span id="detail-author">名無し</span></p>
+                <button id="close-detail" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl transition text-sm">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ルーレットモーダル -->
+    <div id="roulette-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-xl">
+            <h3 class="text-lg font-black text-gray-800">🎰 お店ルーレット</h3>
+            <div id="roulette-result" class="py-6 bg-gray-50 rounded-2xl flex items-center justify-center min-h-[120px] px-4">
+                <p class="text-gray-500">ボタンを押して抽選スタート！</p>
+            </div>
+            <div class="flex gap-2">
+                <button id="start-roulette" class="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:opacity-95 text-white font-bold py-3 rounded-xl shadow-md transition text-sm">回す！</button>
+                <button id="close-roulette" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-4 py-3 rounded-xl transition text-sm">閉じる</button>
             </div>
         </div>
     </div>
 
     <!-- 削除確認モーダル -->
-    <div id="delete-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl max-w-xs w-full p-5 text-center shadow-2xl space-y-4">
-            <div class="text-3xl">⚠️</div>
-            <h3 class="font-bold text-gray-800 text-base">本当に削除しますか？</h3>
-            <p class="text-xs text-gray-500">この操作は元に戻すことはできません。</p>
-            <div class="flex gap-2 pt-2">
-                <button id="cancel-delete" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl text-sm transition">いいえ</button>
-                <button id="confirm-delete" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2.5 rounded-xl text-sm transition">削除する</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ルーレット結果モーダル -->
-    <div id="roulette-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl max-w-xs w-full p-6 text-center shadow-2xl space-y-4">
-            <h3 class="font-black text-lg text-gray-800">🎰 お店ルーレット</h3>
-            <div id="roulette-result" class="py-6 min-h-[100px] flex items-center justify-center">
-                <p class="text-gray-500 text-sm">ボタンを押して抽選スタート！</p>
-            </div>
-            <div class="space-y-2">
-                <button id="start-roulette" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:opacity-95 text-white font-bold py-3 rounded-xl text-sm shadow transition">スタート！</button>
-                <button id="close-roulette" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl text-sm transition">閉じる</button>
+    <div id="delete-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-xs w-full p-6 text-center space-y-4 shadow-xl">
+            <h3 class="text-base font-black text-gray-800">本当に削除しますか？</h3>
+            <p class="text-xs text-gray-500">この操作は元に戻すことができません。</p>
+            <div class="flex gap-2">
+                <button id="confirm-delete" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2.5 rounded-xl transition text-sm">削除する</button>
+                <button id="cancel-delete" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl transition text-sm">キャンセル</button>
             </div>
         </div>
     </div>
