@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>なにクウ？</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- LIFF SDK -->
     <script src="https://static.line-scdn.net/liff/2/sdk.js"></script>
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
@@ -18,17 +21,20 @@
 </head>
 <body class="p-4 max-w-md mx-auto">
 
+    <!-- アクセス制限画面 -->
     <div id="access-restrict" class="fixed inset-0 bg-[#121212] z-50 flex flex-col items-center justify-center p-6 text-center">
         <h2 class="text-xl font-bold text-orange-500 mb-2">⚠️ アクセス制限</h2>
         <p class="text-sm text-gray-300">このアプリはLINEグループ内からのみご利用いただけます。<br>グループのトークルームから開き直してください。</p>
     </div>
 
+    <!-- メインコンテンツ -->
     <div id="main-content" class="hidden space-y-6 pb-12">
         <header class="text-center pt-2">
             <h1 class="text-3xl font-extrabold text-orange-500 tracking-wider">なにクウ？</h1>
             <p class="text-xs text-gray-400 mt-1">ご飯迷った時の決定＆写真共有アプリ</p>
         </header>
 
+        <!-- グループ情報エリア -->
         <div class="card p-4 flex items-center justify-between shadow-md">
             <div class="flex items-center space-x-2 overflow-hidden">
                 <span class="text-xl">🏠</span>
@@ -39,6 +45,7 @@
             </button>
         </div>
 
+        <!-- みんなの投稿一覧（最新6枚：横2列×縦3列） -->
         <div class="card p-4 space-y-3">
             <h2 class="font-bold text-base flex items-center gap-2 text-white">
                 <span>🍴</span> みんなの投稿一覧 <span class="text-xs text-gray-400 font-normal">（最新6件）</span>
@@ -48,6 +55,7 @@
             </div>
         </div>
 
+        <!-- お店を探す・絞り込む -->
         <div class="card p-4 space-y-3">
             <h2 class="font-bold text-base flex items-center gap-2 text-white">
                 <span>🔍</span> お店を探す・絞り込む
@@ -67,11 +75,13 @@
             </select>
         </div>
 
-        <div class="card p-4 space-y-3">
-            <h2 class="font-bold text-base flex items-center gap-2 text-white">
+        <!-- お店を投稿する（編集時はここが切り替わります） -->
+        <div class="card p-4 space-y-3" id="form-container">
+            <h2 class="font-bold text-base flex items-center gap-2 text-white" id="form-title">
                 <span>✏️</span> お店を投稿する
             </h2>
             <form id="post-form" onsubmit="submitPost(event)" class="space-y-3">
+                <input type="hidden" id="edit-post-id" value="">
                 <select id="post-genre" required class="w-full p-2.5 rounded-lg text-sm">
                     <option value="">ジャンルを選択 *</option>
                     <option value="和食">和食</option>
@@ -87,9 +97,11 @@
                 <input type="text" id="post-state" placeholder="国名 / 県名（例：日本 / 愛知県）" class="w-full p-2.5 rounded-lg text-sm">
                 <input type="text" id="post-city" placeholder="市名・区名（例：東海市）" class="w-full p-2.5 rounded-lg text-sm">
 
+                <!-- ホームページ・インスタリンク -->
                 <input type="url" id="post-hp" placeholder="ホームページURL（https://...）" class="w-full p-2.5 rounded-lg text-sm">
                 <input type="text" id="post-insta" placeholder="Instagramリンク or アカウント名" class="w-full p-2.5 rounded-lg text-sm">
 
+                <!-- おすすめシーン（複数選択） -->
                 <div>
                     <label class="block text-xs text-gray-400 mb-1.5">おすすめシーン（複数選択可）</label>
                     <div class="bg-zinc-900 border border-zinc-800 p-2.5 rounded-lg space-y-2">
@@ -105,6 +117,7 @@
                     </div>
                 </div>
 
+                <!-- 駐車場の有無 -->
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">駐車場の有無</label>
                     <select id="post-parking" class="w-full p-2.5 rounded-lg text-sm">
@@ -114,6 +127,7 @@
                     </select>
                 </div>
 
+                <!-- 支払い方法（複数選択） -->
                 <div>
                     <label class="block text-xs text-gray-400 mb-1.5">支払い方法（複数選択可）</label>
                     <div class="bg-zinc-900 border border-zinc-800 p-2.5 rounded-lg space-y-2">
@@ -134,13 +148,17 @@
                 <input type="text" id="post-holiday" placeholder="定休日（例：水曜日、不定休）" class="w-full p-2.5 rounded-lg text-sm">
                 <textarea id="post-comment" placeholder="おすすめポイントや感想など" rows="2" class="w-full p-2.5 rounded-lg text-sm"></textarea>
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">写真を追加</label>
+                    <label class="block text-xs text-gray-400 mb-1">写真を追加（変更しない場合はそのまま）</label>
                     <input type="file" id="post-image" accept="image/*" class="w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-700 file:text-white hover:file:bg-zinc-600">
                 </div>
-                <button type="submit" id="submit-btn" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 rounded-lg text-sm transition">投稿する</button>
+                <div class="flex space-x-2">
+                    <button type="submit" id="submit-btn" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 rounded-lg text-sm transition">投稿する</button>
+                    <button type="button" id="cancel-edit-btn" onclick="cancelEdit()" class="hidden bg-zinc-700 hover:bg-zinc-600 text-gray-300 font-bold py-3 px-4 rounded-lg text-sm transition">キャンセル</button>
+                </div>
             </form>
         </div>
 
+        <!-- ルーレットエリア（一番下） -->
         <div class="card p-4 text-center space-y-3 bg-gradient-to-b from-zinc-900 to-orange-950/30 border-orange-500/30">
             <h2 class="font-bold text-base flex items-center justify-center gap-2 text-white">
                 <span>🎰</span> 今日のお店をルーレットで決める
@@ -154,6 +172,7 @@
         </div>
     </div>
 
+    <!-- グループ名編集モーダル -->
     <div id="group-modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
         <div class="card p-5 w-full max-w-xs space-y-4">
             <h3 class="font-bold text-base text-white">グループ名の変更</h3>
@@ -177,6 +196,7 @@
         const storage = firebase.storage();
 
         let currentGroupId = null;
+        let currentUserId = null;
         let allPosts = [];
 
         document.addEventListener("DOMContentLoaded", async () => {
@@ -195,6 +215,9 @@
                     currentGroupId = "default_group";
                 }
 
+                const profile = await liff.getProfile();
+                currentUserId = profile.userId;
+
                 document.getElementById("access-restrict").classList.add("hidden");
                 document.getElementById("main-content").classList.remove("hidden");
 
@@ -202,6 +225,7 @@
             } catch (error) {
                 console.error("LIFF initialization failed", error);
                 currentGroupId = "test_group";
+                currentUserId = "test_user_" + Math.random();
                 document.getElementById("access-restrict").classList.add("hidden");
                 document.getElementById("main-content").classList.remove("hidden");
                 initApp();
@@ -262,40 +286,49 @@
 
             const displayPosts = posts.slice(0, 6);
 
-            listEl.innerHTML = displayPosts.map(p => `
-                <div class="bg-zinc-900 border border-zinc-800 p-2.5 rounded-xl space-y-1.5 flex flex-col justify-between">
-                    <div>
-                        <div class="flex justify-between items-start">
-                            <span class="text-[9px] bg-orange-900/60 text-orange-300 px-1.5 py-0.5 rounded font-bold">${escapeHtml(p.genre)}</span>
-                            <button onclick="deletePost('${p.id}')" class="text-zinc-500 hover:text-red-400 text-xs px-1">✕</button>
+            listEl.innerHTML = displayPosts.map(p => {
+                const isAuthor = p.userId && p.userId === currentUserId;
+                return `
+                    <div class="bg-zinc-900 border border-zinc-800 p-2.5 rounded-xl space-y-1.5 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <span class="text-[9px] bg-orange-900/60 text-orange-300 px-1.5 py-0.5 rounded font-bold">${escapeHtml(p.genre)}</span>
+                                ${isAuthor ? `
+                                    <div class="flex gap-1">
+                                        <button onclick="startEdit('${p.id}')" class="text-zinc-400 hover:text-orange-400 text-[10px] bg-zinc-800 px-1.5 py-0.5 rounded">編集</button>
+                                        <button onclick="deletePost('${p.id}')" class="text-zinc-400 hover:text-red-400 text-[10px] bg-zinc-800 px-1.5 py-0.5 rounded">削除</button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <h3 class="font-bold text-xs text-white mt-1 line-clamp-1">${escapeHtml(p.name)}</h3>
+                            ${p.city ? `<p class="text-[10px] text-gray-400 line-clamp-1">📍 ${escapeHtml(p.city)}</p>` : ''}
+                            
+                            <!-- リンク表示 -->
+                            <div class="flex gap-2 mt-1">
+                                ${p.hp ? `<a href="${escapeHtml(p.hp)}" target="_blank" class="text-[10px] text-orange-400 underline truncate">🌐 HP</a>` : ''}
+                                ${p.insta ? `<a href="${escapeHtml(p.insta.startsWith('http') ? p.insta : 'https://instagram.com/' + p.insta.replace('@',''))}" target="_blank" class="text-[10px] text-pink-400 underline truncate">📸 Instagram</a>` : ''}
+                            </div>
                         </div>
-                        <h3 class="font-bold text-xs text-white mt-1 line-clamp-1">${escapeHtml(p.name)}</h3>
-                        ${p.city ? `<p class="text-[10px] text-gray-400 line-clamp-1">📍 ${escapeHtml(p.city)}</p>` : ''}
-                        
-                        <div class="flex gap-2 mt-1">
-                            ${p.hp ? `<a href="${escapeHtml(p.hp)}" target="_blank" class="text-[10px] text-orange-400 underline truncate">🌐 HP</a>` : ''}
-                            ${p.insta ? `<a href="${escapeHtml(p.insta.startsWith('http') ? p.insta : 'https://instagram.com/' + p.insta.replace('@',''))}" target="_blank" class="text-[10px] text-pink-400 underline truncate">📸 Instagram</a>` : ''}
-                        </div>
+                        ${p.imageUrl ? `<img src="${escapeHtml(p.imageUrl)}" class="w-full h-24 object-cover rounded-lg mt-1">` : ''}
                     </div>
-                    ${p.imageUrl ? `<img src="${escapeHtml(p.imageUrl)}" class="w-full h-24 object-cover rounded-lg mt-1">` : ''}
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         async function submitPost(event) {
             event.preventDefault();
             const submitBtn = document.getElementById("submit-btn");
+            const editId = document.getElementById("edit-post-id").value;
             submitBtn.disabled = true;
-            submitBtn.textContent = "投稿中...";
+            submitBtn.textContent = editId ? "更新中..." : "投稿中...";
 
             const genre = document.getElementById("post-genre").value;
             const name = document.getElementById("post-name").value;
             const state = document.getElementById("post-state").value;
             const city = document.getElementById("post-city").value;
-            
             const hp = document.getElementById("post-hp").value;
             const insta = document.getElementById("post-insta").value;
-
+            
             const vibes = Array.from(document.querySelectorAll('input[name="post-vibe"]:checked')).map(el => el.value);
             const parking = document.getElementById("post-parking").value;
             const payments = Array.from(document.querySelectorAll('input[name="post-payment"]:checked')).map(el => el.value);
@@ -306,28 +339,84 @@
             const comment = document.getElementById("post-comment").value;
             const imageFile = document.getElementById("post-image").files[0];
 
-            let imageUrl = "";
             try {
+                let imageUrl = "";
+                if (editId) {
+                    const existing = allPosts.find(p => p.id === editId);
+                    imageUrl = existing ? (existing.imageUrl || "") : "";
+                }
+
                 if (imageFile) {
                     const storageRef = storage.ref(`images/${currentGroupId}/${Date.now()}_${imageFile.name}`);
                     const snapshot = await storageRef.put(imageFile);
                     imageUrl = await snapshot.ref.getDownloadURL();
                 }
 
-                const newPostRef = db.ref(`groups/${currentGroupId}/posts`).push();
-                await newPostRef.set({
-                    genre, name, state, city, hp, insta, vibes, parking, payments, hours, budget, holiday, comment, imageUrl,
-                    createdAt: firebase.database.ServerValue.TIMESTAMP
-                });
-
-                document.getElementById("post-form").reset();
+                if (editId) {
+                    // 更新
+                    await db.ref(`groups/${currentGroupId}/posts/${editId}`).update({
+                        genre, name, state, city, hp, insta, vibes, parking, payments, hours, budget, holiday, comment, imageUrl
+                    });
+                    cancelEdit();
+                } else {
+                    // 新規投稿
+                    const newPostRef = db.ref(`groups/${currentGroupId}/posts`).push();
+                    await newPostRef.set({
+                        genre, name, state, city, hp, insta, vibes, parking, payments, hours, budget, holiday, comment, imageUrl,
+                        userId: currentUserId,
+                        createdAt: firebase.database.ServerValue.TIMESTAMP
+                    });
+                    document.getElementById("post-form").reset();
+                }
             } catch (error) {
                 console.error(error);
-                alert("投稿に失敗しました。");
+                alert("処理に失敗しました。");
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = "投稿する";
             }
+        }
+
+        function startEdit(postId) {
+            const post = allPosts.find(p => p.id === postId);
+            if (!post) return;
+
+            document.getElementById("edit-post-id").value = post.id;
+            document.getElementById("post-genre").value = post.genre || "";
+            document.getElementById("post-name").value = post.name || "";
+            document.getElementById("post-state").value = post.state || "";
+            document.getElementById("post-city").value = post.city || "";
+            document.getElementById("post-hp").value = post.hp || "";
+            document.getElementById("post-insta").value = post.insta || "";
+            document.getElementById("post-parking").value = post.parking || "不明・記載なし";
+            document.getElementById("post-hours").value = post.hours || "";
+            document.getElementById("post-budget").value = post.budget || "";
+            document.getElementById("post-holiday").value = post.holiday || "";
+            document.getElementById("post-comment").value = post.comment || "";
+
+            // チェックボックス復元
+            document.querySelectorAll('input[name="post-vibe"]').forEach(el => {
+                el.checked = post.vibes && post.vibes.includes(el.value);
+            });
+            document.querySelectorAll('input[name="post-payment"]').forEach(el => {
+                el.checked = post.payments && post.payments.includes(el.value);
+            });
+
+            // フォームの見た目を編集モードに変更
+            document.getElementById("form-title").innerHTML = `<span>✏️</span> 投稿を編集する`;
+            document.getElementById("submit-btn").textContent = "更新する";
+            document.getElementById("cancel-edit-btn").classList.remove("hidden");
+
+            // フォームの位置までスムーズにスクロール
+            document.getElementById("form-container").scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cancelEdit() {
+            document.getElementById("edit-post-id").value = "";
+            document.getElementById("post-form").reset();
+            document.getElementById("form-title").innerHTML = `<span>✏️</span> お店を投稿する`;
+            document.getElementById("submit-btn").textContent = "投稿する";
+            document.getElementById("cancel-edit-btn").classList.add("hidden");
         }
 
         function deletePost(postId) {
