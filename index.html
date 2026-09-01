@@ -11,7 +11,7 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, push, set, get, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
         import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         // Firebase設定
@@ -25,7 +25,7 @@
         const db = getDatabase(app);
         const storage = getStorage(app);
 
-        // ★ どのLINEグループから開いても必ず同じデータ（error_fallback）を見るように固定
+        // ★ 常に error_fallback のデータを共有するように固定
         let currentGroupId = "error_fallback";
         let allRestaurants = [];
 
@@ -72,25 +72,26 @@
             loadRestaurants();
         }
 
-        // データの読み込み
-        function loadRestaurants() {
-            const sanitizedGroupId = currentGroupId.replace(/[.#$[\]]/g, "_");
-            const dbRef = ref(db, 'groups/' + sanitizedGroupId + '/restaurants');
-            
-            onValue(dbRef, (snapshot) => {
+        // データの読み込み（確実に取得できるように修正）
+        async function loadRestaurants() {
+            try {
+                const dbRef = ref(db, 'groups/' + currentGroupId + '/restaurants');
+                const snapshot = await get(dbRef);
+                
                 allRestaurants = [];
-                const data = snapshot.val();
-                if (data) {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
                     Object.keys(data).forEach((key) => {
                         allRestaurants.push({ id: key, ...data[key] });
                     });
                 }
                 renderRestaurants(allRestaurants);
-                loadingEl.classList.add("hidden");
-            }, (error) => {
+            } catch (error) {
                 console.error("Data load failed", error);
-                loadingEl.textContent = "データの読み込みに失敗しました。";
-            });
+                restaurantListEl.innerHTML = `<div class="col-span-full text-center py-8 text-red-500">データの読み込みに失敗しました。</div>`;
+            } finally {
+                loadingEl.classList.add("hidden");
+            }
         }
 
         // リストの描画
@@ -179,11 +180,10 @@
                     photoPath = newPhotoPath;
                 }
 
-                const sanitizedGroupId = currentGroupId.replace(/[.#$[\]]/g, "_");
-                const dbRef = ref(db, `groups/${sanitizedGroupId}/restaurants`);
+                const dbRef = ref(db, `groups/${currentGroupId}/restaurants`);
                 
                 if (editId) {
-                    const updateRef = ref(db, `groups/${sanitizedGroupId}/restaurants/${editId}`);
+                    const updateRef = ref(db, `groups/${currentGroupId}/restaurants/${editId}`);
                     await update(updateRef, {
                         name, genre, region, memo, photoUrl, photoPath,
                         updatedAt: Date.now()
@@ -198,6 +198,7 @@
 
                 formEl.reset();
                 resetFormState();
+                loadRestaurants(); // 再読み込み
             } catch (error) {
                 console.error("保存エラー:", error);
                 alert("保存に失敗しました。もう一度お試しください。");
@@ -267,14 +268,14 @@
                     }
                 }
 
-                const sanitizedGroupId = currentGroupId.replace(/[.#$[\]]/g, "_");
-                const itemRef = ref(db, `groups/${sanitizedGroupId}/restaurants/${targetDeleteId}`);
+                const itemRef = ref(db, `groups/${currentGroupId}/restaurants/${targetDeleteId}`);
                 await remove(itemRef);
 
                 deleteModal.classList.add("hidden");
                 deleteModal.classList.remove("flex");
                 targetDeleteId = null;
                 targetDeletePhotoPath = null;
+                loadRestaurants(); // 再読み込み
             } catch (error) {
                 console.error("削除エラー:", error);
                 alert("削除に失敗しました。");
