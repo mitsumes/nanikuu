@@ -27,6 +27,7 @@
 
         let currentGroupId = "default_group";
         let allRestaurants = [];
+        let currentUserName = "ゲストユーザー";
 
         // DOM要素
         const groupNameDisplay = document.getElementById("group-name-display");
@@ -61,9 +62,11 @@
         const detailScenes = document.getElementById("detail-scenes");
         const detailParking = document.getElementById("detail-parking");
         const detailReservation = document.getElementById("detail-reservation");
+        const detailAuthor = document.getElementById("detail-author");
         const detailHp = document.getElementById("detail-hp");
         const detailInsta = document.getElementById("detail-insta");
         const detailMemo = document.getElementById("detail-memo");
+        const detailActionButtons = document.getElementById("detail-action-buttons");
         const closeDetailBtn = document.getElementById("close-detail");
 
         // 全件一覧モーダル要素
@@ -84,10 +87,14 @@
         const startRouletteBtn = document.getElementById("start-roulette");
         const rouletteResult = document.getElementById("roulette-result");
 
-        // 初期化処理
+        // 初期化処理（LIFF & ユーザー名取得）
         async function initLiff() {
             try {
                 await liff.init({ liffId: "2011348764-dl9CNIS4" });
+                if (liff.isLoggedIn()) {
+                    const profile = await liff.getProfile();
+                    currentUserName = profile.displayName;
+                }
                 if (liff.isInClient()) {
                     const context = liff.getContext();
                     if (context && context.groupId) {
@@ -108,7 +115,6 @@
             loadRestaurants();
         }
 
-        // グループ名編集トグル（ペンのイラスト）
         editGroupBtn.addEventListener("click", () => {
             groupEditContainer.classList.toggle("hidden");
             groupInput.value = currentGroupId;
@@ -177,7 +183,7 @@
             }
         }
 
-        // お店検索の実行と描画
+        // お店検索の実行と描画（カードには編集・削除ボタンなしのシンプルなもの、または統一カード）
         function renderSearchResults() {
             const genreVal = searchGenreEl.value;
             const prefVal = searchPrefectureEl.value.trim().toLowerCase();
@@ -209,23 +215,19 @@
             const imageUrl = item.photoUrl || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=500&q=60";
             const locationStr = `${item.city || ''} ${item.prefecture || ''}`.trim() || '未設定';
             
-            card.className = "bg-zinc-900 rounded-xl overflow-hidden flex flex-col justify-between border border-zinc-800 hover:border-zinc-700 transition shadow-md";
+            card.className = "bg-zinc-900 rounded-xl overflow-hidden flex flex-col justify-between border border-zinc-800 hover:border-zinc-700 transition shadow-md cursor-pointer";
+            card.onclick = () => openDetail(item.id);
+            
             card.innerHTML = `
-                <div class="cursor-pointer" onclick="openDetail('${item.id}')">
-                    <div class="h-28 overflow-hidden bg-zinc-800 relative">
-                        <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover">
-                        <span class="absolute top-1.5 right-1.5 bg-black/70 backdrop-blur-md text-zinc-200 text-[10px] px-2 py-0.5 rounded-full border border-zinc-700">${item.genre || 'その他'}</span>
-                    </div>
-                    <div class="p-2.5">
-                        <h3 class="font-bold text-xs text-white truncate">${item.name}</h3>
-                        <div class="flex items-center justify-between mt-1 text-[10px] text-zinc-400">
-                            <span class="truncate">📍 ${locationStr}</span>
-                        </div>
-                    </div>
+                <div class="h-28 overflow-hidden bg-zinc-800 relative">
+                    <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover">
+                    <span class="absolute top-1.5 right-1.5 bg-black/70 backdrop-blur-md text-zinc-200 text-[10px] px-2 py-0.5 rounded-full border border-zinc-700">${item.genre || 'その他'}</span>
                 </div>
-                <div class="px-2.5 pb-2.5 pt-0 flex justify-end gap-1.5 border-t border-zinc-800/60 pt-2">
-                    <button onclick="startEdit('${item.id}')" class="text-[10px] bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2 py-1 rounded-lg font-medium transition">編集</button>
-                    <button onclick="promptDelete('${item.id}', '${item.photoPath || ''}')" class="text-[10px] bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded-lg font-medium transition shadow">削除</button>
+                <div class="p-2.5">
+                    <h3 class="font-bold text-xs text-white truncate">${item.name}</h3>
+                    <div class="flex items-center justify-between mt-1 text-[10px] text-zinc-400">
+                        <span class="truncate">📍 ${locationStr}</span>
+                    </div>
                 </div>
             `;
             return card;
@@ -262,7 +264,7 @@
             });
         }
 
-        // 詳細モーダル
+        // 詳細モーダル表示（下部に編集・削除ボタンを配置）
         window.openDetail = function(id) {
             const item = allRestaurants.find(r => r.id === id);
             if (!item) return;
@@ -274,6 +276,7 @@
             detailScenes.textContent = item.scenes && item.scenes.length > 0 ? item.scenes.join(', ') : '未設定';
             detailParking.textContent = item.parking || '未設定';
             detailReservation.textContent = item.reservation || '未設定';
+            detailAuthor.textContent = item.author || '不明';
             
             if (item.hpUrl) {
                 detailHp.innerHTML = `<a href="${item.hpUrl}" target="_blank" class="text-amber-400 underline truncate block">🌐 ホームページを見る</a>`;
@@ -291,8 +294,32 @@
 
             detailMemo.textContent = item.memo || 'メモなし';
 
+            // 詳細モーダル下部の編集・削除ボタン
+            detailActionButtons.innerHTML = `
+                <div class="flex gap-2 pt-2">
+                    <button onclick="closeDetailAndEdit('${item.id}')" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold py-2.5 rounded-xl text-xs transition">編集する</button>
+                    <button onclick="closeDetailAndPromptDelete('${item.id}', '${item.photoPath || ''}')" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-xl text-xs transition">削除する</button>
+                </div>
+            `;
+
             detailModal.classList.remove("hidden");
             detailModal.classList.add("flex");
+        };
+
+        window.closeDetailAndEdit = function(id) {
+            detailModal.classList.add("hidden");
+            detailModal.classList.remove("flex");
+            allModal.classList.add("hidden");
+            allModal.classList.remove("flex");
+            startEdit(id);
+        };
+
+        window.closeDetailAndPromptDelete = function(id, path) {
+            detailModal.classList.add("hidden");
+            detailModal.classList.remove("flex");
+            allModal.classList.add("hidden");
+            allModal.classList.remove("flex");
+            promptDelete(id, path);
         };
 
         closeDetailBtn.addEventListener("click", () => {
@@ -357,6 +384,7 @@
                 
                 const restaurantData = {
                     name, genre, country, prefecture, city, hpUrl, instaUrl, scenes, parking, reservation, memo, photoUrl, photoPath,
+                    author: currentUserName,
                     updatedAt: Date.now()
                 };
 
@@ -522,7 +550,6 @@
             <h1 class="text-lg font-black tracking-wider text-amber-400 flex items-center gap-2">🍽️ なにクウ？</h1>
             <div class="flex items-center gap-2">
                 <span id="group-name-display" class="text-xs bg-zinc-800 text-zinc-300 font-medium px-3 py-1 rounded-full border border-zinc-700 truncate max-w-[130px]">読み込み中...</span>
-                <!-- ペンアイコンによるグループ名編集 -->
                 <button id="edit-group-btn" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 p-1.5 rounded-full border border-zinc-700 transition text-xs" title="グループ名を変更">✏️</button>
             </div>
         </div>
@@ -531,7 +558,7 @@
     <!-- メインコンテンツ -->
     <main class="max-w-md mx-auto px-4 py-5 space-y-6">
 
-        <!-- グループ名編集エリア（初期は非表示） -->
+        <!-- グループ名編集エリア -->
         <section id="group-edit-container" class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 shadow-lg hidden space-y-3">
             <label class="block text-xs font-bold text-zinc-400">グループ名を変更する</label>
             <input type="text" id="group-input" placeholder="グループ名を入力" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
@@ -580,8 +607,9 @@
                     <input type="text" id="search-city" placeholder="例: 半田市" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-2 py-2 text-xs text-white focus:outline-none">
                 </div>
             </div>
+            <!-- 検索結果リスト -->
             <div id="search-restaurant-list" class="grid grid-cols-2 gap-3 pt-2">
-                <!-- 検索結果生成 -->
+                <!-- 動的生成 -->
             </div>
         </section>
 
@@ -734,9 +762,9 @@
         </div>
     </div>
 
-    <!-- 詳細モーダル -->
+    <!-- 詳細モーダル（下部に編集・削除ボタン） -->
     <div id="detail-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-        <div class="bg-zinc-900 rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl border border-zinc-800">
+        <div class="bg-zinc-900 rounded-3xl max-w-sm w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-zinc-800">
             <div class="h-52 bg-zinc-800 relative">
                 <img id="detail-image" src="" alt="" class="w-full h-full object-cover">
             </div>
@@ -746,6 +774,7 @@
                     <h3 id="detail-name" class="text-lg font-bold text-white mt-2"></h3>
                 </div>
                 <div class="bg-zinc-950 p-3 rounded-xl border border-zinc-800 space-y-1.5">
+                    <p>👤 投稿者: <strong id="detail-author" class="text-amber-400"></strong></p>
                     <p>📍 地域: <strong id="detail-region" class="text-white"></strong></p>
                     <p>👥 利用シーン: <strong id="detail-scenes" class="text-zinc-200"></strong></p>
                     <p>🅿️ 駐車場: <strong id="detail-parking" class="text-zinc-200"></strong> | 予約: <strong id="detail-reservation" class="text-zinc-200"></strong></p>
@@ -758,6 +787,10 @@
                     <p class="font-bold text-zinc-500 mb-1">メモ</p>
                     <p id="detail-memo" class="text-zinc-300 whitespace-pre-wrap"></p>
                 </div>
+
+                <!-- 詳細モーダル下部の編集・削除ボタンエリア -->
+                <div id="detail-action-buttons"></div>
+
                 <button id="close-detail" class="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold py-3 rounded-xl text-sm transition">閉じる</button>
             </div>
         </div>
