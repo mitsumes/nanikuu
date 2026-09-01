@@ -42,6 +42,23 @@
             const currentPhotoUrlInput = document.getElementById("current-photo-url");
             const currentPhotoPathInput = document.getElementById("current-photo-path");
 
+            // ジャンル変更によるラーメンこだわり表示切替
+            const genreSelect = document.getElementById("restaurant-genre");
+            const ramenDetailsContainer = document.getElementById("ramen-details-container");
+
+            function toggleRamenDetails() {
+                if (genreSelect.value === "ラーメン") {
+                    ramenDetailsContainer.classList.remove("hidden");
+                } else {
+                    ramenDetailsContainer.classList.add("hidden");
+                    // ラーメン以外に変えたらチェックを外す
+                    document.querySelectorAll('input[name="ramen-detail"]').forEach(cb => cb.checked = false);
+                }
+            }
+            if (genreSelect) {
+                genreSelect.addEventListener("change", toggleRamenDetails);
+            }
+
             // 検索要素
             const searchGenreEl = document.getElementById("search-genre");
             const searchPrefectureEl = document.getElementById("search-prefecture");
@@ -91,7 +108,6 @@
                 try {
                     await liff.init({ liffId: "2011348764-dl9CNIS4" });
 
-                    // 1. ログインしていなければLINEログインを促す
                     if (!liff.isLoggedIn()) {
                         liff.login();
                         return;
@@ -100,7 +116,6 @@
                     const profile = await liff.getProfile();
                     currentUserName = profile.displayName;
 
-                    // 2. LINEアプリ内から開いているかチェック
                     if (!liff.isInClient()) {
                         document.body.innerHTML = `
                             <div class="flex items-center justify-center min-h-screen bg-zinc-950 text-zinc-100 p-6 text-center">
@@ -113,10 +128,9 @@
                         return;
                     }
 
-                    // 3. トークルーム（グループまたはマルチトーク）から開かれているかチェック
                     const context = liff.getContext();
                     if (context && context.groupId) {
-                        currentGroupId = context.groupId; // LINEの実際のグループIDを自動適用
+                        currentGroupId = context.groupId;
                     } else {
                         document.body.innerHTML = `
                             <div class="flex items-center justify-center min-h-screen bg-zinc-950 text-zinc-100 p-6 text-center">
@@ -199,7 +213,8 @@
                         const matchPref = (prefVal === "" || (item.prefecture && item.prefecture.toLowerCase().includes(prefVal)));
                         const matchCity = (cityVal === "" || (item.city && item.city.toLowerCase().includes(cityVal)));
                         
-                        const fullText = `${item.name || ''} ${item.genre || ''} ${item.memo || ''} ${item.prefecture || ''} ${item.city || ''} ${item.author || ''}`.toLowerCase();
+                        const ramenDetailsStr = item.ramenDetails ? item.ramenDetails.join(' ') : '';
+                        const fullText = `${item.name || ''} ${item.genre || ''} ${item.memo || ''} ${item.prefecture || ''} ${item.city || ''} ${item.author || ''} ${ramenDetailsStr}`.toLowerCase();
                         const matchKeyword = (keywordVal === "" || fullText.includes(keywordVal));
 
                         return matchGenre && matchPref && matchCity && matchKeyword;
@@ -363,11 +378,25 @@
                 if (detailName) detailName.textContent = item.name;
                 if (detailGenre) detailGenre.textContent = item.genre || '未設定';
                 if (detailRegion) detailRegion.textContent = `${item.country || '日本'} ${item.prefecture || ''} ${item.city || ''}`.trim() || '未設定';
+                
                 if (detailScenes) detailScenes.textContent = item.scenes && item.scenes.length > 0 ? item.scenes.join(', ') : '未設定';
                 if (detailParking) detailParking.textContent = item.parking || '未設定';
                 if (detailReservation) detailReservation.textContent = item.reservation || '未設定';
                 if (detailAuthor) detailAuthor.textContent = item.author || '不明';
                 
+                // ラーメン詳細があれば詳細モーダルに追加表示
+                let ramenExtraHtml = '';
+                if (item.genre === 'ラーメン' && item.ramenDetails && item.ramenDetails.length > 0) {
+                    ramenExtraHtml = `
+                        <div>
+                            <span class="text-zinc-500 block text-[10px] mb-1">ラーメンのこだわり</span>
+                            <div class="flex flex-wrap gap-1">
+                                ${item.ramenDetails.map(d => `<span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-md">${d}</span>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
                 if (detailHp) {
                     if (item.hpUrl) {
                         detailHp.innerHTML = `<a href="${item.hpUrl}" target="_blank" class="text-amber-400 underline truncate block">🌐 ホームページを見る</a>`;
@@ -396,6 +425,7 @@
 
                 if (detailActionButtons) {
                     detailActionButtons.innerHTML = `
+                        ${ramenExtraHtml}
                         <div class="space-y-2 pt-2 border-t border-zinc-800 mt-2">
                             <div class="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/60 text-[10px] text-zinc-400 flex items-center justify-between">
                                 <span>🚀 イッタヨ！した人: <strong class="text-zinc-200">${likedNames}</strong></span>
@@ -476,6 +506,14 @@
                         scenes.push(cb.value);
                     });
 
+                    // ラーメン詳細の取得
+                    const ramenDetails = [];
+                    if (genre === "ラーメン") {
+                        document.querySelectorAll('input[name="ramen-detail"]:checked').forEach(cb => {
+                            ramenDetails.push(cb.value);
+                        });
+                    }
+
                     const parking = document.getElementById("restaurant-parking").value;
                     const reservation = document.getElementById("restaurant-reservation").value;
                     const memo = document.getElementById("restaurant-memo").value;
@@ -503,7 +541,7 @@
                         const dbRef = ref(db, `groups/${currentGroupId}/restaurants`);
                         
                         const restaurantData = {
-                            name, genre, country, prefecture, city, hpUrl, instaUrl, scenes, parking, reservation, memo, photoUrl, photoPath,
+                            name, genre, country, prefecture, city, hpUrl, instaUrl, scenes, ramenDetails, parking, reservation, memo, photoUrl, photoPath,
                             author: currentUserName,
                             updatedAt: Date.now()
                         };
@@ -523,6 +561,7 @@
 
                         formEl.reset();
                         document.getElementById("restaurant-country").value = "日本";
+                        toggleRamenDetails();
                         resetFormState();
                     } catch (error) {
                         console.error("保存エラー:", error);
@@ -542,7 +581,9 @@
 
                 editIdInput.value = item.id;
                 document.getElementById("restaurant-name").value = item.name;
-                document.getElementById("restaurant-genre").value = item.genre || "ラーメン・麺類";
+                document.getElementById("restaurant-genre").value = item.genre || "ラーメン";
+                toggleRamenDetails();
+
                 document.getElementById("restaurant-country").value = item.country || "日本";
                 document.getElementById("restaurant-prefecture").value = item.prefecture || "";
                 document.getElementById("restaurant-city").value = item.city || "";
@@ -551,6 +592,10 @@
                 
                 document.querySelectorAll('input[name="restaurant-scene"]').forEach(cb => {
                     cb.checked = item.scenes && item.scenes.includes(cb.value);
+                });
+
+                document.querySelectorAll('input[name="ramen-detail"]').forEach(cb => {
+                    cb.checked = item.ramenDetails && item.ramenDetails.includes(cb.value);
                 });
 
                 document.getElementById("restaurant-parking").value = item.parking || "";
@@ -568,6 +613,7 @@
                 cancelEditBtn.addEventListener("click", () => {
                     if (formEl) formEl.reset();
                     document.getElementById("restaurant-country").value = "日本";
+                    toggleRamenDetails();
                     resetFormState();
                 });
             }
@@ -713,12 +759,14 @@
                         <label class="block text-[10px] text-zinc-400 mb-1">ジャンル</label>
                         <select id="search-genre" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
                             <option value="すべて">すべて</option>
-                            <option value="ラーメン・麺類">ラーメン・麺類</option>
+                            <option value="ラーメン">ラーメン</option>
                             <option value="居酒屋・和食">居酒屋・和食</option>
                             <option value="焼肉・肉料理">焼肉・肉料理</option>
                             <option value="洋食・イタリアン">洋食・イタリアン</option>
                             <option value="中華・アジア">中華・アジア</option>
                             <option value="カフェ・スイーツ">カフェ・スイーツ</option>
+                            <option value="ファミレス">ファミレス</option>
+                            <option value="テイクアウト">テイクアウト</option>
                             <option value="その他">その他</option>
                         </select>
                     </div>
@@ -734,7 +782,7 @@
                     </div>
                     <div>
                         <label class="block text-[10px] text-zinc-400 mb-1">キーワード</label>
-                        <input type="text" id="search-keyword" placeholder="店名やメモなど" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        <input type="text" id="search-keyword" placeholder="店名やこだわり等" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
                     </div>
                 </div>
                 <button id="execute-search-btn" class="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold py-2 rounded-xl text-xs transition">この条件で検索する</button>
@@ -760,18 +808,36 @@
                     <div>
                         <label class="block text-[10px] text-zinc-400 mb-1">ジャンル</label>
                         <select id="restaurant-genre" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
-                            <option value="ラーメン・麺類">ラーメン・麺類</option>
+                            <option value="ラーメン">ラーメン</option>
                             <option value="居酒屋・和食">居酒屋・和食</option>
                             <option value="焼肉・肉料理">焼肉・肉料理</option>
                             <option value="洋食・イタリアン">洋食・イタリアン</option>
                             <option value="中華・アジア">中華・アジア</option>
                             <option value="カフェ・スイーツ">カフェ・スイーツ</option>
+                            <option value="ファミレス">ファミレス</option>
+                            <option value="テイクアウト">テイクアウト</option>
                             <option value="その他">その他</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-[10px] text-zinc-400 mb-1">国</label>
                         <input type="text" id="restaurant-country" value="日本" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div id="ramen-details-container" class="bg-zinc-950/40 border border-amber-500/30 p-3 rounded-xl space-y-2">
+                    <label class="block text-[10px] font-bold text-amber-400">🍜 ラーメンのこだわり (複数選択可)</label>
+                    <div class="grid grid-cols-3 gap-2 text-xs text-zinc-300">
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="こってり"> こってり</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="あっさり"> あっさり</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="醤油"> 醤油</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="味噌"> 味噌</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="塩"> 塩</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="辛い"> 辛い</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="つけ麺"> つけ麺</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="まぜそば"> まぜそば</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="二郎系"> 二郎系</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="家系"> 家系</label>
                     </div>
                 </div>
 
@@ -854,12 +920,14 @@
                         <label class="block text-[10px] text-zinc-400 mb-1">ジャンル絞り込み</label>
                         <select id="roulette-genre" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
                             <option value="すべて">すべて</option>
-                            <option value="ラーメン・麺類">ラーメン・麺類</option>
+                            <option value="ラーメン">ラーメン</option>
                             <option value="居酒屋・和食">居酒屋・和食</option>
                             <option value="焼肉・肉料理">焼肉・肉料理</option>
                             <option value="洋食・イタリアン">洋食・イタリアン</option>
                             <option value="中華・アジア">中華・アジア</option>
                             <option value="カフェ・スイーツ">カフェ・スイーツ</option>
+                            <option value="ファミレス">ファミレス</option>
+                            <option value="テイクアウト">テイクアウト</option>
                             <option value="その他">その他</option>
                         </select>
                     </div>
