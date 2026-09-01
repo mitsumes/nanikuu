@@ -87,6 +87,9 @@
                 <input type="text" id="post-state" placeholder="国名 / 県名（例：日本 / 愛知県）" class="w-full p-2.5 rounded-lg text-sm">
                 <input type="text" id="post-city" placeholder="市名・区名（例：東海市）" class="w-full p-2.5 rounded-lg text-sm">
 
+                <input type="url" id="post-hp" placeholder="ホームページURL（https://...）" class="w-full p-2.5 rounded-lg text-sm">
+                <input type="text" id="post-insta" placeholder="Instagramリンク or アカウント名" class="w-full p-2.5 rounded-lg text-sm">
+
                 <div>
                     <label class="block text-xs text-gray-400 mb-1.5">おすすめシーン（複数選択可）</label>
                     <div class="bg-zinc-900 border border-zinc-800 p-2.5 rounded-lg space-y-2">
@@ -268,6 +271,11 @@
                         </div>
                         <h3 class="font-bold text-xs text-white mt-1 line-clamp-1">${escapeHtml(p.name)}</h3>
                         ${p.city ? `<p class="text-[10px] text-gray-400 line-clamp-1">📍 ${escapeHtml(p.city)}</p>` : ''}
+                        
+                        <div class="flex gap-2 mt-1">
+                            ${p.hp ? `<a href="${escapeHtml(p.hp)}" target="_blank" class="text-[10px] text-orange-400 underline truncate">🌐 HP</a>` : ''}
+                            ${p.insta ? `<a href="${escapeHtml(p.insta.startsWith('http') ? p.insta : 'https://instagram.com/' + p.insta.replace('@',''))}" target="_blank" class="text-[10px] text-pink-400 underline truncate">📸 Instagram</a>` : ''}
+                        </div>
                     </div>
                     ${p.imageUrl ? `<img src="${escapeHtml(p.imageUrl)}" class="w-full h-24 object-cover rounded-lg mt-1">` : ''}
                 </div>
@@ -285,6 +293,9 @@
             const state = document.getElementById("post-state").value;
             const city = document.getElementById("post-city").value;
             
+            const hp = document.getElementById("post-hp").value;
+            const insta = document.getElementById("post-insta").value;
+
             const vibes = Array.from(document.querySelectorAll('input[name="post-vibe"]:checked')).map(el => el.value);
             const parking = document.getElementById("post-parking").value;
             const payments = Array.from(document.querySelectorAll('input[name="post-payment"]:checked')).map(el => el.value);
@@ -305,7 +316,7 @@
 
                 const newPostRef = db.ref(`groups/${currentGroupId}/posts`).push();
                 await newPostRef.set({
-                    genre, name, state, city, vibes, parking, payments, hours, budget, holiday, comment, imageUrl,
+                    genre, name, state, city, hp, insta, vibes, parking, payments, hours, budget, holiday, comment, imageUrl,
                     createdAt: firebase.database.ServerValue.TIMESTAMP
                 });
 
