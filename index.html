@@ -695,10 +695,8 @@
             </div>
         </header>
 
-        <!-- ローディング -->
         <div id="loading" class="text-center py-12 text-zinc-500 text-xs">データを読み込んでいます...</div>
 
-        <!-- 1番上：最近追加されたお店（みんなの投稿） -->
         <section class="mb-6">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold text-zinc-300 uppercase tracking-widest">最近追加されたお店</h2>
@@ -707,7 +705,6 @@
             <div id="latest-restaurant-list" class="grid grid-cols-2 gap-3"></div>
         </section>
 
-        <!-- 検索セクション -->
         <section class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-6">
             <h2 class="text-xs font-bold text-zinc-300 mb-2">🔍 お店を検索</h2>
             <div class="space-y-2">
@@ -744,7 +741,6 @@
             </div>
         </section>
 
-        <!-- 投稿・編集フォーム -->
         <section class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-6">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold text-zinc-300">お店を登録・編集</h2>
@@ -850,7 +846,6 @@
             </form>
         </section>
 
-        <!-- 1番下：ルーレット機能セクション -->
         <section class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-8">
             <h2 class="text-xs font-bold text-amber-400 mb-2 flex items-center gap-1">🎲 今日どこ行く？ルーレット</h2>
             <div class="space-y-2">
@@ -879,10 +874,9 @@
         </section>
     </div>
 
-    <!-- 詳細モーダル -->
     <div id="detail-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-sm overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="relative h-48 bg-zinc-800">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-sm overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="relative h-40 min-h-[160px] bg-zinc-800 shrink-0">
                 <img id="detail-image" src="" alt="" class="w-full h-full object-cover">
                 <button id="close-detail" class="absolute top-3 right-3 bg-black/60 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold">✕</button>
             </div>
@@ -908,7 +902,6 @@
         </div>
     </div>
 
-    <!-- 検索結果モーダル -->
     <div id="search-result-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-sm overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-4 border-b border-zinc-800 flex justify-between items-center">
@@ -919,7 +912,6 @@
         </div>
     </div>
 
-    <!-- 全件一覧モーダル -->
     <div id="all-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-sm overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-4 border-b border-zinc-800 flex justify-between items-center">
@@ -930,7 +922,6 @@
         </div>
     </div>
 
-    <!-- 削除確認モーダル -->
     <div id="delete-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 w-full max-w-xs text-center space-y-4">
             <h3 class="text-sm font-bold text-white">本当に削除しますか？</h3>
