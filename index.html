@@ -47,16 +47,19 @@
             const ramenDetailsContainer = document.getElementById("ramen-details-container");
 
             function toggleRamenDetails() {
-                if (genreSelect.value === "ラーメン") {
-                    ramenDetailsContainer.classList.remove("hidden");
-                } else {
-                    ramenDetailsContainer.classList.add("hidden");
-                    // ラーメン以外に変えたらチェックを外す
-                    document.querySelectorAll('input[name="ramen-detail"]').forEach(cb => cb.checked = false);
+                if (genreSelect && ramenDetailsContainer) {
+                    if (genreSelect.value === "ラーメン") {
+                        ramenDetailsContainer.classList.remove("hidden");
+                    } else {
+                        ramenDetailsContainer.classList.add("hidden");
+                        document.querySelectorAll('input[name="ramen-detail"]').forEach(cb => cb.checked = false);
+                    }
                 }
             }
+
             if (genreSelect) {
                 genreSelect.addEventListener("change", toggleRamenDetails);
+                toggleRamenDetails(); // 初期表示時にもチェック
             }
 
             // 検索要素
@@ -384,7 +387,6 @@
                 if (detailReservation) detailReservation.textContent = item.reservation || '未設定';
                 if (detailAuthor) detailAuthor.textContent = item.author || '不明';
                 
-                // ラーメン詳細があれば詳細モーダルに追加表示
                 let ramenExtraHtml = '';
                 if (item.genre === 'ラーメン' && item.ramenDetails && item.ramenDetails.length > 0) {
                     ramenExtraHtml = `
