@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>なにクウ？ - グループ飲食店共有</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- LINE LIFF SDK -->
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -39,7 +36,6 @@
         
         const latestListEl = document.getElementById("latest-restaurant-list");
         const allListEl = document.getElementById("all-restaurant-list");
-        const searchListEl = document.getElementById("search-restaurant-list");
         const loadingEl = document.getElementById("loading");
         const formEl = document.getElementById("restaurant-form");
         const submitBtn = document.getElementById("submit-btn");
@@ -52,6 +48,8 @@
         const searchGenreEl = document.getElementById("search-genre");
         const searchPrefectureEl = document.getElementById("search-prefecture");
         const searchCityEl = document.getElementById("search-city");
+        const searchKeywordEl = document.getElementById("search-keyword");
+        const executeSearchBtn = document.getElementById("execute-search-btn");
 
         // 詳細モーダル要素
         const detailModal = document.getElementById("detail-modal");
@@ -68,6 +66,11 @@
         const detailMemo = document.getElementById("detail-memo");
         const detailActionButtons = document.getElementById("detail-action-buttons");
         const closeDetailBtn = document.getElementById("close-detail");
+
+        // 検索結果モーダル要素
+        const searchResultModal = document.getElementById("search-result-modal");
+        const searchResultListEl = document.getElementById("search-result-list");
+        const closeSearchResultModalBtn = document.getElementById("close-search-result-modal");
 
         // 全件一覧モーダル要素
         const allModal = document.getElementById("all-modal");
@@ -151,7 +154,6 @@
                     allRestaurants.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
                 }
                 renderRestaurants();
-                renderSearchResults();
             }, (error) => {
                 console.error("Data load failed", error);
                 loadingEl.textContent = "データの読み込みに失敗しました。";
@@ -183,32 +185,41 @@
             }
         }
 
-        // お店検索の実行と描画（カードには編集・削除ボタンなしのシンプルなもの、または統一カード）
-        function renderSearchResults() {
+        // 検索ボタン押下時の処理
+        executeSearchBtn.addEventListener("click", () => {
             const genreVal = searchGenreEl.value;
             const prefVal = searchPrefectureEl.value.trim().toLowerCase();
             const cityVal = searchCityEl.value.trim().toLowerCase();
+            const keywordVal = searchKeywordEl.value.trim().toLowerCase();
 
             const filtered = allRestaurants.filter(item => {
                 const matchGenre = (genreVal === "すべて" || item.genre === genreVal);
                 const matchPref = (prefVal === "" || (item.prefecture && item.prefecture.toLowerCase().includes(prefVal)));
                 const matchCity = (cityVal === "" || (item.city && item.city.toLowerCase().includes(cityVal)));
-                return matchGenre && matchPref && matchCity;
+                
+                const fullText = `${item.name || ''} ${item.genre || ''} ${item.memo || ''} ${item.prefecture || ''} ${item.city || ''} ${item.author || ''}`.toLowerCase();
+                const matchKeyword = (keywordVal === "" || fullText.includes(keywordVal));
+
+                return matchGenre && matchPref && matchCity && matchKeyword;
             });
 
-            searchListEl.innerHTML = "";
+            searchResultListEl.innerHTML = "";
             if (filtered.length === 0) {
-                searchListEl.innerHTML = `<div class="col-span-full text-center py-6 text-zinc-500 text-xs">条件に一致するお店が見つかりませんでした。</div>`;
+                searchResultListEl.innerHTML = `<div class="text-center py-8 text-zinc-500 text-xs col-span-2">条件に一致するお店が見つかりませんでした。</div>`;
             } else {
                 filtered.forEach(item => {
-                    searchListEl.appendChild(createCardElement(item));
+                    searchResultListEl.appendChild(createCardElement(item));
                 });
             }
-        }
 
-        searchGenreEl.addEventListener("change", renderSearchResults);
-        searchPrefectureEl.addEventListener("input", renderSearchResults);
-        searchCityEl.addEventListener("input", renderSearchResults);
+            searchResultModal.classList.remove("hidden");
+            searchResultModal.classList.add("flex");
+        });
+
+        closeSearchResultModalBtn.addEventListener("click", () => {
+            searchResultModal.classList.add("hidden");
+            searchResultModal.classList.remove("flex");
+        });
 
         function createCardElement(item) {
             const card = document.createElement("div");
@@ -216,7 +227,13 @@
             const locationStr = `${item.city || ''} ${item.prefecture || ''}`.trim() || '未設定';
             
             card.className = "bg-zinc-900 rounded-xl overflow-hidden flex flex-col justify-between border border-zinc-800 hover:border-zinc-700 transition shadow-md cursor-pointer";
-            card.onclick = () => openDetail(item.id);
+            card.onclick = () => {
+                searchResultModal.classList.add("hidden");
+                searchResultModal.classList.remove("flex");
+                allModal.classList.add("hidden");
+                allModal.classList.remove("flex");
+                openDetail(item.id);
+            };
             
             card.innerHTML = `
                 <div class="h-28 overflow-hidden bg-zinc-800 relative">
@@ -264,7 +281,7 @@
             });
         }
 
-        // 詳細モーダル表示（下部に編集・削除ボタンを配置）
+        // 詳細モーダル表示（ここで初めて編集・削除ボタンが表示される）
         window.openDetail = function(id) {
             const item = allRestaurants.find(r => r.id === id);
             if (!item) return;
@@ -296,7 +313,7 @@
 
             // 詳細モーダル下部の編集・削除ボタン
             detailActionButtons.innerHTML = `
-                <div class="flex gap-2 pt-2">
+                <div class="flex gap-2 pt-2 border-t border-zinc-800 mt-2">
                     <button onclick="closeDetailAndEdit('${item.id}')" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold py-2.5 rounded-xl text-xs transition">編集する</button>
                     <button onclick="closeDetailAndPromptDelete('${item.id}', '${item.photoPath || ''}')" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-xl text-xs transition">削除する</button>
                 </div>
@@ -309,16 +326,12 @@
         window.closeDetailAndEdit = function(id) {
             detailModal.classList.add("hidden");
             detailModal.classList.remove("flex");
-            allModal.classList.add("hidden");
-            allModal.classList.remove("flex");
             startEdit(id);
         };
 
         window.closeDetailAndPromptDelete = function(id, path) {
             detailModal.classList.add("hidden");
             detailModal.classList.remove("flex");
-            allModal.classList.add("hidden");
-            allModal.classList.remove("flex");
             promptDelete(id, path);
         };
 
@@ -498,316 +511,4 @@
             const regionKeyword = rouletteRegionInput.value.trim().toLowerCase();
 
             const filtered = allRestaurants.filter(item => {
-                const matchGenre = (selectedGenre === "すべて" || item.genre === selectedGenre);
-                const regionText = `${item.country || ''} ${item.prefecture || ''} ${item.city || ''}`.toLowerCase();
-                const matchRegion = (regionKeyword === "" || regionText.includes(regionKeyword));
-                return matchGenre && matchRegion;
-            });
-
-            if (filtered.length === 0) {
-                rouletteResult.innerHTML = `<p class='text-red-400 text-xs'>条件に合致するお店が見つかりませんでした！</p>`;
-                return;
-            }
-
-            let count = 0;
-            startRouletteBtn.disabled = true;
-            
-            const timer = setInterval(() => {
-                const randomIndex = Math.floor(Math.random() * filtered.length);
-                const pick = filtered[randomIndex];
-                rouletteResult.innerHTML = `
-                    <div class="animate-pulse">
-                        <h4 class="text-lg font-bold text-amber-400">${pick.name}</h4>
-                        <p class="text-xs text-zinc-400 mt-1">${pick.genre || 'その他'} / ${pick.city || '未設定'}</p>
-                    </div>
-                `;
-                count++;
-                if (count > 15) {
-                    clearInterval(timer);
-                    const finalPick = filtered[Math.floor(Math.random() * filtered.length)];
-                    rouletteResult.innerHTML = `
-                        <div class="bg-zinc-800/90 border border-amber-500/50 p-4 rounded-2xl w-full text-left space-y-1">
-                            <span class="text-[10px] bg-amber-500 text-zinc-950 px-2 py-0.5 rounded-full font-bold">決定！🎉</span>
-                            <h4 class="text-xl font-black text-white mt-1">${finalPick.name}</h4>
-                            <p class="text-xs text-zinc-300">🍽️ ${finalPick.genre} | 📍 ${finalPick.city || '未設定'}</p>
-                            <p class="text-xs text-zinc-400">🅿️ 駐車場:${finalPick.parking} / 予約:${finalPick.reservation}</p>
-                            <p class="text-xs text-zinc-400 pt-2 border-t border-zinc-700">メモ: ${finalPick.memo || 'なし'}</p>
-                        </div>
-                    `;
-                    startRouletteBtn.disabled = false;
-                }
-            }, 100);
-        });
-
-        window.addEventListener("DOMContentLoaded", initLiff);
-    </script>
-</head>
-<body class="bg-zinc-950 min-h-screen text-zinc-100 pb-20">
-
-    <!-- ヘッダー -->
-    <header class="bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800 sticky top-0 z-10">
-        <div class="max-w-md mx-auto px-4 py-3.5 flex justify-between items-center">
-            <h1 class="text-lg font-black tracking-wider text-amber-400 flex items-center gap-2">🍽️ なにクウ？</h1>
-            <div class="flex items-center gap-2">
-                <span id="group-name-display" class="text-xs bg-zinc-800 text-zinc-300 font-medium px-3 py-1 rounded-full border border-zinc-700 truncate max-w-[130px]">読み込み中...</span>
-                <button id="edit-group-btn" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 p-1.5 rounded-full border border-zinc-700 transition text-xs" title="グループ名を変更">✏️</button>
-            </div>
-        </div>
-    </header>
-
-    <!-- メインコンテンツ -->
-    <main class="max-w-md mx-auto px-4 py-5 space-y-6">
-
-        <!-- グループ名編集エリア -->
-        <section id="group-edit-container" class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 shadow-lg hidden space-y-3">
-            <label class="block text-xs font-bold text-zinc-400">グループ名を変更する</label>
-            <input type="text" id="group-input" placeholder="グループ名を入力" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
-            <div class="flex gap-2">
-                <button id="save-group-btn" class="flex-1 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold py-2 rounded-xl text-xs transition">保存</button>
-                <button id="cancel-group-btn" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-2 rounded-xl text-xs transition">キャンセル</button>
-            </div>
-        </section>
-
-        <!-- みんなの投稿（最新6件） -->
-        <section>
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="text-xs font-bold text-zinc-400 uppercase tracking-wider">みんなの投稿（最新6件）</h2>
-                <button id="open-all-modal" class="text-xs text-amber-400 hover:underline font-medium hidden">他の投稿もみる →</button>
-            </div>
-            <div id="loading" class="text-center py-12 text-zinc-500 text-sm">読み込み中...</div>
-            <div id="latest-restaurant-list" class="grid grid-cols-2 gap-3">
-                <!-- 動的生成 -->
-            </div>
-        </section>
-
-        <!-- お店検索機能 -->
-        <section class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 shadow-xl space-y-3">
-            <h2 class="text-xs font-bold text-amber-400 uppercase tracking-wider">🔍 お店検索</h2>
-            <div class="grid grid-cols-3 gap-2">
-                <div>
-                    <label class="block text-[10px] font-bold text-zinc-400 mb-1">ジャンル</label>
-                    <select id="search-genre" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-2 py-2 text-xs text-white focus:outline-none">
-                        <option value="すべて">すべて</option>
-                        <option value="ラーメン・麺類">ラーメン・麺類</option>
-                        <option value="町中華">町中華</option>
-                        <option value="和食">和食</option>
-                        <option value="洋食">洋食</option>
-                        <option value="焼肉">焼肉</option>
-                        <option value="寿司">寿司</option>
-                        <option value="カフェ">カフェ</option>
-                        <option value="その他">その他</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-zinc-400 mb-1">県名</label>
-                    <input type="text" id="search-prefecture" placeholder="例: 愛知県" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-2 py-2 text-xs text-white focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-zinc-400 mb-1">市町村</label>
-                    <input type="text" id="search-city" placeholder="例: 半田市" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-2 py-2 text-xs text-white focus:outline-none">
-                </div>
-            </div>
-            <!-- 検索結果リスト -->
-            <div id="search-restaurant-list" class="grid grid-cols-2 gap-3 pt-2">
-                <!-- 動的生成 -->
-            </div>
-        </section>
-
-        <!-- 投稿フォーム -->
-        <section class="bg-zinc-900 p-5 rounded-2xl border border-zinc-800 shadow-xl">
-            <h2 class="text-sm font-bold text-zinc-200 mb-4 pb-2 border-b border-zinc-800">お店を投稿・編集する</h2>
-            <form id="restaurant-form" class="space-y-4">
-                <input type="hidden" id="edit-id">
-                <input type="hidden" id="current-photo-url">
-                <input type="hidden" id="current-photo-path">
-
-                <div>
-                    <label class="block text-xs font-bold text-zinc-400 mb-1">店名 <span class="text-amber-400">*</span></label>
-                    <input type="text" id="restaurant-name" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-zinc-400 mb-1">ジャンル</label>
-                    <select id="restaurant-genre" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
-                        <option value="ラーメン・麺類">ラーメン・麺類</option>
-                        <option value="町中華">町中華</option>
-                        <option value="和食">和食</option>
-                        <option value="洋食">洋食</option>
-                        <option value="焼肉">焼肉</option>
-                        <option value="寿司">寿司</option>
-                        <option value="カフェ">カフェ</option>
-                        <option value="その他">その他</option>
-                    </select>
-                </div>
-
-                <!-- 地域詳細入力 -->
-                <div class="grid grid-cols-3 gap-2">
-                    <div>
-                        <label class="block text-[10px] font-bold text-zinc-400 mb-1">国名</label>
-                        <input type="text" id="restaurant-country" value="日本" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-zinc-400 mb-1">県名</label>
-                        <input type="text" id="restaurant-prefecture" placeholder="愛知県" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-zinc-400 mb-1">市町村</label>
-                        <input type="text" id="restaurant-city" placeholder="半田市" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
-                    </div>
-                </div>
-
-                <!-- リンク入力欄 -->
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-xs font-bold text-zinc-400 mb-1">ホームページ URL</label>
-                        <input type="url" id="restaurant-hp" placeholder="https://example.com" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-zinc-400 mb-1">Instagram URL</label>
-                        <input type="url" id="restaurant-insta" placeholder="https://instagram.com/..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
-                    </div>
-                </div>
-
-                <!-- 利用シーン（複数選択） -->
-                <div>
-                    <label class="block text-xs font-bold text-zinc-400 mb-1">利用シーン（複数選択可）</label>
-                    <div class="flex gap-4 text-xs text-zinc-300 bg-zinc-950 p-3 rounded-xl border border-zinc-800">
-                        <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" name="restaurant-scene" value="1人向け" class="accent-amber-500"> 1人向け</label>
-                        <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" name="restaurant-scene" value="ファミリー向け" class="accent-amber-500"> ファミリー</label>
-                        <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" name="restaurant-scene" value="グループ向け" class="accent-amber-500"> グループ</label>
-                    </div>
-                </div>
-
-                <!-- 駐車場・予約 -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-zinc-400 mb-1">駐車場</label>
-                        <select id="restaurant-parking" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
-                            <option value="あり">あり</option>
-                            <option value="なし">なし</option>
-                            <option value="近隣にコインパーキング">近隣コインパ</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-zinc-400 mb-1">予約</label>
-                        <select id="restaurant-reservation" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
-                            <option value="可">可</option>
-                            <option value="不可">不可</option>
-                            <option value="不明">不明</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-zinc-400 mb-1">写真（自動圧縮されます）</label>
-                    <input type="file" id="restaurant-photo" accept="image/*" class="w-full text-xs text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-amber-400 hover:file:bg-zinc-700">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-zinc-400 mb-1">メモ・おすすめポイント</label>
-                    <textarea id="restaurant-memo" rows="2" placeholder="例: 唐揚げが美味しい" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-400"></textarea>
-                </div>
-
-                <div class="flex gap-2 pt-2">
-                    <button type="submit" id="submit-btn" class="flex-1 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold py-3 px-4 rounded-xl text-sm shadow transition">投稿する</button>
-                    <button type="button" id="cancel-edit" class="hidden bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-3 px-4 rounded-xl text-sm transition">キャンセル</button>
-                </div>
-            </form>
-        </section>
-
-        <!-- お店ルーレット（一番下） -->
-        <section class="bg-zinc-900 p-5 rounded-2xl border border-zinc-800 shadow-xl space-y-4">
-            <h2 class="text-sm font-black text-amber-400 flex items-center gap-2">🎰 お店ルーレット</h2>
-            
-            <div class="grid grid-cols-2 gap-2">
-                <div>
-                    <label class="block text-[10px] font-bold text-zinc-400 mb-1">ジャンル選択</label>
-                    <select id="roulette-genre" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
-                        <option value="すべて">すべて</option>
-                        <option value="ラーメン・麺類">ラーメン・麺類</option>
-                        <option value="町中華">町中華</option>
-                        <option value="和食">和食</option>
-                        <option value="洋食">洋食</option>
-                        <option value="焼肉">焼肉</option>
-                        <option value="寿司">寿司</option>
-                        <option value="カフェ">カフェ</option>
-                        <option value="その他">その他</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-zinc-400 mb-1">地区名（キーワード）</label>
-                    <input type="text" id="roulette-region" placeholder="例: 半田市" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
-                </div>
-            </div>
-
-            <div id="roulette-result" class="py-4 text-center min-h-[80px] flex items-center justify-center bg-zinc-950 rounded-xl border border-zinc-800/80">
-                <p class="text-zinc-500 text-xs">条件を選んでスタートを押してね！</p>
-            </div>
-
-            <button id="start-roulette" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-95 text-zinc-950 font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-amber-500/20 transition">ルーレットスタート！</button>
-        </section>
-
-    </main>
-
-    <!-- 全件一覧モーダル -->
-    <div id="all-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-        <div class="bg-zinc-900 rounded-3xl max-w-sm w-full max-h-[85vh] flex flex-col shadow-2xl border border-zinc-800 overflow-hidden">
-            <div class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/90">
-                <h3 class="font-bold text-white text-sm">すべての投稿一覧</h3>
-                <button id="close-all-modal" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-xl font-medium transition">閉じる</button>
-            </div>
-            <div id="all-restaurant-list" class="p-4 overflow-y-auto space-y-3 flex-1">
-                <!-- 動的生成 -->
-            </div>
-        </div>
-    </div>
-
-    <!-- 詳細モーダル（下部に編集・削除ボタン） -->
-    <div id="detail-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-        <div class="bg-zinc-900 rounded-3xl max-w-sm w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-zinc-800">
-            <div class="h-52 bg-zinc-800 relative">
-                <img id="detail-image" src="" alt="" class="w-full h-full object-cover">
-            </div>
-            <div class="p-5 space-y-3 text-xs">
-                <div>
-                    <span id="detail-genre" class="bg-zinc-800 text-amber-400 px-2.5 py-1 rounded-full font-medium border border-zinc-700"></span>
-                    <h3 id="detail-name" class="text-lg font-bold text-white mt-2"></h3>
-                </div>
-                <div class="bg-zinc-950 p-3 rounded-xl border border-zinc-800 space-y-1.5">
-                    <p>👤 投稿者: <strong id="detail-author" class="text-amber-400"></strong></p>
-                    <p>📍 地域: <strong id="detail-region" class="text-white"></strong></p>
-                    <p>👥 利用シーン: <strong id="detail-scenes" class="text-zinc-200"></strong></p>
-                    <p>🅿️ 駐車場: <strong id="detail-parking" class="text-zinc-200"></strong> | 予約: <strong id="detail-reservation" class="text-zinc-200"></strong></p>
-                </div>
-                <div id="detail-links" class="space-y-1.5">
-                    <div id="detail-hp" class="hidden"></div>
-                    <div id="detail-insta" class="hidden"></div>
-                </div>
-                <div class="bg-zinc-950 p-3 rounded-xl border border-zinc-800">
-                    <p class="font-bold text-zinc-500 mb-1">メモ</p>
-                    <p id="detail-memo" class="text-zinc-300 whitespace-pre-wrap"></p>
-                </div>
-
-                <!-- 詳細モーダル下部の編集・削除ボタンエリア -->
-                <div id="detail-action-buttons"></div>
-
-                <button id="close-detail" class="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold py-3 rounded-xl text-sm transition">閉じる</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 削除確認モーダル（再確認） -->
-    <div id="delete-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-        <div class="bg-zinc-900 rounded-3xl max-w-xs w-full p-6 text-center shadow-2xl border border-zinc-800 space-y-4">
-            <div class="text-3xl">⚠️</div>
-            <h3 class="font-bold text-white text-base">本当に削除しますか？</h3>
-            <p class="text-xs text-zinc-400">この操作はもとに戻せません。</p>
-            <div class="flex gap-2 pt-2">
-                <button id="cancel-delete" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-3 rounded-xl text-sm transition">いいえ</button>
-                <button id="confirm-delete" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl text-sm transition">削除する</button>
-            </div>
-        </div>
-    </div>
-
-</body>
-</html>
+                const matchGenre = (selectedGenre
