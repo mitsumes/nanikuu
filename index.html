@@ -21,10 +21,10 @@
 </head>
 <body class="p-4 max-w-md mx-auto">
 
-    <!-- アクセス制限画面（デフォルトは表示、LINE内判定で解除） -->
+    <!-- アクセス制限画面 -->
     <div id="access-restrict" class="fixed inset-0 bg-[#121212] z-50 flex flex-col items-center justify-center p-6 text-center">
         <h2 class="text-xl font-bold text-orange-500 mb-2">⚠️ アクセス制限</h2>
-        <p class="text-sm text-gray-300">このアプリはLINEアプリ内からのみご利用いただけます。<br>LINEのトークルームから開き直してください。</p>
+        <p class="text-sm text-gray-300">このアプリはLINEアプリ内からのみご利用いただけます。</p>
     </div>
 
     <!-- メインコンテンツ -->
@@ -45,7 +45,7 @@
             </button>
         </div>
 
-        <!-- みんなの投稿一覧（最新6枚：横2列×縦3列） -->
+        <!-- みんなの投稿一覧 -->
         <div class="card p-4 space-y-3">
             <h2 class="font-bold text-base flex items-center gap-2 text-white">
                 <span>🍴</span> みんなの投稿一覧 <span class="text-xs text-gray-400 font-normal">（最新6件）</span>
@@ -75,7 +75,7 @@
             </select>
         </div>
 
-        <!-- お店を投稿する（編集時はここが切り替わります） -->
+        <!-- お店を投稿する -->
         <div class="card p-4 space-y-3" id="form-container">
             <h2 class="font-bold text-base flex items-center gap-2 text-white" id="form-title">
                 <span>✏️</span> お店を投稿する
@@ -97,11 +97,9 @@
                 <input type="text" id="post-state" placeholder="国名 / 県名（例：日本 / 愛知県）" class="w-full p-2.5 rounded-lg text-sm">
                 <input type="text" id="post-city" placeholder="市名・区名（例：東海市）" class="w-full p-2.5 rounded-lg text-sm">
 
-                <!-- ホームページ・インスタリンク -->
                 <input type="url" id="post-hp" placeholder="ホームページURL（https://...）" class="w-full p-2.5 rounded-lg text-sm">
                 <input type="text" id="post-insta" placeholder="Instagramリンク or アカウント名" class="w-full p-2.5 rounded-lg text-sm">
 
-                <!-- おすすめシーン（複数選択） -->
                 <div>
                     <label class="block text-xs text-gray-400 mb-1.5">おすすめシーン（複数選択可）</label>
                     <div class="bg-zinc-900 border border-zinc-800 p-2.5 rounded-lg space-y-2">
@@ -117,7 +115,6 @@
                     </div>
                 </div>
 
-                <!-- 駐車場の有無 -->
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">駐車場の有無</label>
                     <select id="post-parking" class="w-full p-2.5 rounded-lg text-sm">
@@ -127,7 +124,6 @@
                     </select>
                 </div>
 
-                <!-- 支払い方法（複数選択） -->
                 <div>
                     <label class="block text-xs text-gray-400 mb-1.5">支払い方法（複数選択可）</label>
                     <div class="bg-zinc-900 border border-zinc-800 p-2.5 rounded-lg space-y-2">
@@ -158,13 +154,11 @@
             </form>
         </div>
 
-        <!-- ルーレットエリア（ジャンル・地域選択付き） -->
+        <!-- ルーレットエリア -->
         <div class="card p-4 text-center space-y-3 bg-gradient-to-b from-zinc-900 to-orange-950/30 border-orange-500/30">
             <h2 class="font-bold text-base flex items-center justify-center gap-2 text-white">
                 <span>🎰</span> 今日のお店をルーレットで決める
             </h2>
-            
-            <!-- ルーレット用の絞り込み条件 -->
             <div class="grid grid-cols-2 gap-2 text-left">
                 <div>
                     <label class="block text-[10px] text-gray-400 mb-1">ジャンルで絞り込み</label>
@@ -185,7 +179,6 @@
                     <input type="text" id="roulette-location" placeholder="例：東海市" class="w-full p-2 rounded-lg text-xs">
                 </div>
             </div>
-
             <div id="roulette-display" class="text-2xl font-black text-orange-400 py-3 tracking-wide min-h-[60px] flex items-center justify-center">
                 条件を選んで回してね！
             </div>
@@ -195,23 +188,18 @@
         </div>
     </div>
 
-    <!-- 詳細モーダル（クリック時表示） -->
+    <!-- 詳細モーダル -->
     <div id="detail-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
         <div class="card p-5 w-full max-w-sm space-y-4 my-auto max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-start">
                 <span id="detail-genre" class="text-xs bg-orange-900/60 text-orange-300 px-2 py-0.5 rounded font-bold"></span>
                 <button onclick="closeDetailModal()" class="text-gray-400 hover:text-white text-lg font-bold px-2">✕</button>
             </div>
-            
             <h3 id="detail-name" class="font-bold text-xl text-white"></h3>
             <p id="detail-location" class="text-xs text-gray-400"></p>
-
-            <!-- 大きな画像（見切れないようcontainに調整） -->
             <div id="detail-image-container" class="hidden bg-black/40 rounded-xl overflow-hidden flex items-center justify-center p-1">
                 <img id="detail-image" class="w-full max-h-72 object-contain rounded-lg">
             </div>
-
-            <!-- 詳細データリスト -->
             <div class="space-y-2 text-xs bg-zinc-900/60 p-3 rounded-xl border border-zinc-800 text-gray-300">
                 <div id="detail-hp-row" class="hidden">🌐 <a id="detail-hp" href="#" target="_blank" class="text-orange-400 underline truncate block">ホームページ</a></div>
                 <div id="detail-insta-row" class="hidden">📸 <a id="detail-insta" href="#" target="_blank" class="text-pink-400 underline truncate block">Instagram</a></div>
@@ -223,8 +211,6 @@
                 <div id="detail-holiday-row" class="hidden">💤 <strong>定休日:</strong> <span id="detail-holiday"></span></div>
                 <div id="detail-comment-row" class="hidden pt-2 border-t border-zinc-800 text-gray-200 whitespace-pre-wrap">💬 <span id="detail-comment"></span></div>
             </div>
-
-            <!-- 下部に縦並びで配置された 編集・赤色削除ボタン -->
             <div class="flex flex-col space-y-2 pt-2 border-t border-zinc-800">
                 <button id="detail-edit-btn" onclick="" class="w-full bg-zinc-700 hover:bg-orange-600 text-white font-bold py-2.5 rounded-lg text-xs transition">編集する</button>
                 <button id="detail-delete-btn" onclick="" class="w-full bg-red-700 hover:bg-red-600 text-white font-bold py-2.5 rounded-lg text-xs transition">削除する</button>
@@ -263,42 +249,41 @@
             try {
                 await liff.init({ liffId: "2011348764-dl9CNIS4" });
 
-                // LINEアプリ内からのアクセスかチェック
                 if (!liff.isInClient()) {
-                    return; // 外部ブラウザの場合は制限画面のまま
+                    return; 
                 }
 
-                // プロフィールを先取得してユーザーIDを確実に確保
                 const profile = await liff.getProfile();
                 currentUserId = profile.userId;
 
                 const context = liff.getContext();
                 
-                // グループID、またはトークルームIDがあればそれを優先。
-                // すぐに取得できない場合でも、LINEアプリ内であればユーザーIDベースの固有ルームやフォールバックIDを割り当ててエラーを防ぐ
-                if (context && context.groupId) {
+                // 1. URLのパラメータ（?group=〜）を最優先でチェック
+                const urlParams = new URLSearchParams(window.location.search);
+                const queryGroup = urlParams.get('group');
+
+                if (queryGroup) {
+                    currentGroupId = queryGroup;
+                } else if (context && context.groupId) {
+                    // 2. LINEのグループID
                     currentGroupId = context.groupId;
                 } else if (context && context.roomId) {
+                    // 3. LINEのトークルームID
                     currentGroupId = context.roomId;
-                } else if (context && context.type === "utou") {
-                    currentGroupId = "dm_" + currentUserId;
                 } else {
-                    // 万が一コンテキストが取れなくても、LINE内からのアクセスであれば安全に個別ルームを割り当てて起動させる
-                    currentGroupId = "line_user_" + currentUserId;
+                    // 4. どれも取れない場合は、開いた人ごとに完全に分ける
+                    currentGroupId = "user_private_" + currentUserId;
                 }
 
-                // LINE内からのアクセスが確認できたため制限を解除してアプリを表示
                 document.getElementById("access-restrict").classList.add("hidden");
                 document.getElementById("main-content").classList.remove("hidden");
 
                 initApp();
             } catch (error) {
                 console.error("LIFF initialization failed", error);
-                // 万が一のエラー時もLINE内であれば強制起動させるフォールバック
                 document.getElementById("access-restrict").classList.add("hidden");
                 document.getElementById("main-content").classList.remove("hidden");
-                currentGroupId = "fallback_group";
-                currentUserId = "user_fallback";
+                currentGroupId = "error_fallback";
                 initApp();
             }
         });
@@ -546,7 +531,7 @@
 
         function startRoulette() {
             const rGenre = document.getElementById("roulette-genre").value;
-            const rLocation = document.getElementById("roulette-location").value.toLowerCase();
+            const rLocation = document.getElementById("roulette-location").value.toLowerCase().trim();
 
             const targetPosts = allPosts.filter(p => {
                 const matchGenre = !rGenre || p.genre === rGenre;
