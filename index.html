@@ -172,6 +172,43 @@
         </div>
     </div>
 
+    <!-- 詳細モーダル（クリック時表示） -->
+    <div id="detail-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="card p-5 w-full max-w-sm space-y-4 my-auto max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start">
+                <span id="detail-genre" class="text-xs bg-orange-900/60 text-orange-300 px-2 py-0.5 rounded font-bold"></span>
+                <button onclick="closeDetailModal()" class="text-gray-400 hover:text-white text-lg font-bold px-2">✕</button>
+            </div>
+            
+            <h3 id="detail-name" class="font-bold text-xl text-white"></h3>
+            <p id="detail-location" class="text-xs text-gray-400"></p>
+
+            <!-- 大きな画像 -->
+            <div id="detail-image-container" class="hidden">
+                <img id="detail-image" class="w-full h-56 object-cover rounded-xl border border-zinc-700">
+            </div>
+
+            <!-- 詳細データリスト -->
+            <div class="space-y-2 text-xs bg-zinc-900/60 p-3 rounded-xl border border-zinc-800 text-gray-300">
+                <div id="detail-hp-row" class="hidden">🌐 <a id="detail-hp" href="#" target="_blank" class="text-orange-400 underline truncate block">ホームページ</a></div>
+                <div id="detail-insta-row" class="hidden">📸 <a id="detail-insta" href="#" target="_blank" class="text-pink-400 underline truncate block">Instagram</a></div>
+                <div id="detail-vibes-row" class="hidden">👥 <strong>シーン:</strong> <span id="detail-vibes"></span></div>
+                <div id="detail-parking-row">🅿️ <span id="detail-parking"></span></div>
+                <div id="detail-payment-row" class="hidden">💳 <strong>支払い:</strong> <span id="detail-payment"></span></div>
+                <div id="detail-hours-row" class="hidden">⏰ <strong>営業時間:</strong> <span id="detail-hours"></span></div>
+                <div id="detail-budget-row" class="hidden">💴 <strong>予算:</strong> <span id="detail-budget"></span></div>
+                <div id="detail-holiday-row" class="hidden">💤 <strong>定休日:</strong> <span id="detail-holiday"></span></div>
+                <div id="detail-comment-row" class="hidden pt-2 border-t border-zinc-800 text-gray-200 whitespace-pre-wrap">💬 <span id="detail-comment"></span></div>
+            </div>
+
+            <!-- 下部に配置された 編集・削除ボタン -->
+            <div class="flex space-x-2 pt-2 border-t border-zinc-800">
+                <button id="detail-edit-btn" onclick="" class="flex-1 bg-zinc-700 hover:bg-orange-600 text-white font-bold py-2.5 rounded-lg text-xs transition">編集する</button>
+                <button id="detail-delete-btn" onclick="" class="flex-1 bg-zinc-800 hover:bg-red-600 text-gray-300 hover:text-white font-bold py-2.5 rounded-lg text-xs transition border border-zinc-700">削除する</button>
+            </div>
+        </div>
+    </div>
+
     <!-- グループ名編集モーダル -->
     <div id="group-modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
         <div class="card p-5 w-full max-w-xs space-y-4">
@@ -287,32 +324,75 @@
             const displayPosts = posts.slice(0, 6);
 
             listEl.innerHTML = displayPosts.map(p => {
-                const isAuthor = p.userId && p.userId === currentUserId;
                 return `
-                    <div class="bg-zinc-900 border border-zinc-800 p-2.5 rounded-xl space-y-1.5 flex flex-col justify-between">
+                    <div onclick="openDetailModal('${p.id}')" class="bg-zinc-900 border border-zinc-800 p-2.5 rounded-xl space-y-1.5 flex flex-col justify-between cursor-pointer hover:border-orange-500/50 transition">
                         <div>
                             <div class="flex justify-between items-start">
                                 <span class="text-[9px] bg-orange-900/60 text-orange-300 px-1.5 py-0.5 rounded font-bold">${escapeHtml(p.genre)}</span>
-                                ${isAuthor ? `
-                                    <div class="flex gap-1">
-                                        <button onclick="startEdit('${p.id}')" class="text-zinc-400 hover:text-orange-400 text-[10px] bg-zinc-800 px-1.5 py-0.5 rounded">編集</button>
-                                        <button onclick="deletePost('${p.id}')" class="text-zinc-400 hover:text-red-400 text-[10px] bg-zinc-800 px-1.5 py-0.5 rounded">削除</button>
-                                    </div>
-                                ` : ''}
                             </div>
                             <h3 class="font-bold text-xs text-white mt-1 line-clamp-1">${escapeHtml(p.name)}</h3>
                             ${p.city ? `<p class="text-[10px] text-gray-400 line-clamp-1">📍 ${escapeHtml(p.city)}</p>` : ''}
-                            
-                            <!-- リンク表示 -->
-                            <div class="flex gap-2 mt-1">
-                                ${p.hp ? `<a href="${escapeHtml(p.hp)}" target="_blank" class="text-[10px] text-orange-400 underline truncate">🌐 HP</a>` : ''}
-                                ${p.insta ? `<a href="${escapeHtml(p.insta.startsWith('http') ? p.insta : 'https://instagram.com/' + p.insta.replace('@',''))}" target="_blank" class="text-[10px] text-pink-400 underline truncate">📸 Instagram</a>` : ''}
-                            </div>
                         </div>
-                        ${p.imageUrl ? `<img src="${escapeHtml(p.imageUrl)}" class="w-full h-24 object-cover rounded-lg mt-1">` : ''}
+                        ${p.imageUrl ? `<img src="${escapeHtml(p.imageUrl)}" class="w-full h-24 object-cover rounded-lg mt-1">` : '<div class="w-full h-24 bg-zinc-800 rounded-lg flex items-center justify-center text-[10px] text-gray-500 mt-1">画像なし</div>'}
                     </div>
                 `;
             }).join('');
+        }
+
+        // 詳細モーダルを開く
+        function openDetailModal(postId) {
+            const p = allPosts.find(item => item.id === postId);
+            if (!p) return;
+
+            document.getElementById("detail-genre").textContent = p.genre || "その他";
+            document.getElementById("detail-name").textContent = p.name || "";
+            document.getElementById("detail-location").textContent = [p.state, p.city].filter(Boolean).join(" ");
+
+            // 画像
+            const imgContainer = document.getElementById("detail-image-container");
+            const imgEl = document.getElementById("detail-image");
+            if (p.imageUrl) {
+                imgEl.src = p.imageUrl;
+                imgContainer.classList.remove("hidden");
+            } else {
+                imgContainer.classList.add("hidden");
+            }
+
+            // 各種項目
+            setDetailField("detail-hp-row", "detail-hp", p.hp, p.hp);
+            setDetailField("detail-insta-row", "detail-insta", p.insta ? (p.insta.startsWith('http') ? p.insta : 'https://instagram.com/' + p.insta.replace('@','')) : '', p.insta);
+            setDetailField("detail-vibes-row", "detail-vibes", p.vibes && p.vibes.length > 0 ? p.vibes.join(" / ") : "", true);
+            setDetailField("detail-parking-row", "detail-parking", p.parking, true);
+            setDetailField("detail-payment-row", "detail-payment", p.payments && p.payments.length > 0 ? p.payments.join(" / ") : "", true);
+            setDetailField("detail-hours-row", "detail-hours", p.hours, p.hours);
+            setDetailField("detail-budget-row", "detail-budget", p.budget, p.budget);
+            setDetailField("detail-holiday-row", "detail-holiday", p.holiday, p.holiday);
+            setDetailField("detail-comment-row", "detail-comment", p.comment, p.comment);
+
+            // 下部の編集・削除ボタンにイベントを設定（誰でも可能）
+            document.getElementById("detail-edit-btn").setAttribute("onclick", `closeDetailModal(); startEdit('${p.id}')`);
+            document.getElementById("detail-delete-btn").setAttribute("onclick", `closeDetailModal(); deletePost('${p.id}')`);
+
+            document.getElementById("detail-modal").classList.remove("hidden");
+        }
+
+        function setDetailField(rowId, textId, value, condition) {
+            const row = document.getElementById(rowId);
+            if (condition) {
+                row.classList.remove("hidden");
+                const el = document.getElementById(textId);
+                if (el.tagName === "A") {
+                    el.href = value;
+                } else {
+                    el.textContent = value;
+                }
+            } else {
+                row.classList.add("hidden");
+            }
+        }
+
+        function closeDetailModal() {
+            document.getElementById("detail-modal").classList.add("hidden");
         }
 
         async function submitPost(event) {
