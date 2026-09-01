@@ -235,11 +235,40 @@
                 });
             }
 
+            // イッタヨ！ボタン押下処理
+            window.toggleItkayo = async function(id, event) {
+                event.stopPropagation(); // カード全体のクリック（詳細モーダル）が開かないようにする
+                const item = allRestaurants.find(r => r.id === id);
+                if (!item) return;
+
+                let likedUsers = item.likedUsers || {};
+                // ユーザー名を安全なキーにするために特殊文字等を置換、またはそのまま使用
+                const userKey = currentUserName.replace(/[.#$\/\[\]]/g, "_");
+
+                if (likedUsers[userKey]) {
+                    delete likedUsers[userKey];
+                } else {
+                    likedUsers[userKey] = true;
+                }
+
+                const itemRef = ref(db, `groups/${currentGroupId}/restaurants/${id}`);
+                try {
+                    await update(itemRef, { likedUsers });
+                } catch (error) {
+                    console.error("イッタヨ更新エラー:", error);
+                }
+            };
+
             function createCardElement(item) {
                 const card = document.createElement("div");
                 const imageUrl = item.photoUrl || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=500&q=60";
                 const locationStr = `${item.city || ''} ${item.prefecture || ''}`.trim() || '未設定';
                 
+                const likedUsers = item.likedUsers || {};
+                const likeCount = Object.keys(likedUsers).length;
+                const userKey = currentUserName.replace(/[.#$\/\[\]]/g, "_");
+                const hasLiked = !!likedUsers[userKey];
+
                 card.className = "bg-zinc-900 rounded-xl overflow-hidden flex flex-col justify-between border border-zinc-800 hover:border-zinc-700 transition shadow-md cursor-pointer";
                 card.onclick = () => {
                     if (searchResultModal) {
@@ -258,10 +287,19 @@
                         <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover">
                         <span class="absolute top-1.5 right-1.5 bg-black/70 backdrop-blur-md text-zinc-200 text-[10px] px-2 py-0.5 rounded-full border border-zinc-700">${item.genre || 'その他'}</span>
                     </div>
-                    <div class="p-2.5">
-                        <h3 class="font-bold text-xs text-white truncate">${item.name}</h3>
-                        <div class="flex items-center justify-between mt-1 text-[10px] text-zinc-400">
-                            <span class="truncate">📍 ${locationStr}</span>
+                    <div class="p-2.5 flex flex-col justify-between flex-1">
+                        <div>
+                            <h3 class="font-bold text-xs text-white truncate">${item.name}</h3>
+                            <div class="flex items-center justify-between mt-1 text-[10px] text-zinc-400">
+                                <span class="truncate">📍 ${locationStr}</span>
+                            </div>
+                        </div>
+                        <div class="mt-2 pt-2 border-t border-zinc-800/80 flex items-center justify-between">
+                            <span class="text-[10px] text-zinc-500">投稿者: ${item.author || '不明'}</span>
+                            <button onclick="window.toggleItkayo('${item.id}', event)" class="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border transition ${hasLiked ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold' : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700'}">
+                                <span>🚀</span>
+                                <span>イッタヨ！ (${likeCount})</span>
+                            </button>
                         </div>
                     </div>
                 `;
@@ -361,11 +399,25 @@
 
                 if (detailMemo) detailMemo.textContent = item.memo || 'メモなし';
 
+                const likedUsers = item.likedUsers || {};
+                const likeCount = Object.keys(likedUsers).length;
+                const userKey = currentUserName.replace(/[.#$\/\[\]]/g, "_");
+                const hasLiked = !!likedUsers[userKey];
+                const likedNames = Object.keys(likedUsers).join(', ') || 'なし';
+
                 if (detailActionButtons) {
                     detailActionButtons.innerHTML = `
-                        <div class="flex gap-2 pt-2 border-t border-zinc-800 mt-2">
-                            <button onclick="window.closeDetailAndEdit('${item.id}')" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold py-2.5 rounded-xl text-xs transition">編集する</button>
-                            <button onclick="window.closeDetailAndPromptDelete('${item.id}', '${item.photoPath || ''}')" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-xl text-xs transition">削除する</button>
+                        <div class="space-y-2 pt-2 border-t border-zinc-800 mt-2">
+                            <div class="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/60 text-[10px] text-zinc-400 flex items-center justify-between">
+                                <span>🚀 イッタヨ！した人: <strong class="text-zinc-200">${likedNames}</strong></span>
+                                <button onclick="window.toggleItkayo('${item.id}', event); window.openDetail('${item.id}');" class="px-3 py-1.5 rounded-lg border transition text-xs ${hasLiked ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold' : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700'}">
+                                    ${hasLiked ? '取消する' : '🚀 イッタヨ！'} (${likeCount})
+                                </button>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="window.closeDetailAndEdit('${item.id}')" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold py-2.5 rounded-xl text-xs transition">編集する</button>
+                                <button onclick="window.closeDetailAndPromptDelete('${item.id}', '${item.photoPath || ''}')" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-xl text-xs transition">削除する</button>
+                            </div>
                         </div>
                     `;
                 }
@@ -469,6 +521,11 @@
 
                         if (editId) {
                             const updateRef = ref(db, `groups/${currentGroupId}/restaurants/${editId}`);
+                            // 既存のイッタヨ情報は保持する
+                            const existingItem = allRestaurants.find(r => r.id === editId);
+                            if (existingItem && existingItem.likedUsers) {
+                                restaurantData.likedUsers = existingItem.likedUsers;
+                            }
                             await update(updateRef, restaurantData);
                         } else {
                             restaurantData.createdAt = Date.now();
