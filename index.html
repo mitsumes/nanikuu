@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>なにクウ？</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- LIFF SDK -->
     <script src="https://static.line-scdn.net/liff/2/sdk.js"></script>
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
@@ -21,20 +18,17 @@
 </head>
 <body class="p-4 max-w-md mx-auto">
 
-    <!-- アクセス制限画面 -->
     <div id="access-restrict" class="fixed inset-0 bg-[#121212] z-50 flex flex-col items-center justify-center p-6 text-center">
         <h2 class="text-xl font-bold text-orange-500 mb-2">⚠️ アクセス制限</h2>
         <p class="text-sm text-gray-300">このアプリはLINEグループ内からのみご利用いただけます。<br>グループのトークルームから開き直してください。</p>
     </div>
 
-    <!-- メインコンテンツ -->
     <div id="main-content" class="hidden space-y-6 pb-12">
         <header class="text-center pt-2">
             <h1 class="text-3xl font-extrabold text-orange-500 tracking-wider">なにクウ？</h1>
             <p class="text-xs text-gray-400 mt-1">ご飯迷った時の決定＆写真共有アプリ</p>
         </header>
 
-        <!-- グループ情報エリア -->
         <div class="card p-4 flex items-center justify-between shadow-md">
             <div class="flex items-center space-x-2 overflow-hidden">
                 <span class="text-xl">🏠</span>
@@ -45,7 +39,6 @@
             </button>
         </div>
 
-        <!-- みんなの投稿一覧（最新6枚：横2列×縦3列） -->
         <div class="card p-4 space-y-3">
             <h2 class="font-bold text-base flex items-center gap-2 text-white">
                 <span>🍴</span> みんなの投稿一覧 <span class="text-xs text-gray-400 font-normal">（最新6件）</span>
@@ -55,7 +48,6 @@
             </div>
         </div>
 
-        <!-- お店を探す・絞り込む -->
         <div class="card p-4 space-y-3">
             <h2 class="font-bold text-base flex items-center gap-2 text-white">
                 <span>🔍</span> お店を探す・絞り込む
@@ -75,7 +67,6 @@
             </select>
         </div>
 
-        <!-- お店を投稿する（編集時はここが切り替わります） -->
         <div class="card p-4 space-y-3" id="form-container">
             <h2 class="font-bold text-base flex items-center gap-2 text-white" id="form-title">
                 <span>✏️</span> お店を投稿する
@@ -97,11 +88,9 @@
                 <input type="text" id="post-state" placeholder="国名 / 県名（例：日本 / 愛知県）" class="w-full p-2.5 rounded-lg text-sm">
                 <input type="text" id="post-city" placeholder="市名・区名（例：東海市）" class="w-full p-2.5 rounded-lg text-sm">
 
-                <!-- ホームページ・インスタリンク -->
                 <input type="url" id="post-hp" placeholder="ホームページURL（https://...）" class="w-full p-2.5 rounded-lg text-sm">
                 <input type="text" id="post-insta" placeholder="Instagramリンク or アカウント名" class="w-full p-2.5 rounded-lg text-sm">
 
-                <!-- おすすめシーン（複数選択） -->
                 <div>
                     <label class="block text-xs text-gray-400 mb-1.5">おすすめシーン（複数選択可）</label>
                     <div class="bg-zinc-900 border border-zinc-800 p-2.5 rounded-lg space-y-2">
@@ -117,7 +106,6 @@
                     </div>
                 </div>
 
-                <!-- 駐車場の有無 -->
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">駐車場の有無</label>
                     <select id="post-parking" class="w-full p-2.5 rounded-lg text-sm">
@@ -127,7 +115,6 @@
                     </select>
                 </div>
 
-                <!-- 支払い方法（複数選択） -->
                 <div>
                     <label class="block text-xs text-gray-400 mb-1.5">支払い方法（複数選択可）</label>
                     <div class="bg-zinc-900 border border-zinc-800 p-2.5 rounded-lg space-y-2">
@@ -158,13 +145,34 @@
             </form>
         </div>
 
-        <!-- ルーレットエリア（一番下） -->
         <div class="card p-4 text-center space-y-3 bg-gradient-to-b from-zinc-900 to-orange-950/30 border-orange-500/30">
             <h2 class="font-bold text-base flex items-center justify-center gap-2 text-white">
                 <span>🎰</span> 今日のお店をルーレットで決める
             </h2>
-            <div id="roulette-display" class="text-2xl font-black text-orange-400 py-4 tracking-wide min-h-[70px] flex items-center justify-center">
-                ボタンを押してね！
+            
+            <div class="grid grid-cols-2 gap-2 text-left">
+                <div>
+                    <label class="block text-[10px] text-gray-400 mb-1">ジャンルで絞り込み</label>
+                    <select id="roulette-genre" class="w-full p-2 rounded-lg text-xs">
+                        <option value="">すべて</option>
+                        <option value="和食">和食</option>
+                        <option value="洋食">洋食</option>
+                        <option value="中華">中華</option>
+                        <option value="焼肉・肉料理">焼肉・肉料理</option>
+                        <option value="居酒屋・バー">居酒屋・バー</option>
+                        <option value="カフェ・スイーツ">カフェ・スイーツ</option>
+                        <option value="ラーメン・麺類">ラーメン・麺類</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] text-gray-400 mb-1">地域で絞り込み</label>
+                    <input type="text" id="roulette-location" placeholder="例：東海市" class="w-full p-2 rounded-lg text-xs">
+                </div>
+            </div>
+
+            <div id="roulette-display" class="text-2xl font-black text-orange-400 py-3 tracking-wide min-h-[60px] flex items-center justify-center">
+                条件を選んで回してね！
             </div>
             <button onclick="startRoulette()" id="roulette-btn" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 rounded-lg text-sm transition shadow-lg">
                 ルーレットを回す！
@@ -172,385 +180,8 @@
         </div>
     </div>
 
-    <!-- 詳細モーダル（クリック時表示） -->
     <div id="detail-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
         <div class="card p-5 w-full max-w-sm space-y-4 my-auto max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-start">
                 <span id="detail-genre" class="text-xs bg-orange-900/60 text-orange-300 px-2 py-0.5 rounded font-bold"></span>
-                <button onclick="closeDetailModal()" class="text-gray-400 hover:text-white text-lg font-bold px-2">✕</button>
-            </div>
-            
-            <h3 id="detail-name" class="font-bold text-xl text-white"></h3>
-            <p id="detail-location" class="text-xs text-gray-400"></p>
-
-            <!-- 大きな画像 -->
-            <div id="detail-image-container" class="hidden">
-                <img id="detail-image" class="w-full h-56 object-cover rounded-xl border border-zinc-700">
-            </div>
-
-            <!-- 詳細データリスト -->
-            <div class="space-y-2 text-xs bg-zinc-900/60 p-3 rounded-xl border border-zinc-800 text-gray-300">
-                <div id="detail-hp-row" class="hidden">🌐 <a id="detail-hp" href="#" target="_blank" class="text-orange-400 underline truncate block">ホームページ</a></div>
-                <div id="detail-insta-row" class="hidden">📸 <a id="detail-insta" href="#" target="_blank" class="text-pink-400 underline truncate block">Instagram</a></div>
-                <div id="detail-vibes-row" class="hidden">👥 <strong>シーン:</strong> <span id="detail-vibes"></span></div>
-                <div id="detail-parking-row">🅿️ <span id="detail-parking"></span></div>
-                <div id="detail-payment-row" class="hidden">💳 <strong>支払い:</strong> <span id="detail-payment"></span></div>
-                <div id="detail-hours-row" class="hidden">⏰ <strong>営業時間:</strong> <span id="detail-hours"></span></div>
-                <div id="detail-budget-row" class="hidden">💴 <strong>予算:</strong> <span id="detail-budget"></span></div>
-                <div id="detail-holiday-row" class="hidden">💤 <strong>定休日:</strong> <span id="detail-holiday"></span></div>
-                <div id="detail-comment-row" class="hidden pt-2 border-t border-zinc-800 text-gray-200 whitespace-pre-wrap">💬 <span id="detail-comment"></span></div>
-            </div>
-
-            <!-- 下部に配置された 編集・削除ボタン -->
-            <div class="flex space-x-2 pt-2 border-t border-zinc-800">
-                <button id="detail-edit-btn" onclick="" class="flex-1 bg-zinc-700 hover:bg-orange-600 text-white font-bold py-2.5 rounded-lg text-xs transition">編集する</button>
-                <button id="detail-delete-btn" onclick="" class="flex-1 bg-zinc-800 hover:bg-red-600 text-gray-300 hover:text-white font-bold py-2.5 rounded-lg text-xs transition border border-zinc-700">削除する</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- グループ名編集モーダル -->
-    <div id="group-modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
-        <div class="card p-5 w-full max-w-xs space-y-4">
-            <h3 class="font-bold text-base text-white">グループ名の変更</h3>
-            <input type="text" id="modal-group-name-input" class="w-full p-2.5 rounded-lg text-sm" placeholder="新しいグループ名">
-            <div class="flex space-x-2">
-                <button onclick="closeGroupEdit()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-2 rounded-lg text-sm text-gray-300">キャンセル</button>
-                <button onclick="saveGroupName()" class="flex-1 bg-orange-600 hover:bg-orange-500 py-2 rounded-lg text-sm font-bold text-white">保存</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const firebaseConfig = {
-            databaseURL: "https://nanikuu-default-rtdb.firebaseio.com",
-            storageBucket: "nanikuu.firebasestorage.app"
-        };
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const db = firebase.database();
-        const storage = firebase.storage();
-
-        let currentGroupId = null;
-        let currentUserId = null;
-        let allPosts = [];
-
-        document.addEventListener("DOMContentLoaded", async () => {
-            try {
-                await liff.init({ liffId: "2011348764-dl9CNIS4" });
-                if (!liff.isInClient()) {
-                    document.getElementById("access-restrict").classList.remove("hidden");
-                    return;
-                }
-                const context = liff.getContext();
-                if (context && context.groupId) {
-                    currentGroupId = context.groupId;
-                } else if (context && context.type === "utou") {
-                    currentGroupId = "individual_" + (await liff.getProfile()).userId;
-                } else {
-                    currentGroupId = "default_group";
-                }
-
-                const profile = await liff.getProfile();
-                currentUserId = profile.userId;
-
-                document.getElementById("access-restrict").classList.add("hidden");
-                document.getElementById("main-content").classList.remove("hidden");
-
-                initApp();
-            } catch (error) {
-                console.error("LIFF initialization failed", error);
-                currentGroupId = "test_group";
-                currentUserId = "test_user_" + Math.random();
-                document.getElementById("access-restrict").classList.add("hidden");
-                document.getElementById("main-content").classList.remove("hidden");
-                initApp();
-            }
-        });
-
-        function initApp() {
-            loadGroupName();
-            loadPosts();
-        }
-
-        function loadGroupName() {
-            db.ref(`groups/${currentGroupId}/name`).on("value", (snapshot) => {
-                const name = snapshot.val() || "グループ1";
-                document.getElementById("group-name-display").textContent = name;
-            });
-        }
-
-        function openGroupEdit() {
-            const currentName = document.getElementById("group-name-display").textContent;
-            document.getElementById("modal-group-name-input").value = currentName === "読み込み中..." ? "" : currentName;
-            document.getElementById("group-modal").classList.remove("hidden");
-        }
-
-        function closeGroupEdit() {
-            document.getElementById("group-modal").classList.add("hidden");
-        }
-
-        function saveGroupName() {
-            const newName = document.getElementById("modal-group-name-input").value.trim();
-            if (!newName) return;
-            db.ref(`groups/${currentGroupId}/name`).set(newName, (error) => {
-                if (error) {
-                    alert("保存に失敗しました");
-                } else {
-                    closeGroupEdit();
-                }
-            });
-        }
-
-        function loadPosts() {
-            db.ref(`groups/${currentGroupId}/posts`).on("value", (snapshot) => {
-                allPosts = [];
-                snapshot.forEach((childSnapshot) => {
-                    allPosts.push({ id: childSnapshot.key, ...childSnapshot.val() });
-                });
-                allPosts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-                renderPosts(allPosts);
-            });
-        }
-
-        function renderPosts(posts) {
-            const listEl = document.getElementById("posts-list");
-            if (posts.length === 0) {
-                listEl.innerHTML = `<p class="text-xs text-gray-400 text-center py-4 col-span-2">条件に合う投稿がありません</p>`;
-                return;
-            }
-
-            const displayPosts = posts.slice(0, 6);
-
-            listEl.innerHTML = displayPosts.map(p => {
-                return `
-                    <div onclick="openDetailModal('${p.id}')" class="bg-zinc-900 border border-zinc-800 p-2.5 rounded-xl space-y-1.5 flex flex-col justify-between cursor-pointer hover:border-orange-500/50 transition">
-                        <div>
-                            <div class="flex justify-between items-start">
-                                <span class="text-[9px] bg-orange-900/60 text-orange-300 px-1.5 py-0.5 rounded font-bold">${escapeHtml(p.genre)}</span>
-                            </div>
-                            <h3 class="font-bold text-xs text-white mt-1 line-clamp-1">${escapeHtml(p.name)}</h3>
-                            ${p.city ? `<p class="text-[10px] text-gray-400 line-clamp-1">📍 ${escapeHtml(p.city)}</p>` : ''}
-                        </div>
-                        ${p.imageUrl ? `<img src="${escapeHtml(p.imageUrl)}" class="w-full h-24 object-cover rounded-lg mt-1">` : '<div class="w-full h-24 bg-zinc-800 rounded-lg flex items-center justify-center text-[10px] text-gray-500 mt-1">画像なし</div>'}
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // 詳細モーダルを開く
-        function openDetailModal(postId) {
-            const p = allPosts.find(item => item.id === postId);
-            if (!p) return;
-
-            document.getElementById("detail-genre").textContent = p.genre || "その他";
-            document.getElementById("detail-name").textContent = p.name || "";
-            document.getElementById("detail-location").textContent = [p.state, p.city].filter(Boolean).join(" ");
-
-            // 画像
-            const imgContainer = document.getElementById("detail-image-container");
-            const imgEl = document.getElementById("detail-image");
-            if (p.imageUrl) {
-                imgEl.src = p.imageUrl;
-                imgContainer.classList.remove("hidden");
-            } else {
-                imgContainer.classList.add("hidden");
-            }
-
-            // 各種項目
-            setDetailField("detail-hp-row", "detail-hp", p.hp, p.hp);
-            setDetailField("detail-insta-row", "detail-insta", p.insta ? (p.insta.startsWith('http') ? p.insta : 'https://instagram.com/' + p.insta.replace('@','')) : '', p.insta);
-            setDetailField("detail-vibes-row", "detail-vibes", p.vibes && p.vibes.length > 0 ? p.vibes.join(" / ") : "", true);
-            setDetailField("detail-parking-row", "detail-parking", p.parking, true);
-            setDetailField("detail-payment-row", "detail-payment", p.payments && p.payments.length > 0 ? p.payments.join(" / ") : "", true);
-            setDetailField("detail-hours-row", "detail-hours", p.hours, p.hours);
-            setDetailField("detail-budget-row", "detail-budget", p.budget, p.budget);
-            setDetailField("detail-holiday-row", "detail-holiday", p.holiday, p.holiday);
-            setDetailField("detail-comment-row", "detail-comment", p.comment, p.comment);
-
-            // 下部の編集・削除ボタンにイベントを設定（誰でも可能）
-            document.getElementById("detail-edit-btn").setAttribute("onclick", `closeDetailModal(); startEdit('${p.id}')`);
-            document.getElementById("detail-delete-btn").setAttribute("onclick", `closeDetailModal(); deletePost('${p.id}')`);
-
-            document.getElementById("detail-modal").classList.remove("hidden");
-        }
-
-        function setDetailField(rowId, textId, value, condition) {
-            const row = document.getElementById(rowId);
-            if (condition) {
-                row.classList.remove("hidden");
-                const el = document.getElementById(textId);
-                if (el.tagName === "A") {
-                    el.href = value;
-                } else {
-                    el.textContent = value;
-                }
-            } else {
-                row.classList.add("hidden");
-            }
-        }
-
-        function closeDetailModal() {
-            document.getElementById("detail-modal").classList.add("hidden");
-        }
-
-        async function submitPost(event) {
-            event.preventDefault();
-            const submitBtn = document.getElementById("submit-btn");
-            const editId = document.getElementById("edit-post-id").value;
-            submitBtn.disabled = true;
-            submitBtn.textContent = editId ? "更新中..." : "投稿中...";
-
-            const genre = document.getElementById("post-genre").value;
-            const name = document.getElementById("post-name").value;
-            const state = document.getElementById("post-state").value;
-            const city = document.getElementById("post-city").value;
-            const hp = document.getElementById("post-hp").value;
-            const insta = document.getElementById("post-insta").value;
-            
-            const vibes = Array.from(document.querySelectorAll('input[name="post-vibe"]:checked')).map(el => el.value);
-            const parking = document.getElementById("post-parking").value;
-            const payments = Array.from(document.querySelectorAll('input[name="post-payment"]:checked')).map(el => el.value);
-
-            const hours = document.getElementById("post-hours").value;
-            const budget = document.getElementById("post-budget").value;
-            const holiday = document.getElementById("post-holiday").value;
-            const comment = document.getElementById("post-comment").value;
-            const imageFile = document.getElementById("post-image").files[0];
-
-            try {
-                let imageUrl = "";
-                if (editId) {
-                    const existing = allPosts.find(p => p.id === editId);
-                    imageUrl = existing ? (existing.imageUrl || "") : "";
-                }
-
-                if (imageFile) {
-                    const storageRef = storage.ref(`images/${currentGroupId}/${Date.now()}_${imageFile.name}`);
-                    const snapshot = await storageRef.put(imageFile);
-                    imageUrl = await snapshot.ref.getDownloadURL();
-                }
-
-                if (editId) {
-                    // 更新
-                    await db.ref(`groups/${currentGroupId}/posts/${editId}`).update({
-                        genre, name, state, city, hp, insta, vibes, parking, payments, hours, budget, holiday, comment, imageUrl
-                    });
-                    cancelEdit();
-                } else {
-                    // 新規投稿
-                    const newPostRef = db.ref(`groups/${currentGroupId}/posts`).push();
-                    await newPostRef.set({
-                        genre, name, state, city, hp, insta, vibes, parking, payments, hours, budget, holiday, comment, imageUrl,
-                        userId: currentUserId,
-                        createdAt: firebase.database.ServerValue.TIMESTAMP
-                    });
-                    document.getElementById("post-form").reset();
-                }
-            } catch (error) {
-                console.error(error);
-                alert("処理に失敗しました。");
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = "投稿する";
-            }
-        }
-
-        function startEdit(postId) {
-            const post = allPosts.find(p => p.id === postId);
-            if (!post) return;
-
-            document.getElementById("edit-post-id").value = post.id;
-            document.getElementById("post-genre").value = post.genre || "";
-            document.getElementById("post-name").value = post.name || "";
-            document.getElementById("post-state").value = post.state || "";
-            document.getElementById("post-city").value = post.city || "";
-            document.getElementById("post-hp").value = post.hp || "";
-            document.getElementById("post-insta").value = post.insta || "";
-            document.getElementById("post-parking").value = post.parking || "不明・記載なし";
-            document.getElementById("post-hours").value = post.hours || "";
-            document.getElementById("post-budget").value = post.budget || "";
-            document.getElementById("post-holiday").value = post.holiday || "";
-            document.getElementById("post-comment").value = post.comment || "";
-
-            // チェックボックス復元
-            document.querySelectorAll('input[name="post-vibe"]').forEach(el => {
-                el.checked = post.vibes && post.vibes.includes(el.value);
-            });
-            document.querySelectorAll('input[name="post-payment"]').forEach(el => {
-                el.checked = post.payments && post.payments.includes(el.value);
-            });
-
-            // フォームの見た目を編集モードに変更
-            document.getElementById("form-title").innerHTML = `<span>✏️</span> 投稿を編集する`;
-            document.getElementById("submit-btn").textContent = "更新する";
-            document.getElementById("cancel-edit-btn").classList.remove("hidden");
-
-            // フォームの位置までスムーズにスクロール
-            document.getElementById("form-container").scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function cancelEdit() {
-            document.getElementById("edit-post-id").value = "";
-            document.getElementById("post-form").reset();
-            document.getElementById("form-title").innerHTML = `<span>✏️</span> お店を投稿する`;
-            document.getElementById("submit-btn").textContent = "投稿する";
-            document.getElementById("cancel-edit-btn").classList.add("hidden");
-        }
-
-        function deletePost(postId) {
-            if (confirm("この投稿を削除しますか？")) {
-                db.ref(`groups/${currentGroupId}/posts/${postId}`).remove();
-            }
-        }
-
-        function filterPosts() {
-            const keyword = document.getElementById("search-keyword").value.toLowerCase();
-            const location = document.getElementById("search-location").value.toLowerCase();
-            const genre = document.getElementById("search-genre").value;
-
-            const filtered = allPosts.filter(p => {
-                const matchKeyword = !keyword || (p.name && p.name.toLowerCase().includes(keyword)) || (p.comment && p.comment.toLowerCase().includes(keyword));
-                const matchLocation = !location || (p.state && p.state.toLowerCase().includes(location)) || (p.city && p.city.toLowerCase().includes(location));
-                const matchGenre = !genre || p.genre === genre;
-                return matchKeyword && matchLocation && matchGenre;
-            });
-            renderPosts(filtered);
-        }
-
-        function startRoulette() {
-            if (allPosts.length === 0) {
-                alert("お店がまだ投稿されていません！まずは投稿してください。");
-                return;
-            }
-
-            const display = document.getElementById("roulette-display");
-            const btn = document.getElementById("roulette-btn");
-            btn.disabled = true;
-
-            let count = 0;
-            const maxCount = 20;
-            const interval = setInterval(() => {
-                const randomPost = allPosts[Math.floor(Math.random() * allPosts.length)];
-                display.textContent = randomPost.name;
-                count++;
-
-                if (count >= maxCount) {
-                    clearInterval(interval);
-                    const selected = allPosts[Math.floor(Math.random() * allPosts.length)];
-                    display.innerHTML = `🎉 決定：<span class="text-white underline">${escapeHtml(selected.name)}</span> 🎉`;
-                    btn.disabled = false;
-                }
-            }, 80);
-        }
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&'`"<>]/g, (match) => ({
-                '&': '&amp;', "'": '&#x27;', '`': '&#x60;', '"': '&quot;', '<': '&lt;', '>': '&gt;'
-            }[match]));
-        }
-    </script>
-</body>
-</html>
+                <button onclick="closeDetailModal()" class="text-gray-400 hover:text-white text-lg font-bold px-2">
