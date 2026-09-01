@@ -44,13 +44,26 @@
             </button>
         </div>
 
-        <!-- みんなの投稿一覧 -->
+        <!-- ルーレットエリア -->
+        <div class="card p-4 text-center space-y-3 bg-gradient-to-b from-zinc-900 to-orange-950/30 border-orange-500/30">
+            <h2 class="font-bold text-base flex items-center justify-center gap-2 text-white">
+                <span>🎰</span> 今日のお店をルーレットで決める
+            </h2>
+            <div id="roulette-display" class="text-2xl font-black text-orange-400 py-4 tracking-wide min-h-[70px] flex items-center justify-center">
+                ボタンを押してね！
+            </div>
+            <button onclick="startRoulette()" id="roulette-btn" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 rounded-lg text-sm transition shadow-lg">
+                ルーレットを回す！
+            </button>
+        </div>
+
+        <!-- みんなの投稿一覧（最新6枚：横2列×縦3列） -->
         <div class="card p-4 space-y-3">
             <h2 class="font-bold text-base flex items-center gap-2 text-white">
-                <span>🍴</span> みんなの投稿一覧
+                <span>🍴</span> みんなの投稿一覧 <span class="text-xs text-gray-400 font-normal">（最新6件）</span>
             </h2>
-            <div id="posts-list" class="space-y-3">
-                <p class="text-xs text-gray-400 text-center py-4">読み込み中...</p>
+            <div id="posts-list" class="grid grid-cols-2 gap-3">
+                <p class="text-xs text-gray-400 text-center py-4 col-span-2">読み込み中...</p>
             </div>
         </div>
 
@@ -62,7 +75,7 @@
             <input type="text" id="search-keyword" placeholder="検索ワード（例：おしゃれ、美味しい）" class="w-full p-2.5 rounded-lg text-sm" oninput="filterPosts()">
             <input type="text" id="search-location" placeholder="市名・区名で絞り込む（例：東海市）" class="w-full p-2.5 rounded-lg text-sm" oninput="filterPosts()">
             <select id="search-genre" class="w-full p-2.5 rounded-lg text-sm" onchange="filterPosts()">
-                <value value="">すべてのジャンル</option>
+                <option value="">すべてのジャンル</option>
                 <option value="和食">和食</option>
                 <option value="洋食">洋食</option>
                 <option value="中華">中華</option>
@@ -94,6 +107,8 @@
                 <input type="text" id="post-name" placeholder="店名 *" required class="w-full p-2.5 rounded-lg text-sm">
                 <input type="text" id="post-state" placeholder="国名 / 県名（例：日本 / 愛知県）" class="w-full p-2.5 rounded-lg text-sm">
                 <input type="text" id="post-city" placeholder="市名・区名（例：東海市）" class="w-full p-2.5 rounded-lg text-sm">
+                <input type="text" id="post-hours" placeholder="営業時間（例：11:00〜22:00）" class="w-full p-2.5 rounded-lg text-sm">
+                <input type="text" id="post-budget" placeholder="予算（例：1,000円〜2,000円）" class="w-full p-2.5 rounded-lg text-sm">
                 <input type="text" id="post-holiday" placeholder="定休日（例：水曜日、不定休）" class="w-full p-2.5 rounded-lg text-sm">
                 <textarea id="post-comment" placeholder="おすすめポイントや感想など" rows="2" class="w-full p-2.5 rounded-lg text-sm"></textarea>
                 <div>
@@ -118,7 +133,6 @@
     </div>
 
     <script>
-        // Firebase設定（ご自身の環境の設定に置き換えてください）
         const firebaseConfig = {
             databaseURL: "https://nanikuu-default-rtdb.firebaseio.com",
             storageBucket: "nanikuu.firebasestorage.app"
@@ -132,7 +146,6 @@
         let currentGroupId = null;
         let allPosts = [];
 
-        // LIFF初期化
         document.addEventListener("DOMContentLoaded", async () => {
             try {
                 await liff.init({ liffId: "2011348764-dl9CNIS4" });
@@ -155,7 +168,6 @@
                 initApp();
             } catch (error) {
                 console.error("LIFF initialization failed", error);
-                // 開発テスト用フォールバック
                 currentGroupId = "test_group";
                 document.getElementById("access-restrict").classList.add("hidden");
                 document.getElementById("main-content").classList.remove("hidden");
@@ -168,7 +180,6 @@
             loadPosts();
         }
 
-        // グループ名読み込み
         function loadGroupName() {
             db.ref(`groups/${currentGroupId}/name`).on("value", (snapshot) => {
                 const name = snapshot.val() || "グループ1";
@@ -186,7 +197,6 @@
             document.getElementById("group-modal").classList.add("hidden");
         }
 
-        // グループ名保存（誰でもいつでも変更可能）
         function saveGroupName() {
             const newName = document.getElementById("modal-group-name-input").value.trim();
             if (!newName) return;
@@ -199,42 +209,43 @@
             });
         }
 
-        // 投稿読み込み
         function loadPosts() {
             db.ref(`groups/${currentGroupId}/posts`).on("value", (snapshot) => {
                 allPosts = [];
                 snapshot.forEach((childSnapshot) => {
                     allPosts.push({ id: childSnapshot.key, ...childSnapshot.val() });
                 });
+                // 新しい順に並び替え
+                allPosts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
                 renderPosts(allPosts);
             });
         }
 
-        // 投稿表示
         function renderPosts(posts) {
             const listEl = document.getElementById("posts-list");
             if (posts.length === 0) {
-                listEl.innerHTML = `<p class="text-xs text-gray-400 text-center py-4">条件に合う投稿がありません</p>`;
+                listEl.innerHTML = `<p class="text-xs text-gray-400 text-center py-4 col-span-2">条件に合う投稿がありません</p>`;
                 return;
             }
-            listEl.innerHTML = posts.map(p => `
-                <div class="bg-zinc-900 border border-zinc-800 p-3 rounded-xl space-y-2">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="text-[10px] bg-orange-900/60 text-orange-300 px-2 py-0.5 rounded font-bold">${escapeHtml(p.genre)}</span>
-                            <h3 class="font-bold text-sm text-white mt-1">${escapeHtml(p.name)}</h3>
+
+            // 最新の最大6枚に絞り込む
+            const displayPosts = posts.slice(0, 6);
+
+            listEl.innerHTML = displayPosts.map(p => `
+                <div class="bg-zinc-900 border border-zinc-800 p-2.5 rounded-xl space-y-1.5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <span class="text-[9px] bg-orange-900/60 text-orange-300 px-1.5 py-0.5 rounded font-bold">${escapeHtml(p.genre)}</span>
+                            <button onclick="deletePost('${p.id}')" class="text-zinc-500 hover:text-red-400 text-xs px-1">✕</button>
                         </div>
-                        <button onclick="deletePost('${p.id}')" class="text-zinc-500 hover:text-red-400 text-xs px-1">✕</button>
+                        <h3 class="font-bold text-xs text-white mt-1 line-clamp-1">${escapeHtml(p.name)}</h3>
+                        ${p.city ? `<p class="text-[10px] text-gray-400 line-clamp-1">📍 ${escapeHtml(p.city)}</p>` : ''}
                     </div>
-                    ${p.state || p.city ? `<p class="text-xs text-gray-400">📍 ${escapeHtml(p.state || '')} ${escapeHtml(p.city || '')}</p>` : ''}
-                    ${p.holiday ? `<p class="text-xs text-gray-400">📅 定休日: ${escapeHtml(p.holiday)}</p>` : ''}
-                    ${p.comment ? `<p class="text-xs text-gray-300 bg-zinc-800/50 p-2 rounded">${escapeHtml(p.comment)}</p>` : ''}
-                    ${p.imageUrl ? `<img src="${escapeHtml(p.imageUrl)}" class="w-full h-36 object-cover rounded-lg mt-1">` : ''}
+                    ${p.imageUrl ? `<img src="${escapeHtml(p.imageUrl)}" class="w-full h-24 object-cover rounded-lg mt-1">` : ''}
                 </div>
             `).join('');
         }
 
-        // 投稿追加
         async function submitPost(event) {
             event.preventDefault();
             const submitBtn = document.getElementById("submit-btn");
@@ -245,6 +256,8 @@
             const name = document.getElementById("post-name").value;
             const state = document.getElementById("post-state").value;
             const city = document.getElementById("post-city").value;
+            const hours = document.getElementById("post-hours").value;
+            const budget = document.getElementById("post-budget").value;
             const holiday = document.getElementById("post-holiday").value;
             const comment = document.getElementById("post-comment").value;
             const imageFile = document.getElementById("post-image").files[0];
@@ -259,7 +272,7 @@
 
                 const newPostRef = db.ref(`groups/${currentGroupId}/posts`).push();
                 await newPostRef.set({
-                    genre, name, state, city, holiday, comment, imageUrl,
+                    genre, name, state, city, hours, budget, holiday, comment, imageUrl,
                     createdAt: firebase.database.ServerValue.TIMESTAMP
                 });
 
@@ -273,14 +286,12 @@
             }
         }
 
-        // 投稿削除
         function deletePost(postId) {
             if (confirm("この投稿を削除しますか？")) {
                 db.ref(`groups/${currentGroupId}/posts/${postId}`).remove();
             }
         }
 
-        // 絞り込み検索
         function filterPosts() {
             const keyword = document.getElementById("search-keyword").value.toLowerCase();
             const location = document.getElementById("search-location").value.toLowerCase();
@@ -293,6 +304,32 @@
                 return matchKeyword && matchLocation && matchGenre;
             });
             renderPosts(filtered);
+        }
+
+        function startRoulette() {
+            if (allPosts.length === 0) {
+                alert("お店がまだ投稿されていません！まずは投稿してください。");
+                return;
+            }
+
+            const display = document.getElementById("roulette-display");
+            const btn = document.getElementById("roulette-btn");
+            btn.disabled = true;
+
+            let count = 0;
+            const maxCount = 20;
+            const interval = setInterval(() => {
+                const randomPost = allPosts[Math.floor(Math.random() * allPosts.length)];
+                display.textContent = randomPost.name;
+                count++;
+
+                if (count >= maxCount) {
+                    clearInterval(interval);
+                    const selected = allPosts[Math.floor(Math.random() * allPosts.length)];
+                    display.innerHTML = `🎉 決定：<span class="text-white underline">${escapeHtml(selected.name)}</span> 🎉`;
+                    btn.disabled = false;
+                }
+            }, 80);
         }
 
         function escapeHtml(str) {
