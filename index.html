@@ -22,8 +22,8 @@
         const db = getDatabase(app);
         const storage = getStorage(app);
 
-        // データの永続的な保存先を確保するため、グループIDが取れない場合は安全な共通IDまたはローカル保持を使用
-        let currentGroupId = "default_group";
+        // データの消失を防ぐため、常に固定の共有グループIDを使用するよう一本化
+        const STORAGE_GROUP_ID = "nanikuu_shared_group_data";
         let allRestaurants = [];
         let currentUserName = "ゲストユーザー";
 
@@ -102,7 +102,7 @@
             const startRouletteBtn = document.getElementById("start-roulette");
             const rouletteResult = document.getElementById("roulette-result");
 
-            // LIFF初期化処理（データの消失を防ぐため、グループIDの判定を堅牢化）
+            // LIFF初期化処理
             async function initLiff() {
                 try {
                     await liff.init({ liffId: "2011348764-dl9CNIS4" });
@@ -114,18 +114,8 @@
 
                     const profile = await liff.getProfile();
                     currentUserName = profile.displayName;
-
-                    const context = liff.getContext();
-                    if (context && context.groupId) {
-                        currentGroupId = context.groupId;
-                    } else {
-                        // グループ外や個人チャットから開いた場合でも、データを消さずに共有ルームとして機能させるためデフォルトIDを固定利用
-                        currentGroupId = "shared_group_room";
-                    }
-
                 } catch (error) {
                     console.error("LIFF Initialization failed", error);
-                    currentGroupId = "shared_group_room";
                 }
 
                 if (groupNameDisplay) groupNameDisplay.textContent = "グループ共有中";
@@ -133,9 +123,9 @@
             }
             initLiff();
 
-            // データのリアルタイム読み込み
+            // データのリアルタイム読み込み（固定の共通パスから取得）
             function loadRestaurants() {
-                const dbRef = ref(db, 'groups/' + currentGroupId + '/restaurants');
+                const dbRef = ref(db, 'groups/' + STORAGE_GROUP_ID + '/restaurants');
                 onValue(dbRef, (snapshot) => {
                     if (loadingEl) loadingEl.classList.add("hidden");
                     allRestaurants = [];
@@ -235,7 +225,7 @@
                     likedUsers[userKey] = true;
                 }
 
-                const itemRef = ref(db, `groups/${currentGroupId}/restaurants/${id}`);
+                const itemRef = ref(db, `groups/${STORAGE_GROUP_ID}/restaurants/${id}`);
                 try {
                     await update(itemRef, { likedUsers });
                 } catch (error) {
@@ -504,14 +494,14 @@
                                 } catch (err) {}
                             }
                             const compressedBlob = await compressImage(photoFile, 800, 0.7);
-                            const newPhotoPath = `images/${currentGroupId}/${Date.now()}_compressed.jpg`;
+                            const newPhotoPath = `images/${STORAGE_GROUP_ID}/${Date.now()}_compressed.jpg`;
                             const fileRef = storageRef(storage, newPhotoPath);
                             const snapshot = await uploadBytes(fileRef, compressedBlob);
                             photoUrl = await getDownloadURL(snapshot.ref);
                             photoPath = newPhotoPath;
                         }
 
-                        const dbRef = ref(db, `groups/${currentGroupId}/restaurants`);
+                        const dbRef = ref(db, `groups/${STORAGE_GROUP_ID}/restaurants`);
                         
                         const restaurantData = {
                             name, genre, country, prefecture, city, hpUrl, instaUrl, scenes, ramenDetails, parking, reservation, memo, photoUrl, photoPath,
@@ -520,7 +510,7 @@
                         };
 
                         if (editId) {
-                            const updateRef = ref(db, `groups/${currentGroupId}/restaurants/${editId}`);
+                            const updateRef = ref(db, `groups/${STORAGE_GROUP_ID}/restaurants/${editId}`);
                             const existingItem = allRestaurants.find(r => r.id === editId);
                             if (existingItem && existingItem.likedUsers) {
                                 restaurantData.likedUsers = existingItem.likedUsers;
@@ -629,7 +619,7 @@
                                 await deleteObject(fileRef);
                             } catch (err) {}
                         }
-                        const itemRef = ref(db, `groups/${currentGroupId}/restaurants/${targetDeleteId}`);
+                        const itemRef = ref(db, `groups/${STORAGE_GROUP_ID}/restaurants/${targetDeleteId}`);
                         await remove(itemRef);
                         if (deleteModal) {
                             deleteModal.classList.add("hidden");
@@ -915,6 +905,7 @@
         </section>
     </div>
 
+    <!-- モーダル各種 -->
     <div id="detail-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-sm overflow-hidden flex flex-col max-h-[85vh]">
             <div class="relative h-40 min-h-[160px] bg-zinc-800 shrink-0">
@@ -957,7 +948,7 @@
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-sm overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-4 border-b border-zinc-800 flex justify-between items-center">
                 <h3 class="text-xs font-bold text-white">登録されたお店一覧</h3>
-                <button id="close-all-modal" class="text-xs text-zinc-400 hover:text-white">✕ 閉じる</th>
+                <button id="close-all-modal" class="text-xs text-zinc-400 hover:text-white">✕ 閉じる</button>
             </div>
             <div id="all-restaurant-list" class="p-4 grid grid-cols-2 gap-3 overflow-y-auto flex-1"></div>
         </div>
