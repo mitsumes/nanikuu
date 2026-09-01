@@ -281,7 +281,7 @@
                     openDetail(item.id);
                 };
                 
-                // カード内からは投稿者名を削除し、スッキリとしたデザインに調整
+                // カード内からは投稿者名を削除
                 card.innerHTML = `
                     <div class="h-32 overflow-hidden bg-zinc-950 relative flex items-center justify-center">
                         <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover">
@@ -923,7 +923,7 @@
                     <span class="text-zinc-500 block text-[10px] mb-1">メモ</span>
                     <p id="detail-memo" class="text-xs text-zinc-300 bg-zinc-950/50 p-3 rounded-xl border border-zinc-800/60 whitespace-pre-wrap"></p>
                 </div>
-                <!-- 詳細モーダル内のみで投稿者を表示 -->
+                <!-- 詳細モーダル内でのみ投稿者を表示 -->
                 <div class="text-[10px] text-zinc-400 text-right">投稿者: <span id="detail-author" class="text-zinc-200 font-bold"></span></div>
                 <div id="detail-action-buttons"></div>
             </div>
