@@ -12,7 +12,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         // Firebase設定
         const firebaseConfig = {
@@ -28,7 +28,6 @@
         let currentGroupId = "default_group";
         let allRestaurants = [];
         let currentUserName = "ゲスト";
-        let currentUserId = "guest";
 
         // DOM要素
         const restaurantListEl = document.getElementById("restaurant-list");
@@ -48,7 +47,7 @@
         const detailGenre = document.getElementById("detail-genre");
         const detailRegion = document.getElementById("detail-region");
         const detailMemo = document.getElementById("detail-memo");
-        const detailAuthor = document.getElementById("detail-author");
+        const detailAuthor = document.getElementById("detail-author"); // 投稿者名表示用
         const closeDetailBtn = document.getElementById("close-detail");
 
         // 削除モーダル要素
@@ -56,6 +55,7 @@
         const confirmDeleteBtn = document.getElementById("confirm-delete");
         const cancelDeleteBtn = document.getElementById("cancel-delete");
         let targetDeleteId = null;
+        let targetDeletePhotoPath = null;
 
         // 初期化処理
         async function initLiff() {
@@ -69,9 +69,9 @@
                     } else {
                         groupNameEl.textContent = "個人チャット（デフォルト）";
                     }
+                    // ユーザー名を取得
                     const profile = await liff.getProfile();
                     currentUserName = profile.displayName;
-                    currentUserId = profile.userId;
                 } else {
                     const urlParams = new URLSearchParams(window.location.search);
                     const groupParam = urlParams.get('group');
@@ -131,12 +131,11 @@
                         <div class=\"p-4\">
                             <h3 class=\"font-bold text-lg text-gray-800 truncate\">${item.name}</h3>
                             <p class=\"text-xs text-gray-500 mt-1\">📍 ${item.region || '未設定'}</p>
-                            <p class=\"text-xs text-gray-400 mt-1\">👤 投稿者: ${item.authorName || '名無し'}</p>
                         </div>
                     </div>
                     <div class=\"px-4 pb-4 pt-0 flex justify-end gap-2 border-t border-gray-50 pt-3\">
                         <button onclick=\"startEdit('${item.id}')\" class=\"text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg font-medium transition\">編集</button>
-                        <button onclick=\"promptDelete('${item.id}')\" class=\"text-xs bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg font-medium transition\">削除</button>
+                        <button onclick=\"promptDelete('${item.id}', '${item.photoPath || ''}')\" class=\"text-xs bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg font-medium transition\">削除</button>
                     </div>
                 `;
                 restaurantListEl.appendChild(card);
@@ -153,7 +152,7 @@
             detailGenre.textContent = item.genre || '未設定';
             detailRegion.textContent = item.region || '未設定';
             detailMemo.textContent = item.memo || 'メモなし';
-            detailAuthor.textContent = item.authorName || '名無し';
+            detailAuthor.textContent = item.authorName || '名無し'; // 投稿者名を表示
 
             detailModal.classList.remove("hidden");
             detailModal.classList.add("flex");
@@ -180,8 +179,15 @@
             let photoPath = currentPhotoPathInput.value;
 
             try {
-                // 新しい写真が選択された場合のみアップロード（古い画像ファイルはStorageに残し、消さないように保護）
                 if (photoFile) {
+                    if (photoPath) {
+                        try {
+                            const oldRef = storageRef(storage, photoPath);
+                            await deleteObject(oldRef);
+                        } catch (err) {
+                            console.log("古い画像の削除に失敗または存在しません", err);
+                        }
+                    }
                     const newPhotoPath = `images/${currentGroupId}/${Date.now()}_${photoFile.name}`;
                     const fileRef = storageRef(storage, newPhotoPath);
                     const snapshot = await uploadBytes(fileRef, photoFile);
@@ -190,22 +196,19 @@
                 }
 
                 const sanitizedGroupId = currentGroupId.replace(/[.#$[\]]/g, "_");
+                const dbRef = ref(db, `groups/${sanitizedGroupId}/restaurants`);
                 
                 if (editId) {
-                    // 更新
                     const updateRef = ref(db, `groups/${sanitizedGroupId}/restaurants/${editId}`);
                     await update(updateRef, {
                         name, genre, region, memo, photoUrl, photoPath,
                         updatedAt: Date.now()
                     });
                 } else {
-                    // 新規追加
-                    const dbRef = ref(db, `groups/${sanitizedGroupId}/restaurants`);
                     const newRef = push(dbRef);
                     await set(newRef, {
                         name, genre, region, memo, photoUrl, photoPath,
-                        authorId: currentUserId,
-                        authorName: currentUserName,
+                        authorName: currentUserName, // 投稿者名を保存
                         createdAt: Date.now()
                     });
                 }
@@ -253,9 +256,10 @@
             cancelEditBtn.classList.add("hidden");
         }
 
-        // 削除確認モーダルを開く（画像ファイルはサーバーに残し、消えないように安全化）
-        window.promptDelete = function(id) {
+        // 削除確認モーダルを開く
+        window.promptDelete = function(id, path) {
             targetDeleteId = id;
+            targetDeletePhotoPath = path;
             deleteModal.classList.remove("hidden");
             deleteModal.classList.add("flex");
         };
@@ -264,19 +268,30 @@
             deleteModal.classList.add("hidden");
             deleteModal.classList.remove("flex");
             targetDeleteId = null;
+            targetDeletePhotoPath = null;
         });
 
         confirmDeleteBtn.addEventListener("click", async () => {
             if (!targetDeleteId) return;
 
             try {
+                if (targetDeletePhotoPath) {
+                    try {
+                        const fileRef = storageRef(storage, targetDeletePhotoPath);
+                        await deleteObject(fileRef);
+                    } catch (err) {
+                        console.log("画像ファイルの削除に失敗または存在しません", err);
+                    }
+                }
+
                 const sanitizedGroupId = currentGroupId.replace(/[.#$[\]]/g, "_");
                 const itemRef = ref(db, `groups/${sanitizedGroupId}/restaurants/${targetDeleteId}`);
-                await remove(itemRef); // データベースのデータのみ削除（画像はStorageに保持）
+                await remove(itemRef);
 
                 deleteModal.classList.add("hidden");
                 deleteModal.classList.remove("flex");
                 targetDeleteId = null;
+                targetDeletePhotoPath = null;
             } catch (error) {
                 console.error("削除エラー:", error);
                 alert("削除に失敗しました。");
@@ -321,7 +336,7 @@
                     clearInterval(timer);
                     const finalPick = allRestaurants[Math.floor(Math.random() * allRestaurants.length)];
                     rouletteResult.innerHTML = `
-                        <div class=\"bg-orange-50 border border-orange-200 p-4 rounded-xl\">\n                            <span class=\"text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full font-bold\">決定！🎉</span>\n                            <h4 class=\"text-2xl font-black text-gray-800 mt-2\">${finalPick.name}</h4>\n                            <p class=\"text-sm text-gray-600 mt-1\">📍 ${finalPick.region || '未設定'} | 🍽️ ${finalPick.genre || 'その他'}</p>\n                            <p class=\"text-xs text-gray-500 mt-2\">メモ: ${finalPick.memo || 'なし'}</p>\n                            <p class=\"text-xs text-gray-400 mt-1\">👤 投稿者: ${finalPick.authorName || '名無し'}</p>\n                        </div>\n                    `;
+                        <div class=\"bg-orange-50 border border-orange-200 p-4 rounded-xl\">\n                            <span class=\"text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full font-bold\">決定！🎉</span>\n                            <h4 class=\"text-2xl font-black text-gray-800 mt-2\">${finalPick.name}</h4>\n                            <p class=\"text-sm text-gray-600 mt-1\">📍 ${finalPick.region || '未設定'} | 🍽️ ${finalPick.genre || 'その他'}</p>\n                            <p class=\"text-xs text-gray-500 mt-2\">メモ: ${finalPick.memo || 'なし'}</p>\n                        </div>\n                    `;
                     startRouletteBtn.disabled = false;
                 }
             }, 100);
