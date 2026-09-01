@@ -4,36 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>なにクウ？</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- LIFF SDK -->
     <script src="https://static.line-scdn.net/liff/2/sdk.js"></script>
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     <style>
         body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; }
         .card { background-color: #1e1e1e; border: 1px solid #2d2d2d; border-radius: 1rem; }
-        input, select, textarea { background-color: #2a2a2a !important; color: #ffffff !important; border: 1px solid #3d3d3d !important; }
+        input[type="text"], input[type="url"], select, textarea { background-color: #2a2a2a !important; color: #ffffff !important; border: 1px solid #3d3d3d !important; }
+        input[type="checkbox"] { accent-color: #ea580c; width: 1rem; height: 1rem; }
     </style>
 </head>
 <body class="p-4 max-w-md mx-auto">
 
-    <!-- アクセス制限画面 -->
     <div id="access-restrict" class="fixed inset-0 bg-[#121212] z-50 flex flex-col items-center justify-center p-6 text-center">
         <h2 class="text-xl font-bold text-orange-500 mb-2">⚠️ アクセス制限</h2>
         <p class="text-sm text-gray-300">このアプリはLINEグループ内からのみご利用いただけます。<br>グループのトークルームから開き直してください。</p>
     </div>
 
-    <!-- メインコンテンツ -->
     <div id="main-content" class="hidden space-y-6 pb-12">
         <header class="text-center pt-2">
             <h1 class="text-3xl font-extrabold text-orange-500 tracking-wider">なにクウ？</h1>
             <p class="text-xs text-gray-400 mt-1">ご飯迷った時の決定＆写真共有アプリ</p>
         </header>
 
-        <!-- グループ情報エリア -->
         <div class="card p-4 flex items-center justify-between shadow-md">
             <div class="flex items-center space-x-2 overflow-hidden">
                 <span class="text-xl">🏠</span>
@@ -44,20 +39,6 @@
             </button>
         </div>
 
-        <!-- ルーレットエリア -->
-        <div class="card p-4 text-center space-y-3 bg-gradient-to-b from-zinc-900 to-orange-950/30 border-orange-500/30">
-            <h2 class="font-bold text-base flex items-center justify-center gap-2 text-white">
-                <span>🎰</span> 今日のお店をルーレットで決める
-            </h2>
-            <div id="roulette-display" class="text-2xl font-black text-orange-400 py-4 tracking-wide min-h-[70px] flex items-center justify-center">
-                ボタンを押してね！
-            </div>
-            <button onclick="startRoulette()" id="roulette-btn" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 rounded-lg text-sm transition shadow-lg">
-                ルーレットを回す！
-            </button>
-        </div>
-
-        <!-- みんなの投稿一覧（最新6枚：横2列×縦3列） -->
         <div class="card p-4 space-y-3">
             <h2 class="font-bold text-base flex items-center gap-2 text-white">
                 <span>🍴</span> みんなの投稿一覧 <span class="text-xs text-gray-400 font-normal">（最新6件）</span>
@@ -67,7 +48,6 @@
             </div>
         </div>
 
-        <!-- お店を探す・絞り込む -->
         <div class="card p-4 space-y-3">
             <h2 class="font-bold text-base flex items-center gap-2 text-white">
                 <span>🔍</span> お店を探す・絞り込む
@@ -87,7 +67,6 @@
             </select>
         </div>
 
-        <!-- お店を投稿する -->
         <div class="card p-4 space-y-3">
             <h2 class="font-bold text-base flex items-center gap-2 text-white">
                 <span>✏️</span> お店を投稿する
@@ -107,6 +86,46 @@
                 <input type="text" id="post-name" placeholder="店名 *" required class="w-full p-2.5 rounded-lg text-sm">
                 <input type="text" id="post-state" placeholder="国名 / 県名（例：日本 / 愛知県）" class="w-full p-2.5 rounded-lg text-sm">
                 <input type="text" id="post-city" placeholder="市名・区名（例：東海市）" class="w-full p-2.5 rounded-lg text-sm">
+
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1.5">おすすめシーン（複数選択可）</label>
+                    <div class="bg-zinc-900 border border-zinc-800 p-2.5 rounded-lg space-y-2">
+                        <label class="flex items-center space-x-2 text-xs cursor-pointer">
+                            <input type="checkbox" name="post-vibe" value="👤 1人向け"><span>👤 1人向け</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs cursor-pointer">
+                            <input type="checkbox" name="post-vibe" value="👨‍👩‍👧 ファミリー向け"><span>👨‍👩‍👧 ファミリー向け</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs cursor-pointer">
+                            <input type="checkbox" name="post-vibe" value="🍻 グループ向け"><span>🍻 グループ向け</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">駐車場の有無</label>
+                    <select id="post-parking" class="w-full p-2.5 rounded-lg text-sm">
+                        <option value="不明・記載なし">選択してください</option>
+                        <option value="🅿️ 駐車場あり">🅿️ 駐車場あり</option>
+                        <option value="🚫 駐車場なし">🚫 駐車場なし</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1.5">支払い方法（複数選択可）</label>
+                    <div class="bg-zinc-900 border border-zinc-800 p-2.5 rounded-lg space-y-2">
+                        <label class="flex items-center space-x-2 text-xs cursor-pointer">
+                            <input type="checkbox" name="post-payment" value="💵 現金"><span>💵 現金</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs cursor-pointer">
+                            <input type="checkbox" name="post-payment" value="💳 クレジットカード"><span>💳 クレジットカード</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs cursor-pointer">
+                            <input type="checkbox" name="post-payment" value="📱 電子マネー・QR決済"><span>📱 電子マネー・QR決済</span>
+                        </label>
+                    </div>
+                </div>
+
                 <input type="text" id="post-hours" placeholder="営業時間（例：11:00〜22:00）" class="w-full p-2.5 rounded-lg text-sm">
                 <input type="text" id="post-budget" placeholder="予算（例：1,000円〜2,000円）" class="w-full p-2.5 rounded-lg text-sm">
                 <input type="text" id="post-holiday" placeholder="定休日（例：水曜日、不定休）" class="w-full p-2.5 rounded-lg text-sm">
@@ -118,9 +137,20 @@
                 <button type="submit" id="submit-btn" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 rounded-lg text-sm transition">投稿する</button>
             </form>
         </div>
+
+        <div class="card p-4 text-center space-y-3 bg-gradient-to-b from-zinc-900 to-orange-950/30 border-orange-500/30">
+            <h2 class="font-bold text-base flex items-center justify-center gap-2 text-white">
+                <span>🎰</span> 今日のお店をルーレットで決める
+            </h2>
+            <div id="roulette-display" class="text-2xl font-black text-orange-400 py-4 tracking-wide min-h-[70px] flex items-center justify-center">
+                ボタンを押してね！
+            </div>
+            <button onclick="startRoulette()" id="roulette-btn" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 rounded-lg text-sm transition shadow-lg">
+                ルーレットを回す！
+            </button>
+        </div>
     </div>
 
-    <!-- グループ名編集モーダル -->
     <div id="group-modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
         <div class="card p-5 w-full max-w-xs space-y-4">
             <h3 class="font-bold text-base text-white">グループ名の変更</h3>
@@ -215,7 +245,6 @@
                 snapshot.forEach((childSnapshot) => {
                     allPosts.push({ id: childSnapshot.key, ...childSnapshot.val() });
                 });
-                // 新しい順に並び替え
                 allPosts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
                 renderPosts(allPosts);
             });
@@ -228,7 +257,6 @@
                 return;
             }
 
-            // 最新の最大6枚に絞り込む
             const displayPosts = posts.slice(0, 6);
 
             listEl.innerHTML = displayPosts.map(p => `
@@ -256,6 +284,11 @@
             const name = document.getElementById("post-name").value;
             const state = document.getElementById("post-state").value;
             const city = document.getElementById("post-city").value;
+            
+            const vibes = Array.from(document.querySelectorAll('input[name="post-vibe"]:checked')).map(el => el.value);
+            const parking = document.getElementById("post-parking").value;
+            const payments = Array.from(document.querySelectorAll('input[name="post-payment"]:checked')).map(el => el.value);
+
             const hours = document.getElementById("post-hours").value;
             const budget = document.getElementById("post-budget").value;
             const holiday = document.getElementById("post-holiday").value;
@@ -272,7 +305,7 @@
 
                 const newPostRef = db.ref(`groups/${currentGroupId}/posts`).push();
                 await newPostRef.set({
-                    genre, name, state, city, hours, budget, holiday, comment, imageUrl,
+                    genre, name, state, city, vibes, parking, payments, hours, budget, holiday, comment, imageUrl,
                     createdAt: firebase.database.ServerValue.TIMESTAMP
                 });
 
