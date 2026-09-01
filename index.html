@@ -237,12 +237,11 @@
 
             // イッタヨ！ボタン押下処理
             window.toggleItkayo = async function(id, event) {
-                event.stopPropagation(); // カード全体のクリック（詳細モーダル）が開かないようにする
+                event.stopPropagation();
                 const item = allRestaurants.find(r => r.id === id);
                 if (!item) return;
 
                 let likedUsers = item.likedUsers || {};
-                // ユーザー名を安全なキーにするために特殊文字等を置換、またはそのまま使用
                 const userKey = currentUserName.replace(/[.#$\/\[\]]/g, "_");
 
                 if (likedUsers[userKey]) {
@@ -282,6 +281,7 @@
                     openDetail(item.id);
                 };
                 
+                // カード内からは投稿者名を削除し、スッキリとしたデザインに調整
                 card.innerHTML = `
                     <div class="h-32 overflow-hidden bg-zinc-950 relative flex items-center justify-center">
                         <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover">
@@ -294,8 +294,7 @@
                                 <span class="truncate">📍 ${locationStr}</span>
                             </div>
                         </div>
-                        <div class="mt-2 pt-2 border-t border-zinc-800/80 flex items-center justify-between">
-                            <span class="text-[10px] text-zinc-500">投稿者: ${item.author || '不明'}</span>
+                        <div class="mt-2 pt-2 border-t border-zinc-800/80 flex items-center justify-end">
                             <button onclick="window.toggleItkayo('${item.id}', event)" class="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border transition ${hasLiked ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold' : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700'}">
                                 <span>🚀</span>
                                 <span>イッタヨ！ (${likeCount})</span>
@@ -377,7 +376,7 @@
                 if (detailScenes) detailScenes.textContent = item.scenes && item.scenes.length > 0 ? item.scenes.join(', ') : '未設定';
                 if (detailParking) detailParking.textContent = item.parking || '未設定';
                 if (detailReservation) detailReservation.textContent = item.reservation || '未設定';
-                if (detailAuthor) detailAuthor.textContent = item.author || '不明';
+                if (detailAuthor) detailAuthor.textContent = item.author || '不明'; // 詳細を開いたときに投稿者を表示
                 
                 if (detailHp) {
                     if (item.hpUrl) {
@@ -521,7 +520,6 @@
 
                         if (editId) {
                             const updateRef = ref(db, `groups/${currentGroupId}/restaurants/${editId}`);
-                            // 既存のイッタヨ情報は保持する
                             const existingItem = allRestaurants.find(r => r.id === editId);
                             if (existingItem && existingItem.likedUsers) {
                                 restaurantData.likedUsers = existingItem.likedUsers;
@@ -925,7 +923,8 @@
                     <span class="text-zinc-500 block text-[10px] mb-1">メモ</span>
                     <p id="detail-memo" class="text-xs text-zinc-300 bg-zinc-950/50 p-3 rounded-xl border border-zinc-800/60 whitespace-pre-wrap"></p>
                 </div>
-                <div class="text-[10px] text-zinc-500 text-right">投稿者: <span id="detail-author"></span></div>
+                <!-- 詳細モーダル内のみで投稿者を表示 -->
+                <div class="text-[10px] text-zinc-400 text-right">投稿者: <span id="detail-author" class="text-zinc-200 font-bold"></span></div>
                 <div id="detail-action-buttons"></div>
             </div>
         </div>
@@ -959,7 +958,7 @@
             <h3 class="text-sm font-bold text-white">本当に削除しますか？</h3>
             <p class="text-xs text-zinc-400">この操作は元に戻せません。</p>
             <div class="flex gap-2">
-                <button id="cancel-delete" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-2 rounded-xl text-xs transition">キャンセル</button>
+                <button id="delete-cancel" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-2 rounded-xl text-xs transition">キャンセル</button>
                 <button id="confirm-delete" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-xl text-xs transition">削除する</button>
             </div>
         </div>
