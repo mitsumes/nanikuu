@@ -25,8 +25,8 @@
         const db = getDatabase(app);
         const storage = getStorage(app);
 
-        // ★ 過去の6件データがある場所をフォールバックとして確実に指定
-        let currentGroupId = "default_group";
+        // ★ どのLINEグループから開いても必ず同じデータ（error_fallback）を見るように固定
+        let currentGroupId = "error_fallback";
         let allRestaurants = [];
 
         // DOM要素
@@ -61,30 +61,13 @@
             try {
                 await liff.init({ liffId: "2011348764-dl9CNIS4" });
                 if (liff.isInClient()) {
-                    const context = liff.getContext();
-                    if (context && (context.groupId || context.roomId)) {
-                        currentGroupId = context.groupId || context.roomId;
-                        groupNameEl.textContent = "LINEグループ専用なにクウ？";
-                    } else {
-                        // グループIDが取れない場合は過去のデータがある error_fallback を優先的に使う
-                        currentGroupId = "error_fallback";
-                        groupNameEl.textContent = "復旧モード（ラーメン部）";
-                    }
+                    groupNameEl.textContent = "LINEグループ専用なにクウ？";
                 } else {
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const groupParam = urlParams.get('group');
-                    if (groupParam) {
-                        currentGroupId = groupParam;
-                    } else {
-                        // ブラウザテスト時もデータが見えるように error_fallback をデフォルトに
-                        currentGroupId = "error_fallback";
-                    }
-                    groupNameEl.textContent = "ブラウザテストモード (" + currentGroupId + ")";
+                    groupNameEl.textContent = "ブラウザテストモード";
                 }
             } catch (error) {
                 console.error("LIFF Initialization failed", error);
-                currentGroupId = "error_fallback";
-                groupNameEl.textContent = "通常ブラウザモード（復旧）";
+                groupNameEl.textContent = "通常ブラウザモード";
             }
             loadRestaurants();
         }
@@ -92,38 +75,18 @@
         // データの読み込み
         function loadRestaurants() {
             const sanitizedGroupId = currentGroupId.replace(/[.#$[\]]/g, "_");
-            
-            // まず通常のパスを監視
             const dbRef = ref(db, 'groups/' + sanitizedGroupId + '/restaurants');
             
             onValue(dbRef, (snapshot) => {
+                allRestaurants = [];
                 const data = snapshot.val();
                 if (data) {
-                    allRestaurants = [];
                     Object.keys(data).forEach((key) => {
                         allRestaurants.push({ id: key, ...data[key] });
                     });
-                    renderRestaurants(allRestaurants);
-                    loadingEl.classList.add("hidden");
-                } else if (currentGroupId !== "error_fallback") {
-                    // もし現在のグループにデータがない場合は、念のため error_fallback もチェックする
-                    const fallbackRef = ref(db, 'groups/error_fallback/restaurants');
-                    onValue(fallbackRef, (fallbackSnapshot) => {
-                        allRestaurants = [];
-                        const fallbackData = fallbackSnapshot.val();
-                        if (fallbackData) {
-                            Object.keys(fallbackData).forEach((key) => {
-                                allRestaurants.push({ id: key, ...fallbackData[key] });
-                            });
-                        }
-                        renderRestaurants(allRestaurants);
-                        loadingEl.classList.add("hidden");
-                    }, { onlyOnce: true });
-                } else {
-                    allRestaurants = [];
-                    renderRestaurants(allRestaurants);
-                    loadingEl.classList.add("hidden");
                 }
+                renderRestaurants(allRestaurants);
+                loadingEl.classList.add("hidden");
             }, (error) => {
                 console.error("Data load failed", error);
                 loadingEl.textContent = "データの読み込みに失敗しました。";
