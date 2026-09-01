@@ -254,7 +254,7 @@
                 };
                 
                 card.innerHTML = `
-                    <div class="h-28 overflow-hidden bg-zinc-800 relative">
+                    <div class="h-32 overflow-hidden bg-zinc-950 relative flex items-center justify-center">
                         <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover">
                         <span class="absolute top-1.5 right-1.5 bg-black/70 backdrop-blur-md text-zinc-200 text-[10px] px-2 py-0.5 rounded-full border border-zinc-700">${item.genre || 'その他'}</span>
                     </div>
@@ -508,8 +508,8 @@
                     cb.checked = item.scenes && item.scenes.includes(cb.value);
                 });
 
-                document.getElementById("restaurant-parking").value = item.parking || "あり";
-                document.getElementById("restaurant-reservation").value = item.reservation || "可";
+                document.getElementById("restaurant-parking").value = item.parking || "";
+                document.getElementById("restaurant-reservation").value = item.reservation || "";
                 document.getElementById("restaurant-memo").value = item.memo || "";
                 currentPhotoUrlInput.value = item.photoUrl || "";
                 currentPhotoPathInput.value = item.photoPath || "";
@@ -765,6 +765,9 @@
                         <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="家族向け"> 家族向け</label>
                         <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="接待向け"> 接待向け</label>
                         <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="ランチ"> ランチ</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="男子会"> 男子会</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="記念日"> 記念日</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="ディナー"> ディナー</label>
                     </div>
                 </div>
 
@@ -772,6 +775,7 @@
                     <div>
                         <label class="block text-[10px] text-zinc-400 mb-1">駐車場</label>
                         <select id="restaurant-parking" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                            <option value="">未選択</option>
                             <option value="あり">あり</option>
                             <option value="なし">なし</option>
                             <option value="近くにコインパーキングあり">近くにパーキングあり</option>
@@ -780,6 +784,7 @@
                     <div>
                         <label class="block text-[10px] text-zinc-400 mb-1">予約</label>
                         <select id="restaurant-reservation" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                            <option value="">未選択</option>
                             <option value="可">可</option>
                             <option value="不可">不可</option>
                             <option value="推奨">推奨</option>
