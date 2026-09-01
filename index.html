@@ -268,7 +268,7 @@
                 return card;
             }
 
-            // 写真圧縮関数（最大3秒でタイムアウトして元ファイルを返す安全設計）
+            // 写真圧縮関数
             function compressImage(file, maxWidth = 800, quality = 0.7) {
                 return new Promise((resolve) => {
                     if (!file || !file.type.startsWith('image/')) {
@@ -535,7 +535,6 @@
                 if (cancelEditBtn) cancelEditBtn.classList.add("hidden");
             }
 
-            // 削除確認モーダルを表示
             function promptDelete(id, path) {
                 targetDeleteId = id;
                 targetDeletePhotoPath = path;
@@ -646,9 +645,9 @@
                 <h1 class="text-lg font-bold tracking-wider text-amber-500">なにクウ？</h1>
                 <p class="text-[10px] text-zinc-400">グループ飲食店共有アプリ</p>
             </div>
-            <div class="text-right">
+            <div class="flex items-center gap-1.5">
                 <span id="group-name-display" class="text-xs bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded-lg text-zinc-300 font-mono">読み込み中...</span>
-                <button id="edit-group-btn" class="block text-[10px] text-amber-400 underline mt-1 ml-auto">グループ切替</button>
+                <button id="edit-group-btn" class="text-xs bg-zinc-900 border border-zinc-800 p-1.5 rounded-lg text-amber-400 hover:bg-zinc-800 transition" title="グループ切替">✏️</button>
             </div>
         </header>
 
@@ -760,11 +759,11 @@
                 <div>
                     <label class="block text-[10px] text-zinc-400 mb-1">利用シーン</label>
                     <div class="grid grid-cols-3 gap-2 text-xs text-zinc-300">
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="デート"> デート</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="1人OK"> 1人OK</label>
                         <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="女子会"> 女子会</label>
                         <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="飲み会"> 飲み会</label>
                         <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="家族向け"> 家族向け</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="1人OK"> 1人OK</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="接待向け"> 接待向け</label>
                         <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="ランチ"> ランチ</label>
                     </div>
                 </div>
