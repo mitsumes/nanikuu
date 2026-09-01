@@ -47,7 +47,7 @@
         const detailGenre = document.getElementById("detail-genre");
         const detailRegion = document.getElementById("detail-region");
         const detailMemo = document.getElementById("detail-memo");
-        const detailAuthor = document.getElementById("detail-author"); // 投稿者名表示用
+        const detailAuthor = document.getElementById("detail-author");
         const closeDetailBtn = document.getElementById("close-detail");
 
         // 削除モーダル要素
@@ -57,7 +57,7 @@
         let targetDeleteId = null;
         let targetDeletePhotoPath = null;
 
-        // 初期化処理
+        // 初期化処理（以前の確実に動いていたロジックに復元）
         async function initLiff() {
             try {
                 await liff.init({ liffId: "2011348764-dl9CNIS4" });
@@ -69,9 +69,12 @@
                     } else {
                         groupNameEl.textContent = "個人チャット（デフォルト）";
                     }
-                    // ユーザー名を取得
-                    const profile = await liff.getProfile();
-                    currentUserName = profile.displayName;
+                    try {
+                        const profile = await liff.getProfile();
+                        currentUserName = profile.displayName;
+                    } catch (e) {
+                        console.log("プロフィール取得失敗", e);
+                    }
                 } else {
                     const urlParams = new URLSearchParams(window.location.search);
                     const groupParam = urlParams.get('group');
@@ -142,7 +145,7 @@
             });
         }
 
-        // 詳細モーダルを開く
+        // 詳細モーダルを開く（投稿者名が表示される機能付き）
         window.openDetail = function(id) {
             const item = allRestaurants.find(r => r.id === id);
             if (!item) return;
@@ -152,7 +155,7 @@
             detailGenre.textContent = item.genre || '未設定';
             detailRegion.textContent = item.region || '未設定';
             detailMemo.textContent = item.memo || 'メモなし';
-            detailAuthor.textContent = item.authorName || '名無し'; // 投稿者名を表示
+            detailAuthor.textContent = item.authorName || '名無し';
 
             detailModal.classList.remove("hidden");
             detailModal.classList.add("flex");
@@ -208,7 +211,7 @@
                     const newRef = push(dbRef);
                     await set(newRef, {
                         name, genre, region, memo, photoUrl, photoPath,
-                        authorName: currentUserName, // 投稿者名を保存
+                        authorName: currentUserName,
                         createdAt: Date.now()
                     });
                 }
@@ -330,13 +333,23 @@
                 const randomIndex = Math.floor(Math.random() * allRestaurants.length);
                 const pick = allRestaurants[randomIndex];
                 rouletteResult.innerHTML = `
-                    <div class=\"animate-pulse\">\n                        <h4 class=\"text-xl font-bold text-orange-600\">${pick.name}</h4>\n                        <p class=\"text-sm text-gray-500 mt-1\">${pick.genre || 'その他'} / ${pick.region || '未設定'}</p>\n                    </div>\n                `;
+                    <div class=\"animate-pulse\">
+                        <h4 class=\"text-xl font-bold text-orange-600\">${pick.name}</h4>
+                        <p class=\"text-sm text-gray-500 mt-1\">${pick.genre || 'その他'} / ${pick.region || '未設定'}</p>
+                    </div>
+                `;
                 count++;
                 if (count > 15) {
                     clearInterval(timer);
                     const finalPick = allRestaurants[Math.floor(Math.random() * allRestaurants.length)];
                     rouletteResult.innerHTML = `
-                        <div class=\"bg-orange-50 border border-orange-200 p-4 rounded-xl\">\n                            <span class=\"text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full font-bold\">決定！🎉</span>\n                            <h4 class=\"text-2xl font-black text-gray-800 mt-2\">${finalPick.name}</h4>\n                            <p class=\"text-sm text-gray-600 mt-1\">📍 ${finalPick.region || '未設定'} | 🍽️ ${finalPick.genre || 'その他'}</p>\n                            <p class=\"text-xs text-gray-500 mt-2\">メモ: ${finalPick.memo || 'なし'}</p>\n                        </div>\n                    `;
+                        <div class=\"bg-orange-50 border border-orange-200 p-4 rounded-xl\">
+                            <span class=\"text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full font-bold\">決定！🎉</span>
+                            <h4 class=\"text-2xl font-black text-gray-800 mt-2\">${finalPick.name}</h4>
+                            <p class=\"text-sm text-gray-600 mt-1\">📍 ${finalPick.region || '未設定'} | 🍽️ ${finalPick.genre || 'その他'}</p>
+                            <p class=\"text-xs text-gray-500 mt-2\">メモ: ${finalPick.memo || 'なし'}</p>
+                        </div>
+                    `;
                     startRouletteBtn.disabled = false;
                 }
             }, 100);
