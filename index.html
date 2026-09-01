@@ -22,7 +22,7 @@
         const db = getDatabase(app);
         const storage = getStorage(app);
 
-        // データの消失を防ぐため、常に固定の共有グループIDを使用するよう一本化
+        // データの消失を防ぐため、常に固定の共有グループIDを使用
         const STORAGE_GROUP_ID = "nanikuu_shared_group_data";
         let allRestaurants = [];
         let currentUserName = "ゲストユーザー";
@@ -102,10 +102,26 @@
             const startRouletteBtn = document.getElementById("start-roulette");
             const rouletteResult = document.getElementById("roulette-result");
 
-            // LIFF初期化処理
+            // LIFF初期化処理 ＆ ブラウザ判定
             async function initLiff() {
                 try {
                     await liff.init({ liffId: "2011348764-dl9CNIS4" });
+
+                    // LINEアプリ内（LIFFブラウザ）から開かれているかチェック
+                    if (!liff.isInClient()) {
+                        document.body.innerHTML = `
+                            <div class="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col items-center justify-center p-6 text-center">
+                                <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl max-w-sm space-y-4 shadow-xl">
+                                    <div class="text-3xl">⚠️</div>
+                                    <h1 class="text-base font-bold text-white">LINEアプリから開いてください</h1>
+                                    <p class="text-xs text-zinc-400 leading-relaxed">
+                                        このアプリはLINEグループ内からのみ利用可能です。通常のブラウザ（SafariやChromeなど）からはアクセスできません。
+                                    </p>
+                                </div>
+                            </div>
+                        `;
+                        return;
+                    }
 
                     if (!liff.isLoggedIn()) {
                         liff.login();
@@ -123,7 +139,7 @@
             }
             initLiff();
 
-            // データのリアルタイム読み込み（固定の共通パスから取得）
+            // データのリアルタイム読み込み
             function loadRestaurants() {
                 const dbRef = ref(db, 'groups/' + STORAGE_GROUP_ID + '/restaurants');
                 onValue(dbRef, (snapshot) => {
