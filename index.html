@@ -11,7 +11,7 @@
         import { getDatabase, ref, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
         import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-        // Firebase設定（Storageバケットを最新の正しい形式に修正）
+        // Firebase設定
         const firebaseConfig = {
             databaseURL: "https://nanikuu-default-rtdb.firebaseio.com/",
             projectId: "nanikuu",
@@ -119,6 +119,7 @@
                 if (groupInput) groupInput.value = currentGroupId;
                 loadRestaurants();
             }
+            initLiff();
 
             if (editGroupBtn) {
                 editGroupBtn.addEventListener("click", () => {
@@ -601,3 +602,132 @@
                         if (rouletteResult) rouletteResult.innerHTML = `<p class='text-red-400 text-xs'>条件に合致するお店が見つかりませんでした！</p>`;
                         return;
                     }
+
+                    if (rouletteResult) {
+                        rouletteResult.innerHTML = `<p class='text-zinc-400 text-xs animate-pulse'>抽選中...</p>`;
+                    }
+
+                    let count = 0;
+                    const interval = setInterval(() => {
+                        const randomItem = filtered[Math.floor(Math.random() * filtered.length)];
+                        if (rouletteResult) {
+                            rouletteResult.innerHTML = `
+                                <div class="bg-zinc-800 p-3 rounded-xl border border-zinc-700 text-center">
+                                    <p class="text-xs text-amber-400 font-bold">🎯 ${randomItem.name}</p>
+                                    <p class="text-[10px] text-zinc-400 mt-1">${randomItem.genre || ''} / ${randomItem.city || ''}</p>
+                                </div>
+                            `;
+                        }
+                        count++;
+                        if (count > 15) {
+                            clearInterval(interval);
+                            const winner = filtered[Math.floor(Math.random() * filtered.length)];
+                            if (rouletteResult) {
+                                rouletteResult.innerHTML = `
+                                    <div class="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl text-center cursor-pointer" onclick="openDetail('${winner.id}')">
+                                        <p class="text-[10px] text-amber-400 font-bold mb-1">🎉 決定！今日のお店はここ！</p>
+                                        <p class="text-sm font-bold text-white">${winner.name}</p>
+                                        <p class="text-[10px] text-zinc-300 mt-1">📍 ${winner.city || ''} (${winner.genre || ''})</p>
+                                        <p class="text-[9px] text-amber-300 underline mt-2">タップして詳細を見る 👉</p>
+                                    </div>
+                                `;
+                            }
+                        }
+                    }, 100);
+                });
+            }
+        });
+    </script>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen pb-12">
+    <div class="max-w-md mx-auto p-4">
+        <header class="flex justify-between items-center mb-6 pt-2">
+            <div>
+                <h1 class="text-lg font-bold tracking-wider text-amber-500">なにクウ？</h1>
+                <p class="text-[10px] text-zinc-400">グループ飲食店共有アプリ</p>
+            </div>
+            <div class="text-right">
+                <span id="group-name-display" class="text-xs bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded-lg text-zinc-300 font-mono">読み込み中...</span>
+                <button id="edit-group-btn" class="block text-[10px] text-amber-400 underline mt-1 ml-auto">グループ切替</button>
+            </div>
+        </header>
+
+        <!-- グループ変更コンテナ -->
+        <div id="group-edit-container" class="hidden bg-zinc-900 border border-zinc-800 p-3 rounded-xl mb-6">
+            <label class="block text-[10px] text-zinc-400 mb-1">グループIDを入力</label>
+            <div class="flex gap-2">
+                <input type="text" id="group-input" class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white">
+                <button id="save-group-btn" class="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold px-3 py-1.5 rounded-lg text-xs">保存</button>
+                <button id="cancel-group-btn" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2 py-1.5 rounded-lg text-xs">✕</button>
+            </div>
+        </div>
+
+        <!-- ローディング -->
+        <div id="loading" class="text-center py-12 text-zinc-500 text-xs">データを読み込んでいます...</div>
+
+        <!-- 最新投稿セクション -->
+        <section class="mb-6">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-xs font-bold text-zinc-300 uppercase tracking-widest">最近追加されたお店</h2>
+                <button id="open-all-modal" class="text-[10px] text-amber-400 underline hidden">すべて見る</button>
+            </div>
+            <div id="latest-restaurant-list" class="grid grid-cols-2 gap-3"></div>
+        </section>
+
+        <!-- 投稿・編集フォーム -->
+        <section class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-8">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-xs font-bold text-zinc-300">お店を登録・編集</h2>
+                <button id="cancel-edit" class="text-[10px] text-red-400 underline hidden">編集をキャンセル</button>
+            </div>
+            <form id="restaurant-form" class="space-y-3">
+                <input type="hidden" id="edit-id">
+                <input type="hidden" id="current-photo-url">
+                <input type="hidden" id="current-photo-path">
+
+                <div>
+                    <label class="block text-[10px] text-zinc-400 mb-1">店名 *</label>
+                    <input type="text" id="restaurant-name" required class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] text-zinc-400 mb-1">ジャンル</label>
+                        <select id="restaurant-genre" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                            <option value="ラーメン・麺類">ラーメン・麺類</option>
+                            <option value="居酒屋・和食">居酒屋・和食</option>
+                            <option value="焼肉・肉料理">焼肉・肉料理</option>
+                            <option value="洋食・イタリアン">洋食・イタリアン</option>
+                            <option value="中華・アジア">中華・アジア</option>
+                            <option value="カフェ・スイーツ">カフェ・スイーツ</option>
+                            <option value="その他">その他</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-zinc-400 mb-1">国</label>
+                        <input type="text" id="restaurant-country" value="日本" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] text-zinc-400 mb-1">都道府県</label>
+                        <input type="text" id="restaurant-prefecture" placeholder="愛知県" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-zinc-400 mb-1">市区町村・エリア</label>
+                        <input type="text" id="restaurant-city" placeholder="半田市" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] text-zinc-400 mb-1">写真</label>
+                    <input type="file" id="restaurant-photo" accept="image/*" class="w-full text-xs text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-zinc-800 file:text-zinc-200 hover:file:bg-zinc-700">
+                </div>
+
+                <button type="submit" id="submit-btn" class="w-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold py-2.5 rounded-xl text-xs transition shadow-lg shadow-amber-500/10">投稿する</button>
+            </form>
+        </section>
+    </div>
+</body>
+</html>
