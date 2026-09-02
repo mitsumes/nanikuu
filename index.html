@@ -107,7 +107,6 @@
                 try {
                     await liff.init({ liffId: "2011348764-dl9CNIS4" });
 
-                    // LINEアプリ内（LIFFブラウザ）から開かれているかチェック
                     if (!liff.isInClient()) {
                         document.body.innerHTML = `
                             <div class="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col items-center justify-center p-6 text-center">
@@ -273,20 +272,18 @@
                     openDetail(item.id);
                 };
                 
-                // 写真エリアを広げ、テキストやボタンの余白・文字サイズをコンパクトに修正
+                // 写真エリアの高さをさらに大きく（h-44）、下の文字やボタンをよりコンパクトに調整
                 card.innerHTML = `
-                    <div class="h-32 overflow-hidden bg-zinc-950 relative flex items-center justify-center">
+                    <div class="h-44 overflow-hidden bg-zinc-950 relative flex items-center justify-center">
                         <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover">
                         <span class="absolute top-1.5 right-1.5 bg-black/70 backdrop-blur-md text-zinc-200 text-[9px] px-2 py-0.5 rounded-full border border-zinc-700">${item.genre || 'その他'}</span>
                     </div>
-                    <div class="p-2 flex flex-col justify-between flex-1">
+                    <div class="p-2 flex flex-col justify-between flex-1 space-y-1">
                         <div>
                             <h3 class="font-bold text-[11px] text-white truncate">${item.name}</h3>
-                            <div class="flex items-center justify-between mt-0.5 text-[9px] text-zinc-400">
-                                <span class="truncate">📍 ${locationStr}</span>
-                            </div>
+                            <div class="text-[9px] text-zinc-400 truncate">📍 ${locationStr}</div>
                         </div>
-                        <div class="mt-1.5 pt-1.5 border-t border-zinc-800/80 flex items-center justify-end">
+                        <div class="pt-1 border-t border-zinc-800/80 flex items-center justify-end">
                             <button onclick="window.toggleItkayo('${item.id}', event)" class="flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-md border transition ${hasLiked ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold' : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700'}">
                                 <span>🚀</span>
                                 <span>イッタヨ！ (${likeCount})</span>
