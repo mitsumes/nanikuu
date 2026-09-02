@@ -39,6 +39,7 @@
             const submitBtn = document.getElementById("submit-btn");
             const cancelEditBtn = document.getElementById("cancel-edit");
             const editIdInput = document.getElementById("edit-id");
+            const authorInput = document.getElementById("restaurant-author");
             const currentPhotoUrlInput = document.getElementById("current-photo-url");
             const currentPhotoPathInput = document.getElementById("current-photo-path");
 
@@ -146,6 +147,9 @@
                 }
 
                 if (groupNameDisplay) groupNameDisplay.textContent = "グループ共有中";
+                if (authorInput && !authorInput.value) {
+                    authorInput.value = currentUserName;
+                }
                 loadRestaurants();
             }
             initLiff();
@@ -170,7 +174,7 @@
                 });
             }
 
-            // リスト描画（14件に変更）
+            // リスト描画（14件）
             function renderRestaurants() {
                 if (!latestListEl || !allListEl) return;
                 latestListEl.innerHTML = "";
@@ -294,7 +298,8 @@
                             <h3 class="font-bold text-[11px] text-white truncate">${item.name}</h3>
                             <div class="text-[9px] text-zinc-400 truncate">📍 ${locationStr}</div>
                         </div>
-                        <div class="pt-1 border-t border-zinc-800/80 flex items-center justify-end">
+                        <div class="pt-1 border-t border-zinc-800/80 flex items-center justify-between">
+                            <span class="text-[9px] text-zinc-500 truncate max-w-[90px]">✍️ ${item.author || '不明'}</span>
                             <button onclick="window.toggleItkayo('${item.id}', event)" class="flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-md border transition ${hasLiked ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold' : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700'}">
                                 <span>🚀</span>
                                 <span>イッタヨ！ (${likeCount})</span>
@@ -498,6 +503,7 @@
                     }
 
                     const name = document.getElementById("restaurant-name").value;
+                    const authorVal = authorInput.value.trim();
                     const genre = document.getElementById("restaurant-genre").value;
                     const country = document.getElementById("restaurant-country").value || "日本";
                     const prefecture = document.getElementById("restaurant-prefecture").value;
@@ -551,7 +557,7 @@
                         
                         const restaurantData = {
                             name, genre, country, prefecture, city, holiday, hpUrl, instaUrl, scenes, ramenDetails, payments, parking, reservation, memo, photoUrl, photoPath,
-                            author: currentUserName,
+                            author: authorVal || currentUserName,
                             updatedAt: Date.now()
                         };
 
@@ -570,6 +576,7 @@
 
                         formEl.reset();
                         document.getElementById("restaurant-country").value = "日本";
+                        if (authorInput) authorInput.value = currentUserName;
                         toggleRamenDetails();
                         resetFormState();
                     } catch (error) {
@@ -590,6 +597,7 @@
 
                 editIdInput.value = item.id;
                 document.getElementById("restaurant-name").value = item.name;
+                if (authorInput) authorInput.value = item.author || currentUserName;
                 document.getElementById("restaurant-genre").value = item.genre || "ラーメン";
                 toggleRamenDetails();
 
@@ -627,6 +635,7 @@
                 cancelEditBtn.addEventListener("click", () => {
                     if (formEl) formEl.reset();
                     document.getElementById("restaurant-country").value = "日本";
+                    if (authorInput) authorInput.value = currentUserName;
                     toggleRamenDetails();
                     resetFormState();
                 });
@@ -832,6 +841,11 @@
                 <div>
                     <label class="block text-[10px] text-zinc-400 mb-1">店名 *</label>
                     <input type="text" id="restaurant-name" required class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] text-zinc-400 mb-1">投稿者 *</label>
+                    <input type="text" id="restaurant-author" required class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
