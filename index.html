@@ -751,13 +751,16 @@
             </div>
         </header>
 
-        <!-- メニューバー（お店検索・お店登録へのクイックリンク） -->
-        <nav class="bg-zinc-900 border border-zinc-800 rounded-xl p-1.5 mb-6 flex gap-2 sticky top-2 z-40 shadow-lg backdrop-blur-md bg-opacity-90">
-            <button data-target="search-section" class="menu-link flex-1 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 text-xs py-2 rounded-lg font-bold transition flex items-center justify-center gap-1">
-                <span>🔍</span> お店検索
+        <!-- メニューバー（お店検索・お店登録・ルーレットへのクイックリンク） -->
+        <nav class="bg-zinc-900 border border-zinc-800 rounded-xl p-1.5 mb-6 flex gap-1.5 sticky top-2 z-40 shadow-lg backdrop-blur-md bg-opacity-90">
+            <button data-target="search-section" class="menu-link flex-1 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 text-[11px] py-2 rounded-lg font-bold transition flex items-center justify-center gap-1">
+                <span>🔍</span> 検索
             </button>
-            <button data-target="form-section" class="menu-link flex-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 text-xs py-2 rounded-lg font-bold border border-amber-500/30 transition flex items-center justify-center gap-1">
-                <span>📝</span> お店登録
+            <button data-target="form-section" class="menu-link flex-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 text-[11px] py-2 rounded-lg font-bold border border-amber-500/30 transition flex items-center justify-center gap-1">
+                <span>📝</span> 登録
+            </button>
+            <button data-target="roulette-section" class="menu-link flex-1 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 text-[11px] py-2 rounded-lg font-bold transition flex items-center justify-center gap-1">
+                <span>🎲</span> ルーレット
             </button>
         </nav>
 
@@ -771,7 +774,7 @@
             <div id="latest-restaurant-list" class="grid grid-cols-2 gap-3"></div>
         </section>
 
-        <!-- お店検索セクション (ID付与) -->
+        <!-- お店検索セクション -->
         <section id="search-section" class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-6 scroll-mt-16">
             <h2 class="text-xs font-bold text-zinc-300 mb-2">🔍 お店を検索</h2>
             <div class="space-y-2">
@@ -811,7 +814,7 @@
             </div>
         </section>
 
-        <!-- お店登録セクション (ID付与) -->
+        <!-- お店登録セクション -->
         <section id="form-section" class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-6 scroll-mt-16">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold text-zinc-300">お店を登録・編集</h2>
@@ -947,7 +950,8 @@
             </form>
         </section>
 
-        <section class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-8">
+        <!-- ルーレットセクション (ID付与) -->
+        <section id="roulette-section" class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-8 scroll-mt-16">
             <h2 class="text-xs font-bold text-amber-400 mb-2 flex items-center gap-1">🎲 今日どこ行く？ルーレット</h2>
             <div class="space-y-2">
                 <div class="grid grid-cols-2 gap-2">
