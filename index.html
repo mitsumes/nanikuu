@@ -78,6 +78,7 @@
             const detailScenes = document.getElementById("detail-scenes");
             const detailParking = document.getElementById("detail-parking");
             const detailReservation = document.getElementById("detail-reservation");
+            const detailHoliday = document.getElementById("detail-holiday");
             const detailAuthor = document.getElementById("detail-author");
             const detailHp = document.getElementById("detail-hp");
             const detailInsta = document.getElementById("detail-insta");
@@ -169,11 +170,11 @@
                 });
             }
 
-            // リスト描画
+            // リスト描画（14件に変更）
             function renderRestaurants() {
                 if (!latestListEl || !allListEl) return;
                 latestListEl.innerHTML = "";
-                const latestItems = allRestaurants.slice(0, 10);
+                const latestItems = allRestaurants.slice(0, 14);
 
                 if (latestItems.length === 0) {
                     latestListEl.innerHTML = `<div class="col-span-full text-center py-8 text-zinc-500 text-xs">登録されているお店がありません。<br>下のフォームから投稿してください！</div>`;
@@ -210,7 +211,7 @@
                         
                         const ramenDetailsStr = item.ramenDetails ? item.ramenDetails.join(' ') : '';
                         const paymentsStr = item.payments ? item.payments.join(' ') : '';
-                        const fullText = `${item.name || ''} ${item.genre || ''} ${item.memo || ''} ${item.prefecture || ''} ${item.city || ''} ${item.author || ''} ${ramenDetailsStr} ${paymentsStr}`.toLowerCase();
+                        const fullText = `${item.name || ''} ${item.genre || ''} ${item.memo || ''} ${item.prefecture || ''} ${item.city || ''} ${item.holiday || ''} ${item.author || ''} ${ramenDetailsStr} ${paymentsStr}`.toLowerCase();
                         const matchKeyword = (keywordVal === "" || fullText.includes(keywordVal));
 
                         return matchGenre && matchPref && matchCity && matchKeyword;
@@ -372,6 +373,7 @@
                 if (detailScenes) detailScenes.textContent = item.scenes && item.scenes.length > 0 ? item.scenes.join(', ') : '未設定';
                 if (detailParking) detailParking.textContent = item.parking || '未設定';
                 if (detailReservation) detailReservation.textContent = item.reservation || '未設定';
+                if (detailHoliday) detailHoliday.textContent = item.holiday || '未設定';
                 if (detailAuthor) detailAuthor.textContent = item.author || '不明';
                 
                 let ramenExtraHtml = '';
@@ -500,6 +502,7 @@
                     const country = document.getElementById("restaurant-country").value || "日本";
                     const prefecture = document.getElementById("restaurant-prefecture").value;
                     const city = document.getElementById("restaurant-city").value;
+                    const holiday = document.getElementById("restaurant-holiday").value;
                     const hpUrl = document.getElementById("restaurant-hp").value;
                     const instaUrl = document.getElementById("restaurant-insta").value;
                     
@@ -547,7 +550,7 @@
                         const dbRef = ref(db, `groups/${STORAGE_GROUP_ID}/restaurants`);
                         
                         const restaurantData = {
-                            name, genre, country, prefecture, city, hpUrl, instaUrl, scenes, ramenDetails, payments, parking, reservation, memo, photoUrl, photoPath,
+                            name, genre, country, prefecture, city, holiday, hpUrl, instaUrl, scenes, ramenDetails, payments, parking, reservation, memo, photoUrl, photoPath,
                             author: currentUserName,
                             updatedAt: Date.now()
                         };
@@ -593,6 +596,7 @@
                 document.getElementById("restaurant-country").value = item.country || "日本";
                 document.getElementById("restaurant-prefecture").value = item.prefecture || "";
                 document.getElementById("restaurant-city").value = item.city || "";
+                document.getElementById("restaurant-holiday").value = item.holiday || "";
                 document.getElementById("restaurant-hp").value = item.hpUrl || "";
                 document.getElementById("restaurant-insta").value = item.instaUrl || "";
                 
@@ -751,7 +755,7 @@
             </div>
         </header>
 
-        <!-- メニューバー（お店検索・お店登録・ルーレットへのクイックリンク） -->
+        <!-- メニューバー -->
         <nav class="bg-zinc-900 border border-zinc-800 rounded-xl p-1.5 mb-6 flex gap-1.5 sticky top-2 z-40 shadow-lg backdrop-blur-md bg-opacity-90">
             <button data-target="search-section" class="menu-link flex-1 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 text-[11px] py-2 rounded-lg font-bold transition flex items-center justify-center gap-1">
                 <span>🔍</span> 検索
@@ -880,6 +884,11 @@
                 </div>
 
                 <div>
+                    <label class="block text-[10px] text-zinc-400 mb-1">定休日</label>
+                    <input type="text" id="restaurant-holiday" placeholder="例: 月曜日、第2・第4火曜日" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                </div>
+
+                <div>
                     <label class="block text-[10px] text-zinc-400 mb-1">利用シーン</label>
                     <div class="grid grid-cols-3 gap-2 text-xs text-zinc-300">
                         <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="1人OK"> 1人OK</label>
@@ -950,7 +959,7 @@
             </form>
         </section>
 
-        <!-- ルーレットセクション (ID付与) -->
+        <!-- ルーレットセクション -->
         <section id="roulette-section" class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-8 scroll-mt-16">
             <h2 class="text-xs font-bold text-amber-400 mb-2 flex items-center gap-1">🎲 今日どこ行く？ルーレット</h2>
             <div class="space-y-2">
@@ -998,6 +1007,10 @@
                 <div class="grid grid-cols-2 gap-2 text-xs bg-zinc-950/50 p-3 rounded-xl border border-zinc-800/60">
                     <div><span class="text-zinc-500 block text-[10px]">利用シーン</span><span id="detail-scenes" class="text-zinc-200"></span></div>
                     <div><span class="text-zinc-500 block text-[10px]">駐車場 / 予約</span><span id="detail-parking" class="text-zinc-200"></span> / <span id="detail-reservation" class="text-zinc-200"></span></div>
+                </div>
+                <div class="text-xs bg-zinc-950/50 p-3 rounded-xl border border-zinc-800/60">
+                    <span class="text-zinc-500 block text-[10px]">定休日</span>
+                    <span id="detail-holiday" class="text-zinc-200"></span>
                 </div>
                 <div id="detail-hp" class="hidden"></div>
                 <div id="detail-insta" class="hidden"></div>
