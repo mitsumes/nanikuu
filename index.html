@@ -162,7 +162,8 @@
             function renderRestaurants() {
                 if (!latestListEl || !allListEl) return;
                 latestListEl.innerHTML = "";
-                const latestItems = allRestaurants.slice(0, 6);
+                // 最新の投稿を10件表示するように変更
+                const latestItems = allRestaurants.slice(0, 10);
 
                 if (latestItems.length === 0) {
                     latestListEl.innerHTML = `<div class="col-span-full text-center py-8 text-zinc-500 text-xs">登録されているお店がありません。<br>下のフォームから投稿してください！</div>`;
@@ -272,7 +273,6 @@
                     openDetail(item.id);
                 };
                 
-                // 写真エリアの高さをさらに大きく（h-44）、下の文字やボタンをよりコンパクトに調整
                 card.innerHTML = `
                     <div class="h-44 overflow-hidden bg-zinc-950 relative flex items-center justify-center">
                         <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover">
