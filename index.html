@@ -102,6 +102,17 @@
             const startRouletteBtn = document.getElementById("start-roulette");
             const rouletteResult = document.getElementById("roulette-result");
 
+            // メニューバーのスクロールリンク動作
+            document.querySelectorAll('.menu-link').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const targetId = button.getAttribute('data-target');
+                    const targetEl = document.getElementById(targetId);
+                    if (targetEl) {
+                        targetEl.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+
             // LIFF初期化処理 ＆ ブラウザ判定
             async function initLiff() {
                 try {
@@ -162,7 +173,6 @@
             function renderRestaurants() {
                 if (!latestListEl || !allListEl) return;
                 latestListEl.innerHTML = "";
-                // 最新の投稿を10件表示するように変更
                 const latestItems = allRestaurants.slice(0, 10);
 
                 if (latestItems.length === 0) {
@@ -731,7 +741,7 @@
 </head>
 <body class="bg-zinc-950 text-zinc-100 min-h-screen pb-12">
     <div class="max-w-md mx-auto p-4">
-        <header class="flex justify-between items-center mb-6 pt-2">
+        <header class="flex justify-between items-center mb-4 pt-2">
             <div>
                 <h1 class="text-lg font-bold tracking-wider text-amber-500">なにクウ？</h1>
                 <p class="text-[10px] text-zinc-400">グループ飲食店共有アプリ</p>
@@ -740,6 +750,16 @@
                 <span id="group-name-display" class="text-xs bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded-lg text-zinc-300 font-mono">認証中...</span>
             </div>
         </header>
+
+        <!-- メニューバー（お店検索・お店登録へのクイックリンク） -->
+        <nav class="bg-zinc-900 border border-zinc-800 rounded-xl p-1.5 mb-6 flex gap-2 sticky top-2 z-40 shadow-lg backdrop-blur-md bg-opacity-90">
+            <button data-target="search-section" class="menu-link flex-1 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 text-xs py-2 rounded-lg font-bold transition flex items-center justify-center gap-1">
+                <span>🔍</span> お店検索
+            </button>
+            <button data-target="form-section" class="menu-link flex-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 text-xs py-2 rounded-lg font-bold border border-amber-500/30 transition flex items-center justify-center gap-1">
+                <span>📝</span> お店登録
+            </button>
+        </nav>
 
         <div id="loading" class="text-center py-12 text-zinc-500 text-xs">データを読み込んでいます...</div>
 
@@ -751,7 +771,8 @@
             <div id="latest-restaurant-list" class="grid grid-cols-2 gap-3"></div>
         </section>
 
-        <section class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-6">
+        <!-- お店検索セクション (ID付与) -->
+        <section id="search-section" class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-6 scroll-mt-16">
             <h2 class="text-xs font-bold text-zinc-300 mb-2">🔍 お店を検索</h2>
             <div class="space-y-2">
                 <div class="grid grid-cols-2 gap-2">
@@ -790,7 +811,8 @@
             </div>
         </section>
 
-        <section class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-6">
+        <!-- お店登録セクション (ID付与) -->
+        <section id="form-section" class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-6 scroll-mt-16">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold text-zinc-300">お店を登録・編集</h2>
                 <button id="cancel-edit" class="text-[10px] text-red-400 underline hidden">編集をキャンセル</button>
