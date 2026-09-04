@@ -174,11 +174,11 @@
                 });
             }
 
-            // リスト描画（14件）
+            // リスト描画（30件表示に変更）
             function renderRestaurants() {
                 if (!latestListEl || !allListEl) return;
                 latestListEl.innerHTML = "";
-                const latestItems = allRestaurants.slice(0, 14);
+                const latestItems = allRestaurants.slice(0, 30);
 
                 if (latestItems.length === 0) {
                     latestListEl.innerHTML = `<div class="col-span-full text-center py-8 text-zinc-500 text-xs">登録されているお店がありません。<br>下のフォームから投稿してください！</div>`;
@@ -766,10 +766,10 @@
             </div>
         </header>
 
-        <!-- メニューバー（「登録」ボタンのみに変更） -->
+        <!-- メニューバー（「投稿する」に変更） -->
         <nav class="bg-zinc-900 border border-zinc-800 rounded-xl p-1.5 mb-6 sticky top-2 z-40 shadow-lg backdrop-blur-md bg-opacity-90">
             <button data-target="form-section" class="menu-link w-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 text-[11px] py-2 rounded-lg font-bold border border-amber-500/30 transition flex items-center justify-center gap-1">
-                <span>📝</span> 登録
+                <span>📝</span> 投稿する
             </button>
         </nav>
 
@@ -846,7 +846,7 @@
             </div>
         </section>
 
-        <!-- 最近追加されたお店セクション -->
+        <!-- 最近追加されたお店セクション（30件表示） -->
         <section class="mb-6">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold text-zinc-300 uppercase tracking-widest">最近追加されたお店</h2>
