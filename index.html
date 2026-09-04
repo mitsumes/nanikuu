@@ -493,7 +493,7 @@
                 });
             }
 
-            // フォーム送信
+            // フォーム送信（写真データを維持する仕様）
             if (formEl) {
                 formEl.addEventListener("submit", async (e) => {
                     e.preventDefault();
@@ -534,6 +534,8 @@
                     const memo = document.getElementById("restaurant-memo").value;
                     const photoFile = document.getElementById("restaurant-photo").files[0];
                     const editId = editIdInput.value;
+                    
+                    // 既存の写真データを保持
                     let photoUrl = currentPhotoUrlInput.value;
                     let photoPath = currentPhotoPathInput.value;
 
@@ -870,17 +872,22 @@
                     </div>
                 </div>
 
+                <!-- ラーメンのこだわり (追加済み: 豚骨、まぜそば、台湾、担々麺、鶏系) -->
                 <div id="ramen-details-container" class="bg-zinc-950/40 border border-amber-500/30 p-3 rounded-xl space-y-2">
                     <label class="block text-[10px] font-bold text-amber-400">🍜 ラーメンのこだわり (複数選択可)</label>
                     <div class="grid grid-cols-3 gap-2 text-xs text-zinc-300">
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="こってり"> こってり</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="あっさり"> あっさり</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="豚骨"> 豚骨</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="鶏系"> 鶏系</label>
                         <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="醤油"> 醤油</label>
                         <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="味噌"> 味噌</label>
                         <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="塩"> 塩</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="辛い"> 辛い</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="つけ麺"> つけ麺</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="こってり"> こってり</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="あっさり"> あっさり</label>
                         <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="まぜそば"> まぜそば</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="台湾"> 台湾</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="担々麺"> 担々麺</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="つけ麺"> つけ麺</label>
+                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="辛い"> 辛い</label>
                         <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="二郎系"> 二郎系</label>
                         <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="家系"> 家系</label>
                     </div>
