@@ -190,11 +190,12 @@
                 });
             }
 
-            // リスト描画（30件表示）
+            // リスト描画（無制限表示）
             function renderRestaurants() {
                 if (!latestListEl || !allListEl) return;
                 latestListEl.innerHTML = "";
-                const latestItems = allRestaurants.slice(0, 30);
+                // 件数制限をなくし、全件を表示するよう変更
+                const latestItems = allRestaurants;
 
                 if (latestItems.length === 0) {
                     latestListEl.innerHTML = `<div class="col-span-full text-center py-8 text-zinc-500 text-xs">登録されているお店がありません。<br>上の「投稿する」ボタンから投稿してください！</div>`;
@@ -859,7 +860,7 @@
             </div>
         </section>
 
-        <!-- 最近追加されたお店セクション（30件表示） -->
+        <!-- 最近追加されたお店セクション（無制限表示） -->
         <section class="mb-6">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold text-zinc-300 uppercase tracking-widest">最近追加されたお店</h2>
