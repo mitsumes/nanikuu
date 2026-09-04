@@ -766,22 +766,16 @@
             </div>
         </header>
 
-        <!-- メニューバー -->
-        <nav class="bg-zinc-900 border border-zinc-800 rounded-xl p-1.5 mb-6 flex gap-1.5 sticky top-2 z-40 shadow-lg backdrop-blur-md bg-opacity-90">
-            <button data-target="search-section" class="menu-link flex-1 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 text-[11px] py-2 rounded-lg font-bold transition flex items-center justify-center gap-1">
-                <span>🔍</span> 検索
-            </button>
-            <button data-target="form-section" class="menu-link flex-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 text-[11px] py-2 rounded-lg font-bold border border-amber-500/30 transition flex items-center justify-center gap-1">
+        <!-- メニューバー（「登録」ボタンのみに変更） -->
+        <nav class="bg-zinc-900 border border-zinc-800 rounded-xl p-1.5 mb-6 sticky top-2 z-40 shadow-lg backdrop-blur-md bg-opacity-90">
+            <button data-target="form-section" class="menu-link w-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 text-[11px] py-2 rounded-lg font-bold border border-amber-500/30 transition flex items-center justify-center gap-1">
                 <span>📝</span> 登録
-            </button>
-            <button data-target="roulette-section" class="menu-link flex-1 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 text-[11px] py-2 rounded-lg font-bold transition flex items-center justify-center gap-1">
-                <span>🎲</span> ルーレット
             </button>
         </nav>
 
         <div id="loading" class="text-center py-12 text-zinc-500 text-xs">データを読み込んでいます...</div>
 
-        <!-- ルーレットセクション（検索セクションの上に移動） -->
+        <!-- ルーレットセクション -->
         <section id="roulette-section" class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-6 scroll-mt-16">
             <h2 class="text-xs font-bold text-amber-400 mb-2 flex items-center gap-1">🎲 今日どこ行く？ルーレット</h2>
             <div class="space-y-2">
