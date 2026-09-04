@@ -49,7 +49,7 @@
             const currentPhotoPathInput = document.getElementById("current-photo-path");
             const formModalTitle = document.getElementById("form-modal-title");
 
-            // ジャンル変更によるこだわり表示切替
+            // ジャンル変更によるこだわり表示切替 (投稿フォーム)
             const genreSelect = document.getElementById("restaurant-genre");
             const ramenDetailsContainer = document.getElementById("ramen-details-container");
 
@@ -67,6 +67,27 @@
             if (genreSelect) {
                 genreSelect.addEventListener("change", toggleRamenDetails);
                 toggleRamenDetails();
+            }
+
+            // ルーレット用のラーメンこだわり表示切替
+            const rouletteGenreSelect = document.getElementById("roulette-genre");
+            const rouletteRamenContainer = document.getElementById("roulette-ramen-container");
+            const rouletteRamenSelect = document.getElementById("roulette-ramen-genre");
+
+            function toggleRouletteRamenSelect() {
+                if (rouletteGenreSelect && rouletteRamenContainer) {
+                    if (rouletteGenreSelect.value === "ラーメン") {
+                        rouletteRamenContainer.classList.remove("hidden");
+                    } else {
+                        rouletteRamenContainer.classList.add("hidden");
+                        if (rouletteRamenSelect) rouletteRamenSelect.value = "すべて";
+                    }
+                }
+            }
+
+            if (rouletteGenreSelect) {
+                rouletteGenreSelect.addEventListener("change", toggleRouletteRamenSelect);
+                toggleRouletteRamenSelect();
             }
 
             // 検索要素
@@ -105,7 +126,6 @@
             const confirmDeleteBtn = document.getElementById("confirm-delete");
             const cancelDeleteBtn = document.getElementById("cancel-delete");
 
-            const rouletteGenreSelect = document.getElementById("roulette-genre");
             const rouletteRegionInput = document.getElementById("roulette-region");
             const startRouletteBtn = document.getElementById("start-roulette");
             const rouletteResult = document.getElementById("roulette-result");
@@ -190,11 +210,10 @@
                 });
             }
 
-            // リスト描画（無制限表示）
+            // リスト描画（全件表示）
             function renderRestaurants() {
                 if (!latestListEl || !allListEl) return;
                 latestListEl.innerHTML = "";
-                // 件数制限をなくし、全件を表示するよう変更
                 const latestItems = allRestaurants;
 
                 if (latestItems.length === 0) {
@@ -709,7 +728,7 @@
                 });
             }
 
-            // ルーレット
+            // ルーレット処理
             if (startRouletteBtn) {
                 startRouletteBtn.addEventListener("click", () => {
                     if (allRestaurants.length === 0) {
@@ -718,22 +737,31 @@
                     }
 
                     const selectedGenre = rouletteGenreSelect.value;
+                    const selectedRamenDetail = rouletteRamenSelect ? rouletteRamenSelect.value : "すべて";
                     const regionKeyword = rouletteRegionInput.value.trim().toLowerCase();
 
                     const filtered = allRestaurants.filter(item => {
                         const matchGenre = (selectedGenre === "すべて" || item.genre === selectedGenre);
+                        
+                        // ラーメン選択時のこだわり絞り込み判定
+                        let matchRamen = true;
+                        if (selectedGenre === "ラーメン" && selectedRamenDetail !== "すべて") {
+                            matchRamen = item.ramenDetails && item.ramenDetails.includes(selectedRamenDetail);
+                        }
+
                         const regionText = `${item.country || ''} ${item.prefecture || ''} ${item.city || ''}`.toLowerCase();
                         const matchRegion = (regionKeyword === "" || regionText.includes(regionKeyword));
-                        return matchGenre && matchRegion;
+
+                        return matchGenre && matchRamen && matchRegion;
                     });
 
                     if (filtered.length === 0) {
-                        if (rouletteResult) rouletteResult.innerHTML = `<p class='text-red-400 text-xs'>条件に合致するお店が見つかりませんでした！</p>`;
+                        if (rouletteResult) rouletteResult.innerHTML = `<p class='text-red-400 text-xs text-center py-2'>条件に合致するお店が見つかりませんでした！</p>`;
                         return;
                     }
 
                     if (rouletteResult) {
-                        rouletteResult.innerHTML = `<p class='text-zinc-400 text-xs animate-pulse'>抽選中...</p>`;
+                        rouletteResult.innerHTML = `<p class='text-zinc-400 text-xs text-center py-2 animate-pulse'>抽選中...</p>`;
                     }
 
                     let count = 0;
@@ -815,6 +843,29 @@
                         <input type="text" id="roulette-region" placeholder="例: 半田市" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
                     </div>
                 </div>
+
+                <!-- ラーメン選択時のみ表示されるこだわり絞り込み -->
+                <div id="roulette-ramen-container" class="hidden">
+                    <label class="block text-[10px] text-amber-400 mb-1">🍜 ラーメンのこだわり指定</label>
+                    <select id="roulette-ramen-genre" class="w-full bg-zinc-900 border border-amber-500/30 rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        <option value="すべて">こだわり指定なし（すべて）</option>
+                        <option value="豚骨">豚骨</option>
+                        <option value="鶏系">鶏系</option>
+                        <option value="醤油">醤油</option>
+                        <option value="味噌">味噌</option>
+                        <option value="塩">塩</option>
+                        <option value="こってり">こってり</option>
+                        <option value="あっさり">あっさり</option>
+                        <option value="まぜそば">まぜそば</option>
+                        <option value="台湾">台湾</option>
+                        <option value="担々麺">担々麺</option>
+                        <option value="つけ麺">つけ麺</option>
+                        <option value="辛い">辛い</option>
+                        <option value="二郎系">二郎系</option>
+                        <option value="家系">家系</option>
+                    </select>
+                </div>
+
                 <button id="start-roulette" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold py-2 rounded-xl text-xs transition shadow-md">ルーレットを回す！</button>
                 <div id="roulette-result" class="mt-2"></div>
             </div>
@@ -860,7 +911,7 @@
             </div>
         </section>
 
-        <!-- 最近追加されたお店セクション（無制限表示） -->
+        <!-- 最近追加されたお店セクション -->
         <section class="mb-6">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold text-zinc-300 uppercase tracking-widest">最近追加されたお店</h2>
