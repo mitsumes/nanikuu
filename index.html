@@ -34,6 +34,7 @@
             const latestListEl = document.getElementById("latest-restaurant-list");
             const allListEl = document.getElementById("all-restaurant-list");
             const loadingEl = document.getElementById("loading");
+            const restaurantCountEl = document.getElementById("restaurant-count");
             
             // 投稿モーダル関連
             const formModal = document.getElementById("form-modal");
@@ -213,6 +214,12 @@
             // リスト描画（全件表示）
             function renderRestaurants() {
                 if (!latestListEl || !allListEl) return;
+                
+                // 投稿数をヘッダーに反映
+                if (restaurantCountEl) {
+                    restaurantCountEl.textContent = `(${allRestaurants.length}件)`;
+                }
+
                 latestListEl.innerHTML = "";
                 const latestItems = allRestaurants;
 
@@ -914,7 +921,10 @@
         <!-- 最近追加されたお店セクション -->
         <section class="mb-6">
             <div class="flex justify-between items-center mb-3">
-                <h2 class="text-xs font-bold text-zinc-300 uppercase tracking-widest">最近追加されたお店</h2>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xs font-bold text-zinc-300 uppercase tracking-widest">最近追加されたお店</h2>
+                    <span id="restaurant-count" class="text-[10px] text-amber-400 font-mono font-bold"></span>
+                </div>
                 <button id="open-all-modal" class="text-[10px] text-amber-400 underline hidden">すべて見る</button>
             </div>
             <div id="latest-restaurant-list" class="grid grid-cols-2 gap-3"></div>
