@@ -781,15 +781,7 @@
 
         <div id="loading" class="text-center py-12 text-zinc-500 text-xs">データを読み込んでいます...</div>
 
-        <section class="mb-6">
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="text-xs font-bold text-zinc-300 uppercase tracking-widest">最近追加されたお店</h2>
-                <button id="open-all-modal" class="text-[10px] text-amber-400 underline hidden">すべて見る</button>
-            </div>
-            <div id="latest-restaurant-list" class="grid grid-cols-2 gap-3"></div>
-        </section>
-
-        <!-- お店検索セクション -->
+        <!-- お店検索セクション（「最近追加されたお店」の上に移動） -->
         <section id="search-section" class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-6 scroll-mt-16">
             <h2 class="text-xs font-bold text-zinc-300 mb-2">🔍 お店を検索</h2>
             <div class="space-y-2">
@@ -827,6 +819,15 @@
                 </div>
                 <button id="execute-search-btn" class="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold py-2 rounded-xl text-xs transition">この条件で検索する</button>
             </div>
+        </section>
+
+        <!-- 最近追加されたお店セクション -->
+        <section class="mb-6">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-xs font-bold text-zinc-300 uppercase tracking-widest">最近追加されたお店</h2>
+                <button id="open-all-modal" class="text-[10px] text-amber-400 underline hidden">すべて見る</button>
+            </div>
+            <div id="latest-restaurant-list" class="grid grid-cols-2 gap-3"></div>
         </section>
 
         <!-- お店登録セクション -->
@@ -945,7 +946,7 @@
                     </div>
                 </div>
 
-                <!-- 決済方法 (バーコードはそのまま、QR決済を細かく追加) -->
+                <!-- 決済方法 -->
                 <div>
                     <label class="block text-[10px] text-zinc-400 mb-1">決済方法 (複数選択可)</label>
                     <div class="grid grid-cols-3 gap-2 text-xs text-zinc-300">
