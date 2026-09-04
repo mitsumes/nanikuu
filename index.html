@@ -22,7 +22,6 @@
         const db = getDatabase(app);
         const storage = getStorage(app);
 
-        // データの消失を防ぐため、常に固定の共有グループIDを使用
         const STORAGE_GROUP_ID = "nanikuu_shared_group_data";
         let allRestaurants = [];
         let currentUserName = "ゲストユーザー";
@@ -35,13 +34,20 @@
             const latestListEl = document.getElementById("latest-restaurant-list");
             const allListEl = document.getElementById("all-restaurant-list");
             const loadingEl = document.getElementById("loading");
+            
+            // 投稿モーダル関連
+            const formModal = document.getElementById("form-modal");
+            const openFormModalBtn = document.getElementById("open-form-modal");
+            const closeFormModalBtn = document.getElementById("close-form-modal");
+            const cancelFormBtn = document.getElementById("cancel-form-btn");
+
             const formEl = document.getElementById("restaurant-form");
             const submitBtn = document.getElementById("submit-btn");
-            const cancelEditBtn = document.getElementById("cancel-edit");
             const editIdInput = document.getElementById("edit-id");
             const authorInput = document.getElementById("restaurant-author");
             const currentPhotoUrlInput = document.getElementById("current-photo-url");
             const currentPhotoPathInput = document.getElementById("current-photo-path");
+            const formModalTitle = document.getElementById("form-modal-title");
 
             // ジャンル変更によるこだわり表示切替
             const genreSelect = document.getElementById("restaurant-genre");
@@ -104,16 +110,26 @@
             const startRouletteBtn = document.getElementById("start-roulette");
             const rouletteResult = document.getElementById("roulette-result");
 
-            // メニューバーのスクロールリンク動作
-            document.querySelectorAll('.menu-link').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const targetId = button.getAttribute('data-target');
-                    const targetEl = document.getElementById(targetId);
-                    if (targetEl) {
-                        targetEl.scrollIntoView({ behavior: 'smooth' });
-                    }
+            // 投稿モーダルの開閉制御
+            if (openFormModalBtn) {
+                openFormModalBtn.addEventListener("click", () => {
+                    resetFormState();
+                    if (formModalTitle) formModalTitle.textContent = "お店を投稿する";
+                    if (submitBtn) submitBtn.textContent = "投稿する";
+                    formModal.classList.remove("hidden");
+                    formModal.classList.add("flex");
                 });
-            });
+            }
+
+            function closeFormModal() {
+                if (formModal) {
+                    formModal.classList.add("hidden");
+                    formModal.classList.remove("flex");
+                }
+            }
+
+            if (closeFormModalBtn) closeFormModalBtn.addEventListener("click", closeFormModal);
+            if (cancelFormBtn) cancelFormBtn.addEventListener("click", closeFormModal);
 
             // LIFF初期化処理 ＆ ブラウザ判定
             async function initLiff() {
@@ -174,14 +190,14 @@
                 });
             }
 
-            // リスト描画（30件表示に変更）
+            // リスト描画（30件表示）
             function renderRestaurants() {
                 if (!latestListEl || !allListEl) return;
                 latestListEl.innerHTML = "";
                 const latestItems = allRestaurants.slice(0, 30);
 
                 if (latestItems.length === 0) {
-                    latestListEl.innerHTML = `<div class="col-span-full text-center py-8 text-zinc-500 text-xs">登録されているお店がありません。<br>下のフォームから投稿してください！</div>`;
+                    latestListEl.innerHTML = `<div class="col-span-full text-center py-8 text-zinc-500 text-xs">登録されているお店がありません。<br>上の「投稿する」ボタンから投稿してください！</div>`;
                     if (openAllModalBtn) openAllModalBtn.classList.add("hidden");
                 } else {
                     if (openAllModalBtn) openAllModalBtn.classList.remove("hidden");
@@ -493,7 +509,7 @@
                 });
             }
 
-            // フォーム送信（写真データを維持する仕様）
+            // フォーム送信
             if (formEl) {
                 formEl.addEventListener("submit", async (e) => {
                     e.preventDefault();
@@ -535,7 +551,6 @@
                     const photoFile = document.getElementById("restaurant-photo").files[0];
                     const editId = editIdInput.value;
                     
-                    // 既存の写真データを保持
                     let photoUrl = currentPhotoUrlInput.value;
                     let photoPath = currentPhotoPathInput.value;
 
@@ -581,6 +596,7 @@
                         if (authorInput) authorInput.value = currentUserName;
                         toggleRamenDetails();
                         resetFormState();
+                        closeFormModal();
                     } catch (error) {
                         console.error("保存エラー:", error);
                         alert("投稿に失敗しました。もう一度お試しください。");
@@ -628,27 +644,24 @@
                 currentPhotoUrlInput.value = item.photoUrl || "";
                 currentPhotoPathInput.value = item.photoPath || "";
 
+                if (formModalTitle) formModalTitle.textContent = "お店を編集する";
                 if (submitBtn) submitBtn.textContent = "更新する";
-                if (cancelEditBtn) cancelEditBtn.classList.remove("hidden");
-                if (formEl) formEl.scrollIntoView({ behavior: 'smooth' });
-            }
-
-            if (cancelEditBtn) {
-                cancelEditBtn.addEventListener("click", () => {
-                    if (formEl) formEl.reset();
-                    document.getElementById("restaurant-country").value = "日本";
-                    if (authorInput) authorInput.value = currentUserName;
-                    toggleRamenDetails();
-                    resetFormState();
-                });
+                if (formModal) {
+                    formModal.classList.remove("hidden");
+                    formModal.classList.add("flex");
+                }
             }
 
             function resetFormState() {
+                if (formEl) formEl.reset();
+                document.getElementById("restaurant-country").value = "日本";
+                if (authorInput) authorInput.value = currentUserName;
+                toggleRamenDetails();
                 editIdInput.value = "";
                 currentPhotoUrlInput.value = "";
                 currentPhotoPathInput.value = "";
                 if (submitBtn) submitBtn.textContent = "投稿する";
-                if (cancelEditBtn) cancelEditBtn.classList.add("hidden");
+                if (formModalTitle) formModalTitle.textContent = "お店を投稿する";
             }
 
             function promptDelete(id, path) {
@@ -766,9 +779,9 @@
             </div>
         </header>
 
-        <!-- メニューバー（「投稿する」に変更） -->
+        <!-- メニューバー（「投稿する」ボタンでモーダルを開く） -->
         <nav class="bg-zinc-900 border border-zinc-800 rounded-xl p-1.5 mb-6 sticky top-2 z-40 shadow-lg backdrop-blur-md bg-opacity-90">
-            <button data-target="form-section" class="menu-link w-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 text-[11px] py-2 rounded-lg font-bold border border-amber-500/30 transition flex items-center justify-center gap-1">
+            <button id="open-form-modal" class="w-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 text-[11px] py-2 rounded-lg font-bold border border-amber-500/30 transition flex items-center justify-center gap-1 cursor-pointer">
                 <span>📝</span> 投稿する
             </button>
         </nav>
@@ -776,7 +789,7 @@
         <div id="loading" class="text-center py-12 text-zinc-500 text-xs">データを読み込んでいます...</div>
 
         <!-- ルーレットセクション -->
-        <section id="roulette-section" class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-6 scroll-mt-16">
+        <section id="roulette-section" class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-6">
             <h2 class="text-xs font-bold text-amber-400 mb-2 flex items-center gap-1">🎲 今日どこ行く？ルーレット</h2>
             <div class="space-y-2">
                 <div class="grid grid-cols-2 gap-2">
@@ -807,7 +820,7 @@
         </section>
 
         <!-- お店検索セクション -->
-        <section id="search-section" class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-6 scroll-mt-16">
+        <section id="search-section" class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-6">
             <h2 class="text-xs font-bold text-zinc-300 mb-2">🔍 お店を検索</h2>
             <div class="space-y-2">
                 <div class="grid grid-cols-2 gap-2">
@@ -854,166 +867,173 @@
             </div>
             <div id="latest-restaurant-list" class="grid grid-cols-2 gap-3"></div>
         </section>
+    </div>
 
-        <!-- お店登録セクション -->
-        <section id="form-section" class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-8 scroll-mt-16">
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="text-xs font-bold text-zinc-300">お店を登録・編集</h2>
-                <button id="cancel-edit" class="text-[10px] text-red-400 underline hidden">編集をキャンセル</button>
+    <!-- 投稿・編集用モーダル -->
+    <div id="form-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
+                <h3 id="form-modal-title" class="text-xs font-bold text-white">お店を投稿する</h3>
+                <button id="close-form-modal" class="text-xs text-zinc-400 hover:text-white">✕ 閉じる</button>
             </div>
-            <form id="restaurant-form" class="space-y-3">
-                <input type="hidden" id="edit-id">
-                <input type="hidden" id="current-photo-url">
-                <input type="hidden" id="current-photo-path">
+            <div class="p-4 overflow-y-auto flex-1">
+                <form id="restaurant-form" class="space-y-3">
+                    <input type="hidden" id="edit-id">
+                    <input type="hidden" id="current-photo-url">
+                    <input type="hidden" id="current-photo-path">
 
-                <div>
-                    <label class="block text-[10px] text-zinc-400 mb-1">店名 *</label>
-                    <input type="text" id="restaurant-name" required class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-[10px] text-zinc-400 mb-1">投稿者 *</label>
-                    <input type="text" id="restaurant-author" required class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
-                </div>
-
-                <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-[10px] text-zinc-400 mb-1">ジャンル</label>
-                        <select id="restaurant-genre" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
-                            <option value="ラーメン">ラーメン</option>
-                            <option value="麺類">麺類</option>
-                            <option value="居酒屋・和食">居酒屋・和食</option>
-                            <option value="焼肉・肉料理">焼肉・肉料理</option>
-                            <option value="洋食・イタリアン">洋食・イタリアン</option>
-                            <option value="中華・アジア">中華・アジア</option>
-                            <option value="カフェ・スイーツ">カフェ・スイーツ</option>
-                            <option value="ファミレス">ファミレス</option>
-                            <option value="テイクアウト">テイクアウト</option>
-                            <option value="その他">その他</option>
-                        </select>
+                        <label class="block text-[10px] text-zinc-400 mb-1">店名 *</label>
+                        <input type="text" id="restaurant-name" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
                     </div>
+
                     <div>
-                        <label class="block text-[10px] text-zinc-400 mb-1">国</label>
-                        <input type="text" id="restaurant-country" value="日本" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        <label class="block text-[10px] text-zinc-400 mb-1">投稿者 *</label>
+                        <input type="text" id="restaurant-author" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
                     </div>
-                </div>
 
-                <!-- ラーメンのこだわり -->
-                <div id="ramen-details-container" class="bg-zinc-950/40 border border-amber-500/30 p-3 rounded-xl space-y-2">
-                    <label class="block text-[10px] font-bold text-amber-400">🍜 ラーメンのこだわり (複数選択可)</label>
-                    <div class="grid grid-cols-3 gap-2 text-xs text-zinc-300">
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="豚骨"> 豚骨</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="鶏系"> 鶏系</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="醤油"> 醤油</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="味噌"> 味噌</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="塩"> 塩</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="こってり"> こってり</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="あっさり"> あっさり</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="まぜそば"> まぜそば</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="台湾"> 台湾</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="担々麺"> 担々麺</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="つけ麺"> つけ麺</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="辛い"> 辛い</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="二郎系"> 二郎系</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="家系"> 家系</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] text-zinc-400 mb-1">ジャンル</label>
+                            <select id="restaurant-genre" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                                <option value="ラーメン">ラーメン</option>
+                                <option value="麺類">麺類</option>
+                                <option value="居酒屋・和食">居酒屋・和食</option>
+                                <option value="焼肉・肉料理">焼肉・肉料理</option>
+                                <option value="洋食・イタリアン">洋食・イタリアン</option>
+                                <option value="中華・アジア">中華・アジア</option>
+                                <option value="カフェ・スイーツ">カフェ・スイーツ</option>
+                                <option value="ファミレス">ファミレス</option>
+                                <option value="テイクアウト">テイクアウト</option>
+                                <option value="その他">その他</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-zinc-400 mb-1">国</label>
+                            <input type="text" id="restaurant-country" value="日本" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        </div>
                     </div>
-                </div>
 
-                <div class="grid grid-cols-2 gap-2">
+                    <!-- ラーメンのこだわり -->
+                    <div id="ramen-details-container" class="bg-zinc-950/40 border border-amber-500/30 p-3 rounded-xl space-y-2">
+                        <label class="block text-[10px] font-bold text-amber-400">🍜 ラーメンのこだわり (複数選択可)</label>
+                        <div class="grid grid-cols-3 gap-2 text-xs text-zinc-300">
+                            <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="豚骨"> 豚骨</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="鶏系"> 鶏系</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="醤油"> 醤油</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="味噌"> 味噌</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="塩"> 塩</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="こってり"> こってり</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="あっさり"> あっさり</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="まぜそば"> まぜそば</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="台湾"> 台湾</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="担々麺"> 担々麺</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="つけ麺"> つけ麺</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="辛い"> 辛い</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="二郎系"> 二郎系</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="家系"> 家系</label>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] text-zinc-400 mb-1">都道府県</label>
+                            <input type="text" id="restaurant-prefecture" placeholder="愛知県" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-zinc-400 mb-1">市区町村・エリア</label>
+                            <input type="text" id="restaurant-city" placeholder="半田市" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        </div>
+                    </div>
+
                     <div>
-                        <label class="block text-[10px] text-zinc-400 mb-1">都道府県</label>
-                        <input type="text" id="restaurant-prefecture" placeholder="愛知県" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        <label class="block text-[10px] text-zinc-400 mb-1">定休日</label>
+                        <input type="text" id="restaurant-holiday" placeholder="例: 月曜日、第2・第4火曜日" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
                     </div>
+
                     <div>
-                        <label class="block text-[10px] text-zinc-400 mb-1">市区町村・エリア</label>
-                        <input type="text" id="restaurant-city" placeholder="半田市" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        <label class="block text-[10px] text-zinc-400 mb-1">利用シーン</label>
+                        <div class="grid grid-cols-3 gap-2 text-xs text-zinc-300">
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="1人OK"> 1人OK</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="女子会"> 女子会</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="飲み会"> 飲み会</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="家族向け"> 家族向け</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="接待向け"> 接待向け</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="ランチ"> ランチ</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="男子会"> 男子会</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="記念日"> 記念日</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="ディナー"> ディナー</label>
+                        </div>
                     </div>
-                </div>
 
-                <div>
-                    <label class="block text-[10px] text-zinc-400 mb-1">定休日</label>
-                    <input type="text" id="restaurant-holiday" placeholder="例: 月曜日、第2・第4火曜日" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-[10px] text-zinc-400 mb-1">利用シーン</label>
-                    <div class="grid grid-cols-3 gap-2 text-xs text-zinc-300">
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="1人OK"> 1人OK</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="女子会"> 女子会</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="飲み会"> 飲み会</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="家族向け"> 家族向け</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="接待向け"> 接待向け</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="ランチ"> ランチ</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="男子会"> 男子会</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="記念日"> 記念日</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="ディナー"> ディナー</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] text-zinc-400 mb-1">駐車場</label>
+                            <select id="restaurant-parking" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                                <option value="">未選択</option>
+                                <option value="あり">あり</option>
+                                <option value="なし">なし</option>
+                                <option value="近くにコインパーキングあり">近くにパーキングあり</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-zinc-400 mb-1">予約</label>
+                            <select id="restaurant-reservation" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                                <option value="">未選択</option>
+                                <option value="可">可</option>
+                                <option value="不可">不可</option>
+                                <option value="推奨">推奨</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
 
-                <div class="grid grid-cols-2 gap-2">
+                    <!-- 決済方法 -->
                     <div>
-                        <label class="block text-[10px] text-zinc-400 mb-1">駐車場</label>
-                        <select id="restaurant-parking" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
-                            <option value="">未選択</option>
-                            <option value="あり">あり</option>
-                            <option value="なし">なし</option>
-                            <option value="近くにコインパーキングあり">近くにパーキングあり</option>
-                        </select>
+                        <label class="block text-[10px] text-zinc-400 mb-1">決済方法 (複数選択可)</label>
+                        <div class="grid grid-cols-3 gap-2 text-xs text-zinc-300">
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="現金"> 現金</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="クレジットカード"> クレカ</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="電子マネー"> 電子マネー</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="バーコード決済"> バーコード</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="PayPay"> PayPay</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="楽天Pay"> 楽天Pay</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="d払い"> d払い</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="auPay"> auPay</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="メルペイ"> メルペイ</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="J-coinPAY"> J-coinPAY</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="FamiPay"> FamiPay</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="AEONPay"> AEONPay</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="Alipay"> Alipay</label>
+                        </div>
                     </div>
+
                     <div>
-                        <label class="block text-[10px] text-zinc-400 mb-1">予約</label>
-                        <select id="restaurant-reservation" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
-                            <option value="">未選択</option>
-                            <option value="可">可</option>
-                            <option value="不可">不可</option>
-                            <option value="推奨">推奨</option>
-                        </select>
+                        <label class="block text-[10px] text-zinc-400 mb-1">ホームページ URL</label>
+                        <input type="url" id="restaurant-hp" placeholder="https://..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
                     </div>
-                </div>
 
-                <!-- 決済方法 -->
-                <div>
-                    <label class="block text-[10px] text-zinc-400 mb-1">決済方法 (複数選択可)</label>
-                    <div class="grid grid-cols-3 gap-2 text-xs text-zinc-300">
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="現金"> 現金</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="クレジットカード"> クレカ</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="電子マネー"> 電子マネー</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="バーコード決済"> バーコード</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="PayPay"> PayPay</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="楽天Pay"> 楽天Pay</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="d払い"> d払い</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="auPay"> auPay</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="メルペイ"> メルペイ</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="J-coinPAY"> J-coinPAY</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="FamiPay"> FamiPay</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="AEONPay"> AEONPay</label>
-                        <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-payment" value="Alipay"> Alipay</label>
+                    <div>
+                        <label class="block text-[10px] text-zinc-400 mb-1">Instagram URL</label>
+                        <input type="url" id="restaurant-insta" placeholder="https://instagram.com/..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
                     </div>
-                </div>
 
-                <div>
-                    <label class="block text-[10px] text-zinc-400 mb-1">ホームページ URL</label>
-                    <input type="url" id="restaurant-hp" placeholder="https://..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
-                </div>
+                    <div>
+                        <label class="block text-[10px] text-zinc-400 mb-1">メモ・おすすめメニューなど</label>
+                        <textarea id="restaurant-memo" rows="2" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none"></textarea>
+                    </div>
 
-                <div>
-                    <label class="block text-[10px] text-zinc-400 mb-1">Instagram URL</label>
-                    <input type="url" id="restaurant-insta" placeholder="https://instagram.com/..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
-                </div>
+                    <div>
+                        <label class="block text-[10px] text-zinc-400 mb-1">写真</label>
+                        <input type="file" id="restaurant-photo" accept="image/*" class="w-full text-xs text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-zinc-800 file:text-zinc-200 hover:file:bg-zinc-700">
+                    </div>
 
-                <div>
-                    <label class="block text-[10px] text-zinc-400 mb-1">メモ・おすすめメニューなど</label>
-                    <textarea id="restaurant-memo" rows="2" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none"></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-[10px] text-zinc-400 mb-1">写真</label>
-                    <input type="file" id="restaurant-photo" accept="image/*" class="w-full text-xs text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-zinc-800 file:text-zinc-200 hover:file:bg-zinc-700">
-                </div>
-
-                <button type="submit" id="submit-btn" class="w-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold py-2.5 rounded-xl text-xs transition shadow-lg shadow-amber-500/10">投稿する</button>
-            </form>
-        </section>
+                    <div class="flex gap-2 pt-2">
+                        <button type="button" id="cancel-form-btn" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-2.5 rounded-xl text-xs transition">キャンセル</button>
+                        <button type="submit" id="submit-btn" class="flex-1 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold py-2.5 rounded-xl text-xs transition shadow-lg shadow-amber-500/10">投稿する</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <!-- モーダル各種 -->
