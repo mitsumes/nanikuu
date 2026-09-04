@@ -781,7 +781,38 @@
 
         <div id="loading" class="text-center py-12 text-zinc-500 text-xs">データを読み込んでいます...</div>
 
-        <!-- お店検索セクション（「最近追加されたお店」の上に移動） -->
+        <!-- ルーレットセクション（検索セクションの上に移動） -->
+        <section id="roulette-section" class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-6 scroll-mt-16">
+            <h2 class="text-xs font-bold text-amber-400 mb-2 flex items-center gap-1">🎲 今日どこ行く？ルーレット</h2>
+            <div class="space-y-2">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] text-zinc-400 mb-1">ジャンル絞り込み</label>
+                        <select id="roulette-genre" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
+                            <option value="すべて">すべて</option>
+                            <option value="ラーメン">ラーメン</option>
+                            <option value="麺類">麺類</option>
+                            <option value="居酒屋・和食">居酒屋・和食</option>
+                            <option value="焼肉・肉料理">焼肉・肉料理</option>
+                            <option value="洋食・イタリアン">洋食・イタリアン</option>
+                            <option value="中華・アジア">中華・アジア</option>
+                            <option value="カフェ・スイーツ">カフェ・スイーツ</option>
+                            <option value="ファミレス">ファミレス</option>
+                            <option value="テイクアウト">テイクアウト</option>
+                            <option value="その他">その他</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-zinc-400 mb-1">エリア (任意)</label>
+                        <input type="text" id="roulette-region" placeholder="例: 半田市" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
+                    </div>
+                </div>
+                <button id="start-roulette" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold py-2 rounded-xl text-xs transition shadow-md">ルーレットを回す！</button>
+                <div id="roulette-result" class="mt-2"></div>
+            </div>
+        </section>
+
+        <!-- お店検索セクション -->
         <section id="search-section" class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-6 scroll-mt-16">
             <h2 class="text-xs font-bold text-zinc-300 mb-2">🔍 お店を検索</h2>
             <div class="space-y-2">
@@ -831,7 +862,7 @@
         </section>
 
         <!-- お店登録セクション -->
-        <section id="form-section" class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-6 scroll-mt-16">
+        <section id="form-section" class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-8 scroll-mt-16">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold text-zinc-300">お店を登録・編集</h2>
                 <button id="cancel-edit" class="text-[10px] text-red-400 underline hidden">編集をキャンセル</button>
@@ -988,37 +1019,6 @@
 
                 <button type="submit" id="submit-btn" class="w-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold py-2.5 rounded-xl text-xs transition shadow-lg shadow-amber-500/10">投稿する</button>
             </form>
-        </section>
-
-        <!-- ルーレットセクション -->
-        <section id="roulette-section" class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 mb-8 scroll-mt-16">
-            <h2 class="text-xs font-bold text-amber-400 mb-2 flex items-center gap-1">🎲 今日どこ行く？ルーレット</h2>
-            <div class="space-y-2">
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-[10px] text-zinc-400 mb-1">ジャンル絞り込み</label>
-                        <select id="roulette-genre" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
-                            <option value="すべて">すべて</option>
-                            <option value="ラーメン">ラーメン</option>
-                            <option value="麺類">麺類</option>
-                            <option value="居酒屋・和食">居酒屋・和食</option>
-                            <option value="焼肉・肉料理">焼肉・肉料理</option>
-                            <option value="洋食・イタリアン">洋食・イタリアン</option>
-                            <option value="中華・アジア">中華・アジア</option>
-                            <option value="カフェ・スイーツ">カフェ・スイーツ</option>
-                            <option value="ファミレス">ファミレス</option>
-                            <option value="テイクアウト">テイクアウト</option>
-                            <option value="その他">その他</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] text-zinc-400 mb-1">エリア (任意)</label>
-                        <input type="text" id="roulette-region" placeholder="例: 半田市" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
-                    </div>
-                </div>
-                <button id="start-roulette" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold py-2 rounded-xl text-xs transition shadow-md">ルーレットを回す！</button>
-                <div id="roulette-result" class="mt-2"></div>
-            </div>
         </section>
     </div>
 
