@@ -224,7 +224,7 @@
                 const latestItems = allRestaurants;
 
                 if (latestItems.length === 0) {
-                    latestListEl.innerHTML = `<div class="text-center py-8 text-zinc-500 text-xs">登録されているお店がありません。<br>上の「投稿する」ボタンから投稿してください！</div>`;
+                    latestListEl.innerHTML = `<div class="col-span-full text-center py-8 text-zinc-500 text-xs">登録されているお店がありません。<br>上の「投稿する」ボタンから投稿してください！</div>`;
                     if (openAllModalBtn) openAllModalBtn.classList.add("hidden");
                 } else {
                     if (openAllModalBtn) openAllModalBtn.classList.remove("hidden");
@@ -235,7 +235,7 @@
 
                 allListEl.innerHTML = "";
                 if (allRestaurants.length === 0) {
-                    allListEl.innerHTML = `<div class="text-center py-8 text-zinc-500 text-xs">登録されているお店がありません。</div>`;
+                    allListEl.innerHTML = `<div class="text-center py-8 text-zinc-500 text-xs col-span-2">登録されているお店がありません。</div>`;
                 } else {
                     allRestaurants.forEach((item) => {
                         allListEl.appendChild(createCardElement(item));
@@ -266,7 +266,7 @@
 
                     searchResultListEl.innerHTML = "";
                     if (filtered.length === 0) {
-                        searchResultListEl.innerHTML = `<div class="text-center py-8 text-zinc-500 text-xs">条件に一致するお店が見つかりませんでした。</div>`;
+                        searchResultListEl.innerHTML = `<div class="text-center py-8 text-zinc-500 text-xs col-span-2">条件に一致するお店が見つかりませんでした。</div>`;
                     } else {
                         filtered.forEach(item => {
                             searchResultListEl.appendChild(createCardElement(item));
@@ -308,9 +308,9 @@
                 }
             };
 
-            // 画像なしの文字のみカード要素作成関数
             function createCardElement(item) {
                 const card = document.createElement("div");
+                const imageUrl = item.photoUrl || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=500&q=60";
                 const locationStr = `${item.city || ''} ${item.prefecture || ''}`.trim() || '未設定';
                 
                 const likedUsers = item.likedUsers || {};
@@ -318,7 +318,7 @@
                 const userKey = currentUserName.replace(/[.#$\/\[\]]/g, "_");
                 const hasLiked = !!likedUsers[userKey];
 
-                card.className = "bg-zinc-900 rounded-xl p-3 border border-zinc-800 hover:border-zinc-700 transition shadow-md cursor-pointer flex flex-col justify-between gap-2";
+                card.className = "bg-zinc-900 rounded-xl overflow-hidden flex flex-col justify-between border border-zinc-800 hover:border-zinc-700 transition shadow-md cursor-pointer";
                 card.onclick = () => {
                     if (searchResultModal) {
                         searchResultModal.classList.add("hidden");
@@ -332,19 +332,22 @@
                 };
                 
                 card.innerHTML = `
-                    <div class="flex justify-between items-start gap-2">
-                        <div>
-                            <span class="text-[9px] bg-zinc-800 text-amber-400 px-2 py-0.5 rounded-full border border-zinc-700">${item.genre || 'その他'}</span>
-                            <h3 class="font-bold text-xs text-white mt-1">${item.name}</h3>
-                            <div class="text-[10px] text-zinc-400 mt-0.5">📍 ${locationStr}</div>
-                        </div>
+                    <div class="h-44 overflow-hidden bg-zinc-950 relative flex items-center justify-center">
+                        <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover">
+                        <span class="absolute top-1.5 right-1.5 bg-black/70 backdrop-blur-md text-zinc-200 text-[9px] px-2 py-0.5 rounded-full border border-zinc-700">${item.genre || 'その他'}</span>
                     </div>
-                    <div class="pt-2 border-t border-zinc-800/80 flex items-center justify-between">
-                        <span class="text-[10px] text-zinc-500">✍️ ${item.author || '不明'}</span>
-                        <button onclick="window.toggleItkayo('${item.id}', event)" class="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-md border transition ${hasLiked ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold' : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700'}">
-                            <span>🚀</span>
-                            <span>イッタヨ！ (${likeCount})</span>
-                        </button>
+                    <div class="p-2 flex flex-col justify-between flex-1 space-y-1">
+                        <div>
+                            <h3 class="font-bold text-[11px] text-white truncate">${item.name}</h3>
+                            <div class="text-[9px] text-zinc-400 truncate">📍 ${locationStr}</div>
+                        </div>
+                        <div class="pt-1 border-t border-zinc-800/80 flex items-center justify-between">
+                            <span class="text-[9px] text-zinc-500 truncate max-w-[90px]">✍️ ${item.author || '不明'}</span>
+                            <button onclick="window.toggleItkayo('${item.id}', event)" class="flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-md border transition ${hasLiked ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold' : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700'}">
+                                <span>🚀</span>
+                                <span>イッタヨ！ (${likeCount})</span>
+                            </button>
+                        </div>
                     </div>
                 `;
                 return card;
@@ -747,6 +750,7 @@
                     const filtered = allRestaurants.filter(item => {
                         const matchGenre = (selectedGenre === "すべて" || item.genre === selectedGenre);
                         
+                        // ラーメン選択時のこだわり絞り込み判定
                         let matchRamen = true;
                         if (selectedGenre === "ラーメン" && selectedRamenDetail !== "すべて") {
                             matchRamen = item.ramenDetails && item.ramenDetails.includes(selectedRamenDetail);
@@ -914,7 +918,7 @@
             </div>
         </section>
 
-        <!-- 最近追加されたお店セクション（1列の文字のみリスト表示） -->
+        <!-- 最近追加されたお店セクション -->
         <section class="mb-6">
             <div class="flex justify-between items-center mb-3">
                 <div class="flex items-center gap-2">
@@ -923,7 +927,7 @@
                 </div>
                 <button id="open-all-modal" class="text-[10px] text-amber-400 underline hidden">すべて見る</button>
             </div>
-            <div id="latest-restaurant-list" class="flex flex-col gap-3"></div>
+            <div id="latest-restaurant-list" class="grid grid-cols-2 gap-3"></div>
         </section>
     </div>
 
@@ -1127,25 +1131,23 @@
         </div>
     </div>
 
-    <!-- 検索結果モーダル（1列の文字のみリスト表示） -->
     <div id="search-result-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-sm overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
                 <h3 class="text-xs font-bold text-white">検索結果</h3>
                 <button id="close-search-result-modal" class="text-xs text-zinc-400 hover:text-white">✕ 閉じる</button>
             </div>
-            <div id="search-result-list" class="p-4 flex flex-col gap-3 overflow-y-auto flex-1"></div>
+            <div id="search-result-list" class="p-4 grid grid-cols-2 gap-3 overflow-y-auto flex-1"></div>
         </div>
     </div>
 
-    <!-- すべて見るモーダル（1列の文字のみリスト表示） -->
     <div id="all-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
                 <h3 class="text-xs font-bold text-white">登録されたお店一覧</h3>
                 <button id="close-all-modal" class="text-xs text-zinc-400 hover:text-white">✕ 閉じる</button>
             </div>
-            <div id="all-restaurant-list" class="p-4 flex flex-col gap-3 overflow-y-auto flex-1"></div>
+            <div id="all-restaurant-list" class="p-4 grid grid-cols-2 gap-3 overflow-y-auto flex-1"></div>
         </div>
     </div>
 
