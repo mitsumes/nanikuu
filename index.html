@@ -215,7 +215,6 @@
             function renderRestaurants() {
                 if (!latestListEl || !allListEl) return;
                 
-                // 投稿数をヘッダーに反映
                 if (restaurantCountEl) {
                     restaurantCountEl.textContent = `(${allRestaurants.length}件)`;
                 }
@@ -229,7 +228,7 @@
                 } else {
                     if (openAllModalBtn) openAllModalBtn.classList.remove("hidden");
                     latestItems.forEach((item) => {
-                        latestListEl.appendChild(createCardElement(item, true));
+                        latestListEl.appendChild(createCardElement(item));
                     });
                 }
 
@@ -238,7 +237,7 @@
                     allListEl.innerHTML = `<div class="text-center py-8 text-zinc-500 text-xs col-span-2">登録されているお店がありません。</div>`;
                 } else {
                     allRestaurants.forEach((item) => {
-                        allListEl.appendChild(createCardElement(item, true));
+                        allListEl.appendChild(createCardElement(item));
                     });
                 }
             }
@@ -269,8 +268,7 @@
                         searchResultListEl.innerHTML = `<div class="text-center py-8 text-zinc-500 text-xs col-span-2">条件に一致するお店が見つかりませんでした。</div>`;
                     } else {
                         filtered.forEach(item => {
-                            // 検索結果モーダルでも画像ありのカードを使用
-                            searchResultListEl.appendChild(createCardElement(item, true));
+                            searchResultListEl.appendChild(createCardElement(item));
                         });
                     }
 
@@ -309,8 +307,8 @@
                 }
             };
 
-            // カード生成関数
-            function createCardElement(item, hasImage = true) {
+            // カード生成関数（アスペクト比固定で潰れを防ぐ設計）
+            function createCardElement(item) {
                 const card = document.createElement("div");
                 const imageUrl = item.photoUrl || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=500&q=60";
                 const locationStr = `${item.city || ''} ${item.prefecture || ''}`.trim() || '未設定';
@@ -332,19 +330,20 @@
                     openDetail(item.id);
                 };
 
-                card.className = "bg-zinc-900 rounded-xl overflow-hidden flex flex-col justify-between border border-zinc-800 hover:border-zinc-700 transition shadow-md cursor-pointer";
+                // shrink-0 を設定して検索結果がいくら増えてもカード自体が潰れないようにする
+                card.className = "bg-zinc-900 rounded-xl overflow-hidden flex flex-col justify-between border border-zinc-800 hover:border-zinc-700 transition shadow-md cursor-pointer shrink-0";
                 card.innerHTML = `
-                    <div class="h-44 overflow-hidden bg-zinc-950 relative flex items-center justify-center">
+                    <div class="w-full aspect-video bg-zinc-950 relative overflow-hidden flex items-center justify-center shrink-0">
                         <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover">
                         <span class="absolute top-1.5 right-1.5 bg-black/70 backdrop-blur-md text-zinc-200 text-[9px] px-2 py-0.5 rounded-full border border-zinc-700">${item.genre || 'その他'}</span>
                     </div>
-                    <div class="p-2 flex flex-col justify-between flex-1 space-y-1">
+                    <div class="p-2.5 flex flex-col justify-between flex-1 space-y-1.5">
                         <div>
                             <h3 class="font-bold text-[11px] text-white truncate">${item.name}</h3>
                             <div class="text-[9px] text-zinc-400 truncate">📍 ${locationStr}</div>
                         </div>
-                        <div class="pt-1 border-t border-zinc-800/80 flex items-center justify-between">
-                            <span class="text-[9px] text-zinc-500 truncate max-w-[90px]">✍️ ${item.author || '不明'}</span>
+                        <div class="pt-1.5 border-t border-zinc-800/80 flex items-center justify-between">
+                            <span class="text-[9px] text-zinc-500 truncate max-w-[80px]">✍️ ${item.author || '不明'}</span>
                             <button onclick="window.toggleItkayo('${item.id}', event)" class="flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-md border transition ${hasLiked ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold' : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700'}">
                                 <span>🚀</span>
                                 <span>イッタヨ！ (${likeCount})</span>
@@ -816,7 +815,7 @@
             </div>
         </header>
 
-        <!-- メニューバー（「投稿する」ボタンでモーダルを開く） -->
+        <!-- メニューバー -->
         <nav class="bg-zinc-900 border border-zinc-800 rounded-xl p-1.5 mb-6 sticky top-2 z-40 shadow-lg backdrop-blur-md bg-opacity-90">
             <button id="open-form-modal" class="w-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 text-[11px] py-2 rounded-lg font-bold border border-amber-500/30 transition flex items-center justify-center gap-1 cursor-pointer">
                 <span>📝</span> 投稿する
@@ -852,7 +851,6 @@
                     </div>
                 </div>
 
-                <!-- ラーメン選択時のみ表示されるこだわり絞り込み -->
                 <div id="roulette-ramen-container" class="hidden">
                     <label class="block text-[10px] text-amber-400 mb-1">🍜 ラーメンのこだわり指定</label>
                     <select id="roulette-ramen-genre" class="w-full bg-zinc-900 border border-amber-500/30 rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
@@ -977,7 +975,6 @@
                         </div>
                     </div>
 
-                    <!-- ラーメンのこだわり -->
                     <div id="ramen-details-container" class="bg-zinc-950/40 border border-amber-500/30 p-3 rounded-xl space-y-2">
                         <label class="block text-[10px] font-bold text-amber-400">🍜 ラーメンのこだわり (複数選択可)</label>
                         <div class="grid grid-cols-3 gap-2 text-xs text-zinc-300">
@@ -1050,7 +1047,6 @@
                         </div>
                     </div>
 
-                    <!-- 決済方法 -->
                     <div>
                         <label class="block text-[10px] text-zinc-400 mb-1">決済方法 (複数選択可)</label>
                         <div class="grid grid-cols-3 gap-2 text-xs text-zinc-300">
@@ -1099,7 +1095,7 @@
         </div>
     </div>
 
-    <!-- モーダル各種 -->
+    <!-- 詳細モーダル -->
     <div id="detail-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-sm overflow-hidden flex flex-col max-h-[85vh]">
             <div class="relative h-40 min-h-[160px] bg-zinc-800 shrink-0">
@@ -1132,7 +1128,7 @@
         </div>
     </div>
 
-    <!-- 検索結果モーダル（写真付きのグリッド表示に変更） -->
+    <!-- 検索結果モーダル -->
     <div id="search-result-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
@@ -1143,6 +1139,7 @@
         </div>
     </div>
 
+    <!-- 一覧モーダル -->
     <div id="all-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
@@ -1153,6 +1150,7 @@
         </div>
     </div>
 
+    <!-- 削除確認モーダル -->
     <div id="delete-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 w-full max-w-xs text-center space-y-4">
             <h3 class="text-sm font-bold text-white">本当に削除しますか？</h3>
