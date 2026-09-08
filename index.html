@@ -307,7 +307,6 @@
                         });
                     }
 
-                    // 検索モーダルを閉じ、結果モーダルを開く
                     searchModal.classList.add("hidden");
                     searchModal.classList.remove("flex");
 
@@ -369,11 +368,11 @@
                     openDetail(item.id);
                 };
 
-                card.className = "bg-zinc-900/80 rounded-2xl overflow-hidden flex flex-col border border-zinc-800/80 hover:border-emerald-500/50 transition shadow-lg cursor-pointer group";
+                card.className = "bg-zinc-900/80 rounded-2xl overflow-hidden flex flex-col border border-zinc-800/80 hover:border-[#06C755]/50 transition shadow-lg cursor-pointer group";
                 card.innerHTML = `
                     <div class="w-full aspect-video bg-zinc-950 relative overflow-hidden flex items-center justify-center">
                         <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                        <span class="absolute top-2 right-2 bg-black/70 backdrop-blur-md text-emerald-400 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-500/30">${item.genre || 'その他'}</span>
+                        <span class="absolute top-2 right-2 bg-black/70 backdrop-blur-md text-[#06C755] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-[#06C755]/30">${item.genre || 'その他'}</span>
                     </div>
                     <div class="p-3 flex flex-col justify-between flex-1 space-y-2">
                         <div>
@@ -469,7 +468,7 @@
                         <div>
                             <span class="text-zinc-500 block text-[10px] mb-1">ラーメンのこだわり</span>
                             <div class="flex flex-wrap gap-1">
-                                ${item.ramenDetails.map(d => `<span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-lg">${d}</span>`).join('')}
+                                ${item.ramenDetails.map(d => `<span class="text-[10px] bg-[#06C755]/10 text-[#06C755] border border-[#06C755]/30 px-2.5 py-1 rounded-lg">${d}</span>`).join('')}
                             </div>
                         </div>
                     `;
@@ -489,7 +488,7 @@
 
                 if (detailHp) {
                     if (item.hpUrl) {
-                        detailHp.innerHTML = `<a href="${item.hpUrl}" target="_blank" class="text-emerald-400 underline truncate block text-xs">🌐 ホームページを見る</a>`;
+                        detailHp.innerHTML = `<a href="${item.hpUrl}" target="_blank" class="text-[#06C755] underline truncate block text-xs">🌐 ホームページを見る</a>`;
                         detailHp.classList.remove("hidden");
                     } else {
                         detailHp.classList.add("hidden");
@@ -774,7 +773,7 @@
                 });
             }
 
-            // ルーレット処理
+            // 【リッチ＆面白い】スロット風ルーレット処理
             if (startRouletteBtn) {
                 startRouletteBtn.addEventListener("click", () => {
                     if (allRestaurants.length === 0) {
@@ -801,41 +800,74 @@
                     });
 
                     if (filtered.length === 0) {
-                        if (rouletteResult) rouletteResult.innerHTML = `<p class='text-red-400 text-xs text-center py-2'>条件に合致するお店が見つかりませんでした！</p>`;
-                        return;
-                    }
-
-                    if (rouletteResult) {
-                        rouletteResult.innerHTML = `<p class='text-emerald-400 text-xs text-center py-2 animate-pulse'>抽選中...</p>`;
-                    }
-
-                    let count = 0;
-                    const interval = setInterval(() => {
-                        const randomItem = filtered[Math.floor(Math.random() * filtered.length)];
                         if (rouletteResult) {
                             rouletteResult.innerHTML = `
-                                <div class="bg-zinc-800 p-3 rounded-2xl border border-zinc-700 text-center">
-                                    <p class="text-xs text-emerald-400 font-bold">🎯 ${randomItem.name}</p>
-                                    <p class="text-[10px] text-zinc-400 mt-1">${randomItem.genre || ''} / ${randomItem.city || ''}</p>
+                                <div class="bg-zinc-950 border border-red-500/40 p-4 rounded-2xl text-center space-y-1">
+                                    <p class="text-xs text-red-400 font-bold">⚠️ 条件に合うお店がないよ！</p>
+                                    <p class="text-[10px] text-zinc-400">条件を少しゆるくして再チャレンジしてね</p>
                                 </div>
                             `;
                         }
+                        return;
+                    }
+
+                    // ボタンを一時無効化してワクワク感を演出
+                    startRouletteBtn.disabled = true;
+                    startRouletteBtn.classList.add("opacity-50", "cursor-not-allowed");
+
+                    let count = 0;
+                    const maxCount = 20; // スロットの回転数
+                    let speed = 50;
+
+                    const spin = () => {
+                        const randomItem = filtered[Math.floor(Math.random() * filtered.length)];
+                        const randomImg = randomItem.photoUrl || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=500&q=60";
+                        
+                        if (rouletteResult) {
+                            rouletteResult.innerHTML = `
+                                <div class="bg-zinc-950 border border-[#06C755]/50 p-3 rounded-2xl text-center space-y-2 shadow-inner animate-pulse">
+                                    <div class="inline-block bg-[#06C755]/20 text-[#06C755] text-[9px] font-bold px-2 py-0.5 rounded-full">🎰 スロット回転中...</div>
+                                    <div class="flex items-center gap-3 bg-zinc-900/90 p-2 rounded-xl border border-zinc-800">
+                                        <img src="${randomImg}" class="w-12 h-12 object-cover rounded-lg shrink-0">
+                                        <div class="text-left overflow-hidden">
+                                            <p class="text-xs font-bold text-white truncate">${randomItem.name}</p>
+                                            <p class="text-[10px] text-zinc-400 truncate">${randomItem.genre} / ${randomItem.city || 'エリア未設定'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+
                         count++;
-                        if (count > 15) {
-                            clearInterval(interval);
+                        if (count < maxCount) {
+                            speed += 10; // だんだんスピードが遅くなる（ドラム停止の演出）
+                            setTimeout(spin, speed);
+                        } else {
+                            // 当選決定！
                             const winner = filtered[Math.floor(Math.random() * filtered.length)];
+                            const winnerImg = winner.photoUrl || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=500&q=60";
+                            
                             if (rouletteResult) {
                                 rouletteResult.innerHTML = `
-                                    <div class="bg-[#06C755]/10 border border-[#06C755]/30 p-3.5 rounded-2xl text-center cursor-pointer shadow-lg" onclick="openDetail('${winner.id}')">
-                                        <p class="text-[10px] text-[#06C755] font-bold mb-1">🎉 決定！今日のお店はここ！</p>
-                                        <p class="text-sm font-bold text-white">${winner.name}</p>
-                                        <p class="text-[10px] text-zinc-300 mt-1">📍 ${winner.city || ''} (${winner.genre || ''})</p>
-                                        <p class="text-[9px] text-[#06C755] underline mt-2 font-bold">タップして詳細を見る 👉</p>
+                                    <div class="bg-gradient-to-b from-[#06C755]/20 to-zinc-950 border-2 border-[#06C755] p-4 rounded-2xl text-center space-y-2 shadow-2xl animate-bounce">
+                                        <div class="inline-block bg-[#06C755] text-zinc-950 text-[10px] font-extrabold px-3 py-1 rounded-full shadow-md">🎉 当選！今日のお店はここ！</div>
+                                        <div class="bg-zinc-900 p-3 rounded-xl border border-[#06C755]/40 flex items-center gap-3 cursor-pointer group" onclick="openDetail('${winner.id}')">
+                                            <img src="${winnerImg}" class="w-14 h-14 object-cover rounded-xl shrink-0 group-hover:scale-105 transition">
+                                            <div class="text-left overflow-hidden flex-1">
+                                                <p class="text-sm font-extrabold text-white truncate">${winner.name}</p>
+                                                <p class="text-[10px] text-[#06C755] font-bold mt-0.5">📍 ${winner.city || 'エリア未設定'} (${winner.genre})</p>
+                                                <p class="text-[9px] text-zinc-400 underline mt-1">👆 タップして詳細を見る・決定！</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 `;
                             }
+                            startRouletteBtn.disabled = false;
+                            startRouletteBtn.classList.remove("opacity-50", "cursor-not-allowed");
                         }
-                    }, 100);
+                    };
+
+                    spin();
                 });
             }
         });
@@ -940,7 +972,7 @@
     <div id="roulette-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
         <div class="bg-zinc-900 border border-zinc-800 rounded-t-3xl sm:rounded-3xl w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]">
             <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
-                <h3 class="text-xs font-bold text-[#06C755] flex items-center gap-1.5"><span>🎲</span> 今日どこ行く？ルーレット</h3>
+                <h3 class="text-xs font-bold text-[#06C755] flex items-center gap-1.5"><span>🎰</span> 今日どこ行く？スロットルーレット</h3>
                 <button id="close-roulette-modal" class="text-xs text-zinc-400 hover:text-white px-2 py-1 font-bold">✕ 閉じる</button>
             </div>
             <div class="p-4 overflow-y-auto space-y-3 flex-1">
@@ -988,7 +1020,7 @@
                     </select>
                 </div>
 
-                <button id="start-roulette" class="w-full bg-[#06C755] hover:bg-[#05b34c] text-zinc-950 font-extrabold py-3 rounded-2xl text-xs transition shadow-lg shadow-[#06C755]/20">ルーレットを回す！</button>
+                <button id="start-roulette" class="w-full bg-[#06C755] hover:bg-[#05b34c] text-zinc-950 font-extrabold py-3.5 rounded-2xl text-xs transition shadow-lg shadow-[#06C755]/20 active:scale-95">🎲 スロットを回す！</button>
                 <div id="roulette-result" class="mt-2"></div>
             </div>
         </div>
@@ -1168,7 +1200,7 @@
             </div>
             <div class="p-4 overflow-y-auto space-y-3 flex-1">
                 <div>
-                    <span id="detail-genre" class="text-[10px] bg-zinc-800 text-[#06C755] font-bold px-2.5 py-1 rounded-full border border-emerald-500/30"></span>
+                    <span id="detail-genre" class="text-[10px] bg-zinc-800 text-[#06C755] font-bold px-2.5 py-1 rounded-full border border-[#06C755]/30"></span>
                     <h2 id="detail-name" class="text-base font-bold text-white mt-1.5"></h2>
                     <p id="detail-region" class="text-xs text-zinc-400 mt-0.5"></p>
                 </div>
