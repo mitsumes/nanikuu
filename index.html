@@ -307,7 +307,7 @@
                 }
             };
 
-            // カード生成関数（アスペクト比固定で潰れを防ぐ設計）
+            // カード生成関数（アスペクト比を固定し、カード自体が絶対に潰れないように調整）
             function createCardElement(item) {
                 const card = document.createElement("div");
                 const imageUrl = item.photoUrl || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=500&q=60";
@@ -330,10 +330,10 @@
                     openDetail(item.id);
                 };
 
-                // shrink-0 を設定して検索結果がいくら増えてもカード自体が潰れないようにする
-                card.className = "bg-zinc-900 rounded-xl overflow-hidden flex flex-col justify-between border border-zinc-800 hover:border-zinc-700 transition shadow-md cursor-pointer shrink-0";
+                // 固定の高さをなくし、画像領域は aspect-video、全体は flex で自然な高さを維持
+                card.className = "bg-zinc-900 rounded-xl overflow-hidden flex flex-col border border-zinc-800 hover:border-zinc-700 transition shadow-md cursor-pointer";
                 card.innerHTML = `
-                    <div class="w-full aspect-video bg-zinc-950 relative overflow-hidden flex items-center justify-center shrink-0">
+                    <div class="w-full aspect-video bg-zinc-950 relative overflow-hidden flex items-center justify-center">
                         <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover">
                         <span class="absolute top-1.5 right-1.5 bg-black/70 backdrop-blur-md text-zinc-200 text-[9px] px-2 py-0.5 rounded-full border border-zinc-700">${item.genre || 'その他'}</span>
                     </div>
@@ -1128,25 +1128,25 @@
         </div>
     </div>
 
-    <!-- 検索結果モーダル -->
-    <div id="search-result-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
-                <h3 class="text-xs font-bold text-white">検索結果</h3>
-                <button id="close-search-result-modal" class="text-xs text-zinc-400 hover:text-white">✕ 閉じる</button>
-            </div>
-            <div id="search-result-list" class="p-4 grid grid-cols-2 gap-3 overflow-y-auto flex-1"></div>
+    <!-- 検索結果モーダル（高さを画面一杯に広げ、このモーダル全体でスクロールするように調整） -->
+    <div id="search-result-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex-col z-50 overflow-hidden">
+        <div class="bg-zinc-900 border-b border-zinc-800 p-4 flex justify-between items-center shrink-0">
+            <h3 class="text-xs font-bold text-white">検索結果</h3>
+            <button id="close-search-result-modal" class="text-xs text-zinc-400 hover:text-white px-2 py-1">✕ 閉じる</button>
+        </div>
+        <div class="p-4 overflow-y-auto flex-1">
+            <div id="search-result-list" class="grid grid-cols-2 gap-3 max-w-md mx-auto"></div>
         </div>
     </div>
 
-    <!-- 一覧モーダル -->
-    <div id="all-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
-                <h3 class="text-xs font-bold text-white">登録されたお店一覧</h3>
-                <button id="close-all-modal" class="text-xs text-zinc-400 hover:text-white">✕ 閉じる</button>
-            </div>
-            <div id="all-restaurant-list" class="p-4 grid grid-cols-2 gap-3 overflow-y-auto flex-1"></div>
+    <!-- 一覧モーダル（検索結果と同様にスクロール可能に調整） -->
+    <div id="all-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex-col z-50 overflow-hidden">
+        <div class="bg-zinc-900 border-b border-zinc-800 p-4 flex justify-between items-center shrink-0">
+            <h3 class="text-xs font-bold text-white">登録されたお店一覧</h3>
+            <button id="close-all-modal" class="text-xs text-zinc-400 hover:text-white px-2 py-1">✕ 閉じる</button>
+        </div>
+        <div class="p-4 overflow-y-auto flex-1">
+            <div id="all-restaurant-list" class="grid grid-cols-2 gap-3 max-w-md mx-auto"></div>
         </div>
     </div>
 
