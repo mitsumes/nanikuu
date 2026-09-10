@@ -136,6 +136,12 @@
             const openRouletteModalBtn = document.getElementById("open-roulette-modal");
             const closeRouletteModalBtn = document.getElementById("close-roulette-modal");
 
+            // 日本地図モーダル関連
+            const mapModal = document.getElementById("map-modal");
+            const openMapModalBtn = document.getElementById("open-map-modal");
+            const closeMapModalBtn = document.getElementById("close-map-modal");
+            const prefectureCountEl = document.getElementById("prefecture-count");
+
             if (openSearchModalBtn) {
                 openSearchModalBtn.addEventListener("click", () => {
                     searchModal.classList.remove("hidden");
@@ -159,6 +165,20 @@
                 closeRouletteModalBtn.addEventListener("click", () => {
                     rouletteModal.classList.add("hidden");
                     rouletteModal.classList.remove("flex");
+                });
+            }
+
+            if (openMapModalBtn) {
+                openMapModalBtn.addEventListener("click", () => {
+                    updateJapanMap();
+                    mapModal.classList.remove("hidden");
+                    mapModal.classList.add("flex");
+                });
+            }
+            if (closeMapModalBtn) {
+                closeMapModalBtn.addEventListener("click", () => {
+                    mapModal.classList.add("hidden");
+                    mapModal.classList.remove("flex");
                 });
             }
 
@@ -240,6 +260,7 @@
                         allRestaurants.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
                     }
                     renderRestaurants();
+                    updateJapanMap();
                 }, (error) => {
                     console.error("Data load failed", error);
                     if (loadingEl) loadingEl.textContent = "データの読み込みに失敗しました。";
@@ -276,6 +297,105 @@
                     });
                 }
             }
+
+            // 日本地図のピン・色塗り更新処理
+            function updateJapanMap() {
+                const prefCounts = {};
+                allRestaurants.forEach(item => {
+                    if (item.prefecture) {
+                        // 表記ゆれ対策（「愛知県」→「愛知」など）
+                        let pref = item.prefecture.replace(/(都|道|府|県)$/, '');
+                        prefCounts[pref] = (prefCounts[pref] || 0) + 1;
+                    }
+                });
+
+                const uniqueCount = Object.keys(prefCounts).length;
+                if (prefectureCountEl) {
+                    prefectureCountEl.textContent = `${uniqueCount} / 47 都道府県制覇`;
+                }
+
+                document.querySelectorAll('.pref-path').forEach(path => {
+                    const prefName = path.getAttribute('data-pref');
+                    const count = prefCounts[prefName] || 0;
+                    
+                    if (count > 0) {
+                        path.classList.remove('fill-zinc-800', 'hover:fill-zinc-700');
+                        path.classList.add('fill-[#06C755]', 'hover:fill-[#05b34c]', 'filter', 'drop-shadow-[0_0_4px_rgba(6,199,85,0.6)]');
+                    } else {
+                        path.classList.remove('fill-[#06C755]', 'hover:fill-[#05b34c]', 'drop-shadow-[0_0_4px_rgba(6,199,85,0.6)]');
+                        path.classList.add('fill-zinc-800', 'hover:fill-zinc-700');
+                    }
+                });
+
+                // リスト側の表示更新
+                const mapPrefListEl = document.getElementById("map-prefecture-list");
+                if (mapPrefListEl) {
+                    mapPrefListEl.innerHTML = "";
+                    
+                    const allPrefs = [
+                        "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
+                        "茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県",
+                        "新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県","静岡県","愛知県",
+                        "三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県",
+                        "鳥取県","島根県","岡山県","広島県","山口県",
+                        "徳島県","香川県","愛媛県","高知県",
+                        "福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"
+                    ];
+
+                    allPrefs.forEach(pref => {
+                        const shortPref = pref.replace(/(都|道|府|県)$/, '');
+                        const count = prefCounts[shortPref] || 0;
+                        const isVisited = count > 0;
+
+                        const badge = document.createElement("button");
+                        badge.className = `p-2 rounded-xl text-xs font-bold border transition flex items-center justify-between ${isVisited ? 'bg-[#06C755]/10 border-[#06C755] text-white shadow-sm' : 'bg-zinc-950 border-zinc-900 text-zinc-500 opacity-60'}`;
+                        badge.innerHTML = `
+                            <span>${pref}</span>
+                            <span class="text-[10px] px-1.5 py-0.5 rounded-full ${isVisited ? 'bg-[#06C755] text-zinc-950 font-extrabold' : 'bg-zinc-900 text-zinc-600'}">${isVisited ? `📍 ${count}件` : '未'}</span>
+                        `;
+                        badge.onclick = () => {
+                            if (isVisited) {
+                                filterByPrefecture(pref);
+                            }
+                        };
+                        mapPrefListEl.appendChild(badge);
+                    });
+                }
+            }
+
+            // 都道府県クリック・タップ時の絞り込み検索
+            window.filterByPrefecture = function(prefName) {
+                if (mapModal) {
+                    mapModal.classList.add("hidden");
+                    mapModal.classList.remove("flex");
+                }
+
+                const filtered = allRestaurants.filter(item => {
+                    return item.prefecture && item.prefecture.includes(prefName.replace(/(都|道|府|県)$/, ''));
+                });
+
+                searchResultListEl.innerHTML = "";
+                if (filtered.length === 0) {
+                    searchResultListEl.innerHTML = `<div class="text-center py-8 text-zinc-500 text-xs col-span-2">${prefName}のお店は見つかりませんでした。</div>`;
+                } else {
+                    filtered.forEach(item => {
+                        searchResultListEl.appendChild(createCardElement(item));
+                    });
+                }
+
+                searchResultModal.classList.remove("hidden");
+                searchResultModal.classList.add("flex");
+            };
+
+            // SVG上の都道府県クリックハンドラ
+            window.handlePrefClick = function(prefName) {
+                const count = allRestaurants.filter(item => item.prefecture && item.prefecture.includes(prefName)).length;
+                if (count > 0) {
+                    filterByPrefecture(prefName);
+                } else {
+                    alert(`${prefName}に登録されているお店はまだありません。`);
+                }
+            };
 
             // 検索処理
             if (executeSearchBtn) {
@@ -811,12 +931,11 @@
                         return;
                     }
 
-                    // ボタンを一時無効化してワクワク感を演出
                     startRouletteBtn.disabled = true;
                     startRouletteBtn.classList.add("opacity-50", "cursor-not-allowed");
 
                     let count = 0;
-                    const maxCount = 20; // スロットの回転数
+                    const maxCount = 20;
                     let speed = 50;
 
                     const spin = () => {
@@ -840,10 +959,9 @@
 
                         count++;
                         if (count < maxCount) {
-                            speed += 10; // だんだんスピードが遅くなる（ドラム停止の演出）
+                            speed += 10;
                             setTimeout(spin, speed);
                         } else {
-                            // 当選決定！
                             const winner = filtered[Math.floor(Math.random() * filtered.length)];
                             const winnerImg = winner.photoUrl || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=500&q=60";
                             
@@ -902,26 +1020,121 @@
         </section>
     </div>
 
-    <!-- 右手の親指で操作しやすい下部固定アクションナビゲーション -->
+    <!-- 右手の親指で操作しやすい下部固定アクションナビゲーション (4ボタン化) -->
     <nav class="fixed bottom-0 left-0 right-0 bg-zinc-900/95 backdrop-blur-md border-t border-zinc-800 p-3 z-40 shadow-2xl">
-        <div class="max-w-md mx-auto grid grid-cols-3 gap-2">
+        <div class="max-w-md mx-auto grid grid-cols-4 gap-1.5">
             <!-- 検索ボタン -->
-            <button id="open-search-modal" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs py-2.5 px-2 rounded-2xl font-bold border border-zinc-700/60 transition flex flex-col items-center justify-center gap-0.5 shadow-md active:scale-95">
+            <button id="open-search-modal" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs py-2 px-1 rounded-2xl font-bold border border-zinc-700/60 transition flex flex-col items-center justify-center gap-0.5 shadow-md active:scale-95">
                 <span class="text-sm">🔍</span>
-                <span class="text-[10px]">お店を探す</span>
+                <span class="text-[9px]">探す</span>
+            </button>
+            <!-- 地図を見るボタン -->
+            <button id="open-map-modal" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs py-2 px-1 rounded-2xl font-bold border border-zinc-700/60 transition flex flex-col items-center justify-center gap-0.5 shadow-md active:scale-95">
+                <span class="text-sm">🗺️</span>
+                <span class="text-[9px]">地図を見る</span>
             </button>
             <!-- ルーレットボタン -->
-            <button id="open-roulette-modal" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs py-2.5 px-2 rounded-2xl font-bold border border-zinc-700/60 transition flex flex-col items-center justify-center gap-0.5 shadow-md active:scale-95">
+            <button id="open-roulette-modal" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs py-2 px-1 rounded-2xl font-bold border border-zinc-700/60 transition flex flex-col items-center justify-center gap-0.5 shadow-md active:scale-95">
                 <span class="text-sm">🎲</span>
-                <span class="text-[10px]">ルーレット</span>
+                <span class="text-[9px]">ルーレット</span>
             </button>
             <!-- LINEグリーン投稿ボタン -->
-            <button id="open-form-modal" class="bg-[#06C755] hover:bg-[#05b34c] text-zinc-950 text-xs py-2.5 px-2 rounded-2xl font-extrabold transition flex flex-col items-center justify-center gap-0.5 shadow-lg shadow-[#06C755]/20 active:scale-95">
+            <button id="open-form-modal" class="bg-[#06C755] hover:bg-[#05b34c] text-zinc-950 text-xs py-2 px-1 rounded-2xl font-extrabold transition flex flex-col items-center justify-center gap-0.5 shadow-lg shadow-[#06C755]/20 active:scale-95">
                 <span class="text-sm">＋</span>
-                <span class="text-[10px]">投稿する</span>
+                <span class="text-[9px]">投稿する</span>
             </button>
         </div>
     </nav>
+
+    <!-- 日本地図モーダル -->
+    <div id="map-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-t-3xl sm:rounded-3xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
+                <div>
+                    <h3 class="text-xs font-bold text-white flex items-center gap-1.5"><span>🗺️</span> 日本地図・都道府県制覇</h3>
+                    <p id="prefecture-count" class="text-[10px] text-[#06C755] font-bold mt-0.5">0 / 47 都道府県制覇</p>
+                </div>
+                <button id="close-map-modal" class="text-xs text-zinc-400 hover:text-white px-2 py-1 font-bold">✕ 閉じる</button>
+            </div>
+            <div class="p-4 overflow-y-auto space-y-4 flex-1">
+                <!-- 日本地図イラスト (主要地方別ブロックSVGレイアウト) -->
+                <div class="bg-zinc-950 p-4 rounded-2xl border border-zinc-800 flex flex-col items-center justify-center relative">
+                    <p class="text-[10px] text-zinc-400 mb-2">投稿がある都道府県が緑色に光ります💡（タップで詳細）</p>
+                    
+                    <!-- SVG日本地図アイコンレイアウト -->
+                    <svg viewBox="0 0 400 380" class="w-full max-w-[280px] h-auto drop-shadow-md">
+                        <!-- 北海道 -->
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="北海道" onclick="handlePrefClick('北海道')" d="M260,20 L320,10 L370,40 L350,70 L300,50 L270,40 Z" stroke="#27272a" stroke-width="2"/>
+                        <!-- 東北エリア -->
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="青森" onclick="handlePrefClick('青森')" d="M290,80 L330,80 L320,110 L280,100 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="岩手" onclick="handlePrefClick('岩手')" d="M330,110 L360,110 L350,150 L320,140 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="秋田" onclick="handlePrefClick('秋田')" d="M295,110 L320,110 L320,145 L290,135 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="山形" onclick="handlePrefClick('山形')" d="M290,140 L320,145 L310,175 L280,165 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="宮城" onclick="handlePrefClick('宮城')" d="M320,145 L350,150 L340,180 L310,175 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="福島" onclick="handlePrefClick('福島')" d="M285,180 L335,185 L325,215 L275,205 Z" stroke="#27272a" stroke-width="1.5"/>
+
+                        <!-- 関東エリア -->
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="茨城" onclick="handlePrefClick('茨城')" d="M315,220 L340,225 L335,250 L310,240 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="栃木" onclick="handlePrefClick('栃木')" d="M295,215 L315,220 L310,245 L290,240 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="群馬" onclick="handlePrefClick('群馬')" d="M270,210 L295,215 L290,240 L265,235 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="埼玉" onclick="handlePrefClick('埼玉')" d="M285,245 L310,245 L305,260 L280,255 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="千葉" onclick="handlePrefClick('千葉')" d="M315,250 L335,255 L325,290 L310,270 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="東京" onclick="handlePrefClick('東京')" d="M285,260 L305,260 L300,275 L280,270 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="神奈川" onclick="handlePrefClick('神奈川')" d="M280,275 L305,275 L295,295 L270,285 Z" stroke="#27272a" stroke-width="1.5"/>
+
+                        <!-- 中部エリア -->
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="新潟" onclick="handlePrefClick('新潟')" d="M245,170 L280,175 L270,210 L235,200 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="富山" onclick="handlePrefClick('富山')" d="M225,205 L245,205 L240,225 L220,220 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="石川" onclick="handlePrefClick('石川')" d="M205,195 L225,205 L215,235 L195,225 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="福井" onclick="handlePrefClick('福井')" d="M195,230 L215,235 L205,260 L185,250 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="山梨" onclick="handlePrefClick('山梨')" d="M255,240 L275,240 L270,265 L250,260 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="長野" onclick="handlePrefClick('長野')" d="M240,215 L265,220 L255,260 L230,250 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="岐阜" onclick="handlePrefClick('岐阜')" d="M215,240 L235,245 L225,285 L205,275 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="静岡" onclick="handlePrefClick('静岡')" d="M255,270 L280,275 L270,295 L240,285 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="愛知" onclick="handlePrefClick('愛知')" d="M225,285 L250,285 L245,305 L220,300 Z" stroke="#27272a" stroke-width="1.5"/>
+
+                        <!-- 関西エリア -->
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="三重" onclick="handlePrefClick('三重')" d="M210,290 L225,290 L220,325 L200,315 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="滋賀" onclick="handlePrefClick('滋賀')" d="M195,275 L210,275 L205,300 L190,295 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="京都" onclick="handlePrefClick('京都')" d="M180,265 L195,270 L190,305 L175,295 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="大阪" onclick="handlePrefClick('大阪')" d="M170,300 L185,300 L180,320 L165,315 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="兵庫" onclick="handlePrefClick('兵庫')" d="M150,270 L175,275 L170,315 L145,305 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="奈良" onclick="handlePrefClick('奈良')" d="M185,305 L200,305 L195,330 L180,325 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="和歌山" onclick="handlePrefClick('和歌山')" d="M175,325 L195,330 L185,360 L165,350 Z" stroke="#27272a" stroke-width="1.5"/>
+
+                        <!-- 中国エリア -->
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="鳥取" onclick="handlePrefClick('鳥取')" d="M125,275 L145,275 L140,290 L120,285 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="島根" onclick="handlePrefClick('島根')" d="M95,275 L125,275 L120,295 L90,290 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="岡山" onclick="handlePrefClick('岡山')" d="M125,295 L145,295 L140,320 L120,315 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="広島" onclick="handlePrefClick('広島')" d="M100,295 L120,295 L115,325 L95,320 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="山口" onclick="handlePrefClick('山口')" d="M70,305 L95,310 L90,335 L65,330 Z" stroke="#27272a" stroke-width="1.5"/>
+
+                        <!-- 四国エリア -->
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="香川" onclick="handlePrefClick('香川')" d="M115,335 L135,335 L130,350 L110,345 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="徳島" onclick="handlePrefClick('徳島')" d="M135,335 L155,340 L150,360 L130,355 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="愛媛" onclick="handlePrefClick('愛媛')" d="M95,340 L115,345 L110,370 L90,365 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="高知" onclick="handlePrefClick('高知')" d="M115,350 L135,355 L130,375 L110,370 Z" stroke="#27272a" stroke-width="1.5"/>
+
+                        <!-- 九州・沖縄エリア -->
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="福岡" onclick="handlePrefClick('福岡')" d="M35,320 L55,325 L50,345 L30,340 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="佐賀" onclick="handlePrefClick('佐賀')" d="M15,330 L30,335 L25,350 L10,345 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="長崎" onclick="handlePrefClick('長崎')" d="M2,335 L15,340 L10,365 L1,360 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="熊本" onclick="handlePrefClick('熊本')" d="M25,350 L45,355 L40,380 L20,375 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="大分" onclick="handlePrefClick('大分')" d="M45,340 L65,345 L60,365 L40,360 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="宮崎" onclick="handlePrefClick('宮崎')" d="M45,370 L65,375 L60,400 L40,395 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="鹿児島" onclick="handlePrefClick('鹿児島')" d="M25,385 L45,390 L35,415 L15,410 Z" stroke="#27272a" stroke-width="1.5"/>
+                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="沖縄" onclick="handlePrefClick('沖縄')" d="M10,430 L30,435 L25,445 L5,440 Z" stroke="#27272a" stroke-width="1.5"/>
+                    </svg>
+                </div>
+
+                <!-- 都道府県別ピン状況リスト -->
+                <div>
+                    <h4 class="text-[10px] font-bold text-zinc-400 mb-2 uppercase tracking-wider">都道府県ごとの投稿状況</h4>
+                    <div id="map-prefecture-list" class="grid grid-cols-2 gap-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- 検索モーダル -->
     <div id="search-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
@@ -1227,7 +1440,7 @@
     <!-- 検索結果モーダル -->
     <div id="search-result-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex-col z-50 overflow-hidden">
         <div class="bg-zinc-900 border-b border-zinc-800 p-4 flex justify-between items-center shrink-0">
-            <h3 class="text-xs font-bold text-white">検索結果</h3>
+            <h3 class="text-xs font-bold text-white">検索結果 / 都道府県別</h3>
             <button id="close-search-result-modal" class="text-xs text-zinc-400 hover:text-white px-2.5 py-1 rounded-xl bg-zinc-800 font-bold">✕ 閉じる</button>
         </div>
         <div class="p-4 overflow-y-auto flex-1">
