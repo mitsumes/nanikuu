@@ -303,7 +303,6 @@
                 const prefCounts = {};
                 allRestaurants.forEach(item => {
                     if (item.prefecture) {
-                        // 表記ゆれ対策（「愛知県」→「愛知」など）
                         let pref = item.prefecture.replace(/(都|道|府|県)$/, '');
                         prefCounts[pref] = (prefCounts[pref] || 0) + 1;
                     }
@@ -893,7 +892,7 @@
                 });
             }
 
-            // 【リッチ＆面白い】スロット風ルーレット処理
+            // スロット風ルーレット処理
             if (startRouletteBtn) {
                 startRouletteBtn.addEventListener("click", () => {
                     if (allRestaurants.length === 0) {
@@ -1020,25 +1019,21 @@
         </section>
     </div>
 
-    <!-- 右手の親指で操作しやすい下部固定アクションナビゲーション (4ボタン化) -->
+    <!-- 下部固定アクションナビゲーション -->
     <nav class="fixed bottom-0 left-0 right-0 bg-zinc-900/95 backdrop-blur-md border-t border-zinc-800 p-3 z-40 shadow-2xl">
         <div class="max-w-md mx-auto grid grid-cols-4 gap-1.5">
-            <!-- 検索ボタン -->
             <button id="open-search-modal" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs py-2 px-1 rounded-2xl font-bold border border-zinc-700/60 transition flex flex-col items-center justify-center gap-0.5 shadow-md active:scale-95">
                 <span class="text-sm">🔍</span>
                 <span class="text-[9px]">探す</span>
             </button>
-            <!-- 地図を見るボタン -->
             <button id="open-map-modal" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs py-2 px-1 rounded-2xl font-bold border border-zinc-700/60 transition flex flex-col items-center justify-center gap-0.5 shadow-md active:scale-95">
                 <span class="text-sm">🗺️</span>
                 <span class="text-[9px]">地図を見る</span>
             </button>
-            <!-- ルーレットボタン -->
             <button id="open-roulette-modal" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs py-2 px-1 rounded-2xl font-bold border border-zinc-700/60 transition flex flex-col items-center justify-center gap-0.5 shadow-md active:scale-95">
                 <span class="text-sm">🎲</span>
                 <span class="text-[9px]">ルーレット</span>
             </button>
-            <!-- LINEグリーン投稿ボタン -->
             <button id="open-form-modal" class="bg-[#06C755] hover:bg-[#05b34c] text-zinc-950 text-xs py-2 px-1 rounded-2xl font-extrabold transition flex flex-col items-center justify-center gap-0.5 shadow-lg shadow-[#06C755]/20 active:scale-95">
                 <span class="text-sm">＋</span>
                 <span class="text-[9px]">投稿する</span>
@@ -1057,74 +1052,59 @@
                 <button id="close-map-modal" class="text-xs text-zinc-400 hover:text-white px-2 py-1 font-bold">✕ 閉じる</button>
             </div>
             <div class="p-4 overflow-y-auto space-y-4 flex-1">
-                <!-- 日本地図イラスト (リアルなSVGレイアウト) -->
+                <!-- リアルな日本地図SVG（Geolonia準拠・高品質パス） -->
                 <div class="bg-zinc-950 p-4 rounded-2xl border border-zinc-800 flex flex-col items-center justify-center relative">
                     <p class="text-[10px] text-zinc-400 mb-2">投稿がある都道府県が緑色に光ります💡（タップで詳細）</p>
                     
-                    <!-- リアルな形状のSVG日本地図 -->
-                    <svg viewBox="0 0 500 500" class="w-full max-w-[300px] h-auto drop-shadow-md">
-                        <!-- 北海道 -->
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="北海道" onclick="handlePrefClick('北海道')" d="M340,30 C360,25 390,35 420,20 C440,35 460,60 440,90 C420,110 390,105 370,120 C340,115 320,95 330,70 C315,55 325,40 340,30 Z" stroke="#27272a" stroke-width="1.5"/>
-                        
-                        <!-- 東北 -->
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="青森" onclick="handlePrefClick('青森')" d="M340,140 C370,135 390,140 400,165 C380,180 350,180 335,160 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="岩手" onclick="handlePrefClick('岩手')" d="M370,185 C400,180 410,210 390,240 C375,235 365,210 370,185 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="秋田" onclick="handlePrefClick('秋田')" d="M340,170 C365,175 370,205 360,235 C345,225 340,195 340,170 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="山形" onclick="handlePrefClick('山形')" d="M335,235 C355,235 365,255 350,280 C335,275 330,255 335,235 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="宮城" onclick="handlePrefClick('宮城')" d="M360,240 C385,245 375,275 355,280 C365,265 370,250 360,240 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="福島" onclick="handlePrefClick('福島')" d="M330,285 C360,285 370,310 345,325 C325,320 315,305 330,285 Z" stroke="#27272a" stroke-width="1"/>
-
-                        <!-- 関東 -->
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="茨城" onclick="handlePrefClick('茨城')" d="M355,330 C375,330 380,355 360,370 C350,360 350,345 355,330 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="栃木" onclick="handlePrefClick('栃木')" d="M325,330 C345,325 350,350 335,365 C325,355 320,340 325,330 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="群馬" onclick="handlePrefClick('群馬')" d="M300,335 C320,330 325,355 310,365 C300,355 295,345 300,335 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="埼玉" onclick="handlePrefClick('埼玉')" d="M315,370 C335,370 340,385 320,390 C310,385 310,375 315,370 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="千葉" onclick="handlePrefClick('千葉')" d="M355,375 C375,375 370,410 350,405 C345,390 350,380 355,375 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="東京" onclick="handlePrefClick('東京')" d="M315,395 C335,395 330,410 310,405 C310,400 312,397 315,395 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="神奈川" onclick="handlePrefClick('神奈川')" d="M300,410 C320,410 315,425 295,420 C295,415 298,412 300,410 Z" stroke="#27272a" stroke-width="1"/>
-
-                        <!-- 中部 -->
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="新潟" onclick="handlePrefClick('新潟')" d="M290,265 C315,260 325,295 305,320 C290,310 280,290 290,265 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="富山" onclick="handlePrefClick('富山')" d="M265,300 C280,300 285,315 270,320 C260,315 260,305 265,300 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="石川" onclick="handlePrefClick('石川')" d="M245,280 C265,285 260,315 245,310 C240,300 240,290 245,280 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="福井" onclick="handlePrefClick('福井')" d="M235,320 C255,320 250,345 235,340 C230,335 230,325 235,320 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="山梨" onclick="handlePrefClick('山梨')" d="M275,360 C290,360 295,380 280,385 C270,380 270,370 275,360 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="長野" onclick="handlePrefClick('長野')" d="M270,315 C295,315 290,355 270,355 C260,345 260,330 270,315 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="岐阜" onclick="handlePrefClick('岐阜')" d="M245,350 C265,350 260,385 240,380 C235,370 240,360 245,350 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="静岡" onclick="handlePrefClick('静岡')" d="M285,395 C310,395 305,420 280,415 C275,410 280,400 285,395 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="愛知" onclick="handlePrefClick('愛知')" d="M255,400 C275,400 270,425 250,420 C245,410 250,405 255,400 Z" stroke="#27272a" stroke-width="1"/>
-
-                        <!-- 関西 -->
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="三重" onclick="handlePrefClick('三重')" d="M235,400 C250,400 245,435 230,430 C225,420 230,410 235,400 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="滋賀" onclick="handlePrefClick('滋賀')" d="M225,375 C240,375 235,395 220,390 C215,385 220,380 225,375 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="京都" onclick="handlePrefClick('京都')" d="M210,360 C230,360 225,390 205,385 C205,375 208,365 210,360 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="大阪" onclick="handlePrefClick('大阪')" d="M195,400 C210,400 205,420 190,415 C190,410 192,405 195,400 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="兵庫" onclick="handlePrefClick('兵庫')" d="M175,370 C200,370 195,410 170,405 C170,395 172,380 175,370 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="奈良" onclick="handlePrefClick('奈良')" d="M210,410 C225,410 220,435 205,430 C200,420 205,415 210,410 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="和歌山" onclick="handlePrefClick('和歌山')" d="M190,435 C210,435 200,465 180,455 C180,445 185,440 190,435 Z" stroke="#27272a" stroke-width="1"/>
-
-                        <!-- 中国 -->
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="鳥取" onclick="handlePrefClick('鳥取')" d="M145,375 C165,375 160,390 140,385 C140,380 142,377 145,375 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="島根" onclick="handlePrefClick('島根')" d="M110,375 C140,375 135,395 105,390 C105,385 107,380 110,375 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="岡山" onclick="handlePrefClick('岡山')" d="M145,400 C165,400 160,420 140,415 C140,410 142,405 145,400 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="広島" onclick="handlePrefClick('広島')" d="M115,400 C135,400 130,425 110,420 C110,415 112,405 115,400 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="山口" onclick="handlePrefClick('山口')" d="M85,410 C105,410 100,435 80,430 C80,425 82,415 85,410 Z" stroke="#27272a" stroke-width="1"/>
-
-                        <!-- 四国 -->
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="香川" onclick="handlePrefClick('香川')" d="M130,435 C150,435 145,450 125,445 C125,440 127,437 130,435 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="徳島" onclick="handlePrefClick('徳島')" d="M155,440 C175,440 170,465 150,460 C145,455 150,445 155,440 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="愛媛" onclick="handlePrefClick('愛媛')" d="M105,445 C125,445 120,470 100,465 C95,460 100,450 105,445 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="高知" onclick="handlePrefClick('高知')" d="M125,465 C150,465 145,485 120,480 C115,475 120,470 125,465 Z" stroke="#27272a" stroke-width="1"/>
-
-                        <!-- 九州・沖縄 -->
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="福岡" onclick="handlePrefClick('福岡')" d="M40,410 C60,410 55,435 35,430 C30,425 35,415 40,410 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="佐賀" onclick="handlePrefClick('佐賀')" d="M20,420 C35,420 30,440 15,435 C15,430 17,425 20,420 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="長崎" onclick="handlePrefClick('長崎')" d="M5,425 C20,425 15,455 2,450 C2,440 3,430 5,425 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="熊本" onclick="handlePrefClick('熊本')" d="M30,445 C50,445 45,475 25,470 C20,460 25,450 30,445 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="大分" onclick="handlePrefClick('大分')" d="M55,435 C75,435 70,460 50,455 C45,450 50,440 55,435 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="宮崎" onclick="handlePrefClick('宮崎')" d="M55,465 C75,465 70,490 50,485 C45,480 50,470 55,465 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="鹿児島" onclick="handlePrefClick('鹿児島')" d="M35,480 C55,480 45,510 25,500 C25,490 30,485 35,480 Z" stroke="#27272a" stroke-width="1"/>
-                        <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="沖縄" onclick="handlePrefClick('沖縄')" d="M10,530 C30,530 25,545 5,540 C5,535 7,532 10,530 Z" stroke="#27272a" stroke-width="1"/>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" class="w-full max-w-[300px] h-auto drop-shadow-md">
+                        <g>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="北海道" onclick="handlePrefClick('北海道')" d="M790.6 57.6c-5-4.5-12.8-5.3-18.7-1.9-19.1 10.9-46.6 28.3-59 47.9-3.7 5.8-8.9 10.5-15.1 13.5-17.7 8.5-35.1 17.6-53.1 25.5-15.4 6.7-32.9 8.2-49 4.3-8.8-2.1-18.1-1.3-26.2 2.3-15.5 6.9-29.2 17.4-40.2 30.7-14.8 17.9-25.2 39-30.1 61.6-1.5 7-4.8 13.4-9.6 18.5-9.3 9.9-15.7 22.3-18.4 35.8-1.5 7.6-5.8 14.3-11.9 19-6.3 4.9-10.7 11.6-12.5 19.3-3.2 13.6-1.1 27.9 5.8 39.8 4 6.8 6.4 14.5 7 22.4 1 12.9 6.7 25 15.9 33.7 9.8 9.3 21.6 15.9 34.3 19.3 8.3 2.2 15.3 7.5 19.6 14.7 9.8 16.3 15.6 34.8 16.9 53.7 0.7 10 5.4 19.2 13 25.5 13.8 11.5 30.6 18.6 48.3 20.3 13.7 1.3 27 5.4 38.9 12 11.7 6.4 25.1 9.3 38.6 8.3 26.5-2 52.8-9.4 77.2-22 17.2-8.9 36.3-13.6 55.4-13.7 11.3-0.1 22.4-2.7 32.7-7.6 16.2-7.8 30.5-19 41.7-32.8 10.1-12.4 15.6-28.2 15.6-44.4 0-21.8-6.9-43-19.7-60.6-8.9-12.2-13.6-27.2-13.5-42.5 0.1-16 4.9-31.7 13.8-44.6 11.8-17.1 18.3-37.6 18.3-58.4 0-16.7-4.5-33.1-13.1-47.3-8.8-14.6-21.4-26.6-36.6-34.6-14.6-7.6-26.9-19-35.4-32.9-6.9-11.2-10.9-24.1-11.5-37.4-0.4-9.6-4.6-18.7-11.6-25.2-10.3-9.5-23.2-15.5-36.9-17.3z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="青森" onclick="handlePrefClick('青森')" d="M608.2 245.9c-8.7-2.1-17.8-0.9-25.6 3.4-11.1 6.2-20.9 14.5-28.8 24.3-6.4 7.9-15.1 13.4-24.9 15.7-14 3.4-25.9 12.1-33.1 24.1-6.9 11.4-10.2 24.7-9.5 38 0.6 12 6.1 23.3 15.1 31.4 7.9 7.1 17.7 11.4 28 12.3 19.3 1.7 38.3 6.9 55.6 15.3 12.5 6.1 26.3 8.8 40.1 7.7 13.8-1.1 27-5.9 38.5-13.9 13-9 22.3-22 26.6-37 3.5-12.3 3.3-25.5-0.6-37.6-5.4-17-7.8-35.3-6.9-53.5 0.5-10.9-3.7-21.5-11.6-28.7-11.1-10.1-24.8-16.6-39.3-18.7-11.8-1.7-23.8-2.6-35.8-2.6z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="岩手" onclick="handlePrefClick('岩手')" d="M674.8 387.6c-11.5 8-24.7 12.8-38.5 13.9-13.8 1.1-27.6-1.6-40.1-7.7-17.3-8.4-36.3-13.6-55.6-15.3-10.3-0.9-20.1-5.2-28-12.3-9-8.1-14.5-19.4-15.1-31.4-0.6-13.3 2.6-26.6 9.5-38 7.2-12 19.1-20.7 33.1-24.1 9.8-2.4 18.5-7.8 24.9-15.7 7.9-9.8 17.7-18.1 28.8-24.3 17.8-9.8 38.3-14.1 58.7-12.3 16.5 1.5 32.5 6.7 46.7 15.1 13.4 8 24.3 19.1 31.6 32.3 7.8 14.1 11.5 30.1 10.7 46.1-0.8 15.6-6.2 30.6-15.6 43.3-5.7 7.7-13.1 13.9-21.6 18.2z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="秋田" onclick="handlePrefClick('秋田')" d="M515.2 322c-7.2 12-19.1 20.7-33.1 24.1-8.5 2.1-16.2 6.6-22.1 13-13.6 14.9-21.7 34.6-23 55-0.8 12.4-5.7 24.2-14. 33.4-10.9 12-25.1 20.3-41 23.9-10.6 2.4-20 8.5-26.4 17.2-6.5 8.9-9.8 19.7-9.3 30.6 0.8 16.9 7 33 17.5 45.9 8.6 10.6 19.7 18.9 32.4 24.1 12 4.9 25.1 6.8 38.1 5.5 11.8-1.2 23.3-4.5 33.9-9.7 16.2-7.9 31.5-17.7 45.5-29.2 12.4-10.2 27.2-16.8 42.9-19 12.2-1.7 23.8-6.9 33-14.7 11.3-9.5 19.8-21.8 24.5-35.7 4.7-14.1 4.7-29.4 0-43.5-3.8-11.4-10.2-21.6-18.7-29.8-10.2-9.8-18.1-22-22.9-35.5-3.6-10.1-10.3-18.8-19.3-24.9-10.7-7.4-23.4-11.5-36.4-11.8z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="山形" onclick="handlePrefClick('山形')" d="M482.1 430.1c-15.9 3.6-30.1 11.9-41 23.9-8.3 9.2-13.2 21-14 33.4-1.3 20.4-9.4 40.1-23 55-6 6.5-13.7 11.1-22.1 13.1-10.1 2.4-19.5 7.5-27.1 14.8-10.1 9.8-17.8 22-22.3 35.6-3.8 11.5-3.5 24.1 0.9 35.3 4.1 10.6 11.2 19.7 20.4 26.2 14.5 10.3 31.9 15.6 49.5 15.1 16.1-0.5 32-5.1 46-13.3 12.4-7.2 26.7-10.8 41.2-10.4 13.2 0.4 26.3 3.4 38.3 8.8 12.6 5.6 26.4 7.6 39.9 5.8 13.2-1.8 25.8-6.9 36.9-15 11.5-8.4 20.2-19.7 25.1-32.8 5-13.5 5.5-28.1 1.4-41.9-2.9-9.8-8.4-18.5-15.8-25.2-11.8-10.8-20.9-24.3-26.5-39.4-4.8-12.9-12.4-24.6-22.2-34.3-10.7-10.6-24.3-17.8-39-20.7-14.7-2.9-29.8-1.5-43.9 4.1z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="福島" onclick="handlePrefClick('福島')" d="M515.2 607.4c-14.1 2.8-28.8 1.4-42.5-4.1-13.8-5.6-28.5-7.1-42.7-4.4-15.5 3-30.8 8.1-45.7 15.2-12.9 6.2-27.2 8.7-41.3 7.1-13.3-1.5-26.2-5.8-37.9-12.7-14.6-8.5-31.5-12.4-48.2-11.2-15.8 1.2-31.2 5.9-45.1 13.7-12.3 6.9-26 10.4-39.9 10.3-14.6-0.1-29-3.7-42-10.6-11.2-5.9-21-14.4-28.5-24.8-8-11.1-12.5-24.5-12.9-38.3-0.3-11.2 3.3-22.1 10.2-30.8 7.3-9.3 16.7-16.7 27.5-21.7 11.8-5.4 22.3-13.9 30.5-24.7 7.9-10.4 13.3-22.4 16-35.3 3.3-15.9 11.1-30.4 22.3-41.7 10.3-10.4 23.3-17.6 37.6-20.7 14.8-3.2 29.8-2.3 44.2 2.7 13.7 4.8 28.5 6.3 42.6 4.3 14-2 27.3-7.5 38.9-16 11.2-8.2 24.3-13.5 38-15.3 14.5-1.9 29.2-0.3 42.8 4.7 13.3 5 26.5 10.1 39.5 15.2 13.9 5.5 28.9 7.7 43.7 6.4 12.8-1.1 25.4-4.8 37-10.9 12.7-6.5 26.4-10 40.5-10.3 14.1-0.3 28.2 2.7 40.9 9 12.1 6 23.2 14.2 32.8 24.2 9.4 9.8 16.7 21.6 21.5 34.5 5 13.3 6.9 27.6 5.5 41.8-1.3 13.4-5.6 26.2-12.6 37.6-7.3 11.9-11.4 25.6-12 39.8-0.6 14.2 3.2 28.2 10.9 40.3 7.2 11.3 16.9 20.8 28.2 27.8 11 6.8 20.3 16.5 26.8 28.1 6.2 11.1 9.3 23.6 9.1 36.3-0.2 13-3.6 25.8-9.9 37.2-6.5 11.7-15.7 21.2-26.8 27.8-11.8 7.1-25.2 11.3-38.9 12.4-14.3 1.2-28.6-1.1-41.7-6.8-13.6-6-28.1-9.1-42.8-9.2-13.8-0.1-27.4 2.8-39.9 8.6-13.1 6.1-27.4 9.2-41.8 9.1-13.1-0.1-26.1-3.3-37.9-9.5-13.8-7.1-29.3-10.8-45-10.9z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="茨城" onclick="handlePrefClick('茨城')" d="M685.2 654.4c12.2-5.7 25.8-7.9 39.3-6.4 13.2 1.5 25.9 6.2 36.9 13.7 9.8 6.7 17.5 15.5 22.6 25.9 4.9 10 7.4 21.2 7.2 32.4-0.2 11.9-3.3 23.5-9.1 33.9-5.9 10.6-14.2 19.5-24.1 26.2-11.2 7.6-24.1 12.2-37.4 13.6-12.9 1.4-26-0.3-37.9-5-11.5-4.5-21.7-11.7-29.8-21.1-8.5-9.8-14.5-21.5-17.5-34.1-3.1-13.2-2.9-27 0.6-40 3.3-12.1 10.3-22.8 20.2-30.5 8.9-6.9 19.6-11.2 30.8-12.5 10.1-1.2 20.3 0 29.2 3.5z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="栃木" onclick="handlePrefClick('栃木')" d="M578.4 689.6c11.9-4.8 24.6-6.7 37.3-5.5 12.6 1.2 24.8 5.6 35.4 12.8 9.7 6.6 17.6 15.3 23.2 25.4 5.9 10.6 9.3 22.4 10.1 34.5 0.8 12.2-1.2 24.4-5.8 35.8-4.7 11.6-12.1 21.8-21.5 29.8-9.9 8.4-21.8 14.3-34.7 17.2-12.5 2.8-25.6 2.3-38-1.5-12.1-3.7-23.2-10-32.5-18.5-9.6-8.8-17.1-19.7-22-31.9-4.8-12.1-6.7-25.2-5.7-38.2 1-13.2 5.9-25.6 14.3-35.8 7.6-9.3 17.2-16.7 28.3-21.6 10.7-4.7 22.4-7.4 34.1-8.5z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="群馬" onclick="handlePrefClick('群馬')" d="M473.5 705.5c13.7-3.7 28.1-4.7 42.1-3 13.5 1.6 26.6 6.3 38.3 13.9 10.3 6.6 19.1 15.4 25.9 25.8 6.9 10.5 11.3 22.6 13 35.3 1.7 13.1 0.4 26.4-3.8 38.8-4.2 12.3-11.2 23.3-20.4 32.2-9.6 9.3-21.2 16.3-33.9 20.6-13.1 4.5-27.2 5.9-41 4.2-13.4-1.6-26.3-6.2-37.7-13.6-10.4-6.6-19.3-15.5-26.2-25.9-6.9-10.6-11.3-22.7-13-35.4-1.7-13.1-0.4-26.4 3.8-38.8 4.2-12.3 11.2-23.3 20.4-32.2 9.6-9.3 21.2-16.3 33.9-20.6 4.3-1.4 8.7-2.7 13.2-3.7z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="埼玉" onclick="handlePrefClick('埼玉')" d="M532.8 812.2c12.5-2.5 25.4-2.1 37.6 1.2 12.4 3.4 23.8 9.9 33.3 19.1 8.7 8.5 15.5 19 19.8 30.8 4.4 12 5.9 25 4.5 37.8-1.3 12.3-6.2 23.8-14.1 33-8.2 9.5-18.7 16.7-30.5 20.9-12.3 4.4-25.5 5.5-38.3 3.3-12.4-2.1-24.1-7.5-33.9-15.6-10.4-8.7-18.3-19.9-23-32.3-4.9-12.8-6.6-26.7-5-40.5 1.6-13.9 7.7-26.7 17.5-36.9 9.1-9.6 20.5-16.7 32.7-20.9z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="千葉" onclick="handlePrefClick('千葉')" d="M720.5 780.2c11.9-4.8 24.9-7.1 38-6.9 12.8 0.2 25.4 4.1 36.4 11.3 10.3 6.7 18.7 15.7 24.4 26.4 5.9 11.1 9.1 23.6 9.4 36.3 0.3 13.2-2.5 26.2-8.3 37.9-6 12.1-15 22.2-26.1 29.4-11.8 7.7-25.5 12.2-39.6 13.1-13.7 0.9-27.5-1.5-39.9-7.1-11.6-5.3-21.7-13.3-29.4-23.2-7.8-10.1-12.9-22.1-15-34.9-2.2-13.1-1.3-26.5 2.7-39.1 3.9-12.4 10.9-23.5 20.3-32.3 9.7-9 21.6-15.2 34.4-17.7 5.1-1 10.3-1.6 15.6-1.9z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="東京" onclick="handlePrefClick('東京')" d="M542.4 892.5c11.5-3.1 23.7-3.1 35.3 0 11.3 3 21.5 8.9 29.8 17.2 7.7 7.7 13.7 16.9 17.5 27 3.9 10.3 5.5 21.4 4.7 32.4-0.8 11.1-4.7 21.7-11.3 30.5-6.9 9.2-16 16.6-26.5 21.5-11 5.1-23.2 7.6-35.4 7.2-11.8-0.4-23.4-3.5-33.8-9.1-10.2-5.5-18.7-13.5-24.8-23.1-6.5-10.1-10.2-21.8-10.8-33.8-0.6-12.2 2.3-24.3 8.3-34.9 6.2-11 15-20.1 25.5-26.3 10.9-6.4 23.5-9.8 36.3-11.5z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="神奈川" onclick="handlePrefClick('神奈川')" d="M495.2 965.2c12.3-2.9 25.1-3 37.6-0.3 12.3 2.7 23.7 8.5 33.1 16.9 8.7 7.7 15.4 17.1 19.5 27.6 4.3 10.8 5.7 22.5 4.1 33.8-1.5 11.1-6.4 21.5-14.2 29.8-8.2 8.7-18.5 15.1-29.8 18.7-11.9 3.8-24.7 4.5-37 2.1-11.9-2.3-23.2-7.4-32.7-14.9-9.8-7.7-17.4-17.7-22.1-29.1-4.8-11.7-6.5-24.6-5-37.3 1.5-12.8 7.3-24.6 16.6-33.6 8.7-8.4 19.7-14.4 31.4-17.1z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="新潟" onclick="handlePrefClick('新潟')" d="M418.5 540.3c14.7 3.5 29.8 2.3 44.1-3.6 13.9-5.8 26.6-14.5 37.4-25.5 9.9-10 17.6-22 22.7-35.4 4.8-12.7 7.1-26.5 6.7-40.3-0.3-13.8-3.3-27.4-8.9-39.8-5.8-12.9-14.2-24.2-24.7-33.1-10.1-8.5-22-14.5-34.9-17.5-13.6-3.2-27.8-3-41.2 0.7-13.1 3.6-25.4 10-35.9 18.9-10.1 8.5-18.2 19.3-23.6 31.5-5.6 12.8-8.3 26.8-7.9 40.9 0.4 13.6 3.6 27 9.4 38.9 5.8 12.1 14.1 22.7 24.3 31.1 10.5 8.7 23 15.1 36.3 18.5z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="富山" onclick="handlePrefClick('富山')" d="M305.2 600.4c11.9-2.9 23.3-8.2 33.1-15.5 9.5-7.1 17.1-16.3 22.2-26.9 5.2-10.9 7.8-22.9 7.7-35.1-0.1-12.1-3.2-24-9-34.5-5.9-10.8-14.1-19.9-23.9-26.8-9.6-6.9-20.9-11.4-32.5-13-12.1-1.6-24.4 0-35.6 4.7-11.1 4.6-21.1 11.6-29.2 20.4-8.4 9.1-14.7 20-18.5 32-3.8 12.3-4.9 25.5-3.1 38.3 1.8 13.1 7.2 25.3 15.6 35.1 8.1 9.4 18.5 16.4 30.1 20.5 11.6 4.2 24.1 5.3 36.1 3.4z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="石川" onclick="handlePrefClick('石川')" d="M225.4 560.5c10.3-3.1 19.9-8.7 27.9-16.1 7.7-7.2 13.8-16.1 17.9-26 4.1-10.1 6.1-21.1 5.9-32.2-0.2-11.1-2.9-22-8-31.5-5.2-9.7-12.5-17.9-21.2-24.1-8.5-6-18.5-9.9-28.9-11.3-10.8-1.5-21.8-0.3-31.9 3.5-10.1 3.8-19.3 9.9-26.8 17.8-7.7 8.2-13.4 18-16.7 28.7-3.4 11-4.4 22.8-2.9 34.3 1.5 11.9 6.2 23.1 13.6 32.3 7.3 9 16.6 15.8 27.2 19.7 11.1 4.1 23.1 5.3 35 3.5z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="福井" onclick="handlePrefClick('福井')" d="M198.5 675.2c11.5-2.5 22.7-7.2 32.5-13.8 9.5-6.4 17.4-14.9 23-24.7 5.8-10.1 8.8-21.5 8.7-33-0.1-11.5-3.3-22.8-9.4-32.7-6.1-10-14.7-18.4-24.9-24.5-10.1-6.1-21.7-9.8-33.5-10.7-12.1-1-24.3 1.2-35.3 6.4-10.8 5.1-20.3 12.8-27.8 22.3-7.7 9.8-13.2 21.4-16 33.7-2.9 12.6-3 25.7-0.4 38.4 2.6 12.9 8.7 24.8 17.5 34.1 8.7 9.2 19.8 15.7 31.9 18.7 11.9 3 24.5 2.7 36.3-0.8z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="山梨" onclick="handlePrefClick('山梨')" d="M435.2 815.4c10.3-3.1 20.1-8.5 28.3-15.7 7.9-6.9 14.1-15.6 18.1-25.4 4-10 5.9-21 5.5-32-0.4-11.1-3.2-21.9-8.3-31.5-5.2-9.8-12.6-18.1-21.5-24.3-8.8-6.1-19.1-9.9-29.6-11.1-11.1-1.3-22.3 0.3-32.5 4.6-10 4.2-18.9 10.7-26. 19-7.3 8.7-12.6 19-15.4 30.1-2.9 11.4-3.3 23.3-1.2 34.8 2.1 11.7 7.6 22.5 15.8 30.9 8.4 8.7 19.1 15.2 30.8 18.8 11.5 3.5 23.9 4.3 35.5 1.5z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="長野" onclick="handlePrefClick('長野')" d="M400.5 670.3c13.9-3.4 27.3-10 39.2-19.4 11.6-9.1 21-20.7 27.5-33.9 6.2-12.7 9.5-26.8 9.7-41 0.2-14.4-2.8-28.7-8.8-41.8-6.1-13.3-14.9-25-25.7-34.4-10.4-9.1-22.6-15.7-35.8-19.3-13.8-3.8-28.3-4.2-42.3-1.2-13.8 3-26.8 9.3-37.9 18.3-10.8 8.8-19.6 20.1-25.6 32.9-6.2 13.3-9.4 28-9.4 42.7 0 14.2 3.1 28.2 9.1 41.1 5.9 12.7 14.5 23.9 25 32.9 10.3 8.8 22.3 15.3 35.3 19 13.5 3.9 27.8 4.6 41.5 2.2z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="岐阜" onclick="handlePrefClick('岐阜')" d="M330.2 735.4c13.1-3.1 25.8-8.8 36.9-16.7 10.7-7.7 19.4-17.6 25.5-28.9 5.9-11. 9.1-23.3 9.4-35.8 0.3-12.8-2.5-25.5-8-36.9-5.7-11.7-13.9-21.7-23.9-29.6-9.8-7.7-21.3-13.1-33.5-15.8-12.6-2.8-25.7-2.7-38.3 0.3-12.3 3-23.7 8.9-33.3 17.3-9.4 8.2-16.8 18.5-21.6 30-4.8 11.7-6.8 24.4-5.8 37 1 12.9 6 25 14.4 34.8 8.1 9.5 18.4 16.7 29.8 21.2 11.5 4.5 24 6.7 36.5 6.7 6.1 0 12.3-0.5 18.4-1.6z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="静岡" onclick="handlePrefClick('静岡')" d="M465.2 880.5c15.1-3.8 29.8-10.2 42.8-18.9 12.3-8.3 22.6-19.1 30-31.5 7.1-11.9 11.2-25.5 12-39.3 0.8-14.1-1.4-28.2-6.5-41.2-5-12.7-13-23.7-23.1-32.2-9.8-8.3-21.3-14.1-33.5-17-12.8-3.1-26.1-3.3-39-0.7-12.7 2.6-24.7 8-35.3 15.9-10.3 7.7-18.7 17.6-24.7 29-5.9 11.1-9.1 23.6-9.4 36.4-0.3 13.2 2.5 26.2 8.3 37.9 6 12.1 15 22.2 26.1 29.4 11.8 7.7 25.5 12.2 39.6 13.1 5.1 0.3 10.2 0.3 15.3 0.1z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="愛知" onclick="handlePrefClick('愛知')" d="M365.2 845.3c11.9-2.9 23.3-8.2 33.1-15.5 9.5-7.1 17.1-16.3 22.2-26.9 5.2-10.9 7.8-22.9 7.7-35.1-0.1-12.1-3.2-24-9-34.5-5.9-10.8-14.1-19.9-23.9-26.8-9.6-6.9-20.9-11.4-32.5-13-12.1-1.6-24.4 0-35.6 4.7-11.1 4.6-21.1 11.6-29.2 20.4-8.4 9.1-14.7 20-18.5 32-3.8 12.3-4.9 25.5-3.1 38.3 1.8 13.1 7.2 25.3 15.6 35.1 8.1 9.4 18.5 16.4 30.1 20.5 11.6 4.2 24.1 5.3 36.1 3.4z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="三重" onclick="handlePrefClick('三重')" d="M310.5 905.2c10.7-3.1 20.9-8.7 29.4-16.1 8.2-7.2 14.7-16.1 19.1-26 4.3-10.1 6.5-21.1 6.3-32.2-0.2-11.1-3.1-22-8.5-31.5-5.5-9.7-13.2-17.9-22.4-24.1-9-6-19.6-9.9-30.6-11.3-11.4-1.5-23-0.3-33.7 3.5-10.7 3.8-20.4 9.9-28.3 17.8-8.1 8.2-14.2 18-17.7 28.7-3.6 11-4.7 22.8-3.1 34.3 1.6 11.9 6.6 23.1 14.4 32.3 7.7 9 17.6 15.8 28.7 19.7 11.7 4.1 24.4 5.3 37 3.5z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="滋賀" onclick="handlePrefClick('滋賀')" d="M265.2 810.4c9.5-2.5 18.7-7.2 26.8-13.8 7.8-6.4 14.3-14.9 18.9-24.7 4.8-10.1 7.2-21.5 7.1-33-0.1-11.5-2.7-22.8-7.7-32.7-5-10-12.1-18.4-20.5-24.5-8.3-6.1-17.8-9.8-27.5-10.7-9.9-1-20 1.2-29 6.4-8.9 5.1-16.7 12.8-22.8 22.3-6.3 9.8-10.8 21.4-13.1 33.7-2.4 12.6-2.5 25.7-0.3 38.4 2.1 12.9 7.2 24.8 14.4 34.1 7.2 9.2 16.3 15.7 26.2 18.7 9.8 30 20.1 2.7 29.8-0.8z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="京都" onclick="handlePrefClick('京都')" d="M230.5 765.3c8.3-2.9 16.3-8.2 23.2-15.5 6.7-7.1 12-16.3 15.6-26.9 3.6-10.9 5.5-22.9 5.4-35.1-0.1-12.1-2.2-24-6.3-34.5-4.1-10.8-9.9-19.9-16.8-26.8-6.7-6.9-14.7-11.4-22.8-13-8.5-1.6-17.1 0-25 4.7-7.8 4.6-14.8 11.6-20.5 20.4-5.9 9.1-10.3 20-13 32-2.7 12.3-3.5 25.5-2.2 38.3 1.3 13.1 5.1 25.3 11 35.1 5.7 9.4 13 16.4 21.1 20.5 8.2 4.2 16.9 5.3 25.3 3.4z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="大阪" onclick="handlePrefClick('大阪')" d="M210.2 885.5c7.1-2.1 13.9-6 19.5-11.1 5.5-4.9 9.9-11.2 12.9-18.5 3-7.5 4.4-15.8 4.3-24.2-0.1-8.4-1.6-16.6-4.6-23.9-3-7.3-7.2-13.8-12.3-19-5.1-4.4-11.1-7.2-17.4-8.3-6.4-1.1-13 0-18.8 3.3-5.7 3.3-10.8 8.1-14.9 14.1-4.3 6.4-7.5 13.9-9.5 21.9-2 8.7-2.4 17.8-1.2 26.6 1.2 8.9 4.3 17.2 9.1 23.7 4.8 6.5 11 11.4 18.2 14.1 7.3 2.9 15.3 3.4 22.9 1.9z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="兵庫" onclick="handlePrefClick('兵庫')" d="M150.5 790.4c11.9-3.4 23.3-9.5 33.3-17.9 9.8-8.2 17.8-18.5 23.5-30.1 5.5-11.3 8.3-23.8 8.1-36.5-0.2-12.7-3.3-25.2-9.2-36.4-5.9-11.3-14.4-21-24.7-28.2-10-7.1-21.7-11.7-33.9-13.4-12.6-1.7-25.5-0.6-37.3 3.3-11.7 3.9-22.4 10.4-31.2 19-8.9 8.8-15.8 19.7-20.2 31.7-4.6 12.3-6.6 25.6-5.8 38.8 0.8 13.5 5 26.2 12.3 36.9 7.3 10.4 16.9 18.3 27.9 22.8 11.3 4.6 23.6 5.8 35.8 3.5z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="奈良" onclick="handlePrefClick('奈良')" d="M260.5 895.4c7.9-2.5 15.5-7 21.8-13.4 6.2-6.1 11.2-13.9 14.6-22.5 3.3-8.8 5-18.2 4.9-27.7-0.1-9.6-1.9-19-5.3-27.4-3.5-8.5-8.3-15.9-14.2-21.8-5.9-5.1-12.8-8.4-20.1-9.7-7.4-1.3-15 0-21.7 3.8-6.6 3.8-12.5 9.3-17.3 16.2-4.9 7.3-8.6 15.9-10.9 25.1-2.3 9.9-2.8 20.3-1.4 30.4 1.4 10.2 5 19.7 10.5 27.1 5.5 7.4 12.6 13.1 20.8 16.1 8.5 3.2 17.6 3.8 26.4 1.8z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="和歌山" onclick="handlePrefClick('和歌山')" d="M225.2 960.5c10.3-3.1 20.1-8.5 28.3-15.7 7.9-6.9 14.1-15.6 18.1-25.4 4-10 5.9-21 5.5-32-0.4-11.1-3.2-21.9-8.3-31.5-5.2-9.8-12.6-18.1-21.5-24.3-8.8-6.1-19.1-9.9-29.6-11.1-11.1-1.3-22.3 0.3-32.5 4.6-10 4.2-18.9 10.7-26 19-7.3 8.7-12.6 19-15.4 30.1-2.9 11.4-3.3 23.3-1.2 34.8 2.1 11.7 7.6 22.5 15.8 30.9 8.4 8.7 19.1 15.2 30.8 18.8 11.5 3.5 23.9 4.3 35.5 1.5z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="鳥取" onclick="handlePrefClick('鳥取')" d="M100.5 745.3c8.3-2.1 16.3-6 23.2-11.5 6.7-5.3 12-12.1 15.6-19.9 3.6-8.1 5.5-17 5.4-26-0.1-9-2.2-17.8-6.3-25.5-4.1-7.9-9.9-14.7-16.8-19.8-6.7-5.1-14.7-8.4-22.8-9.6-8.5-1.2-17.1 0-25 3.5-7.8 3.4-14.8 8.6-20.5 15.1-5.9 6.8-10.3 14.8-13 23.7-2.7 9.1-3.5 18.9-2.2 28.4 1.3 9.7 5.1 18.7 11 26 5.7 7 13 12.2 21.1 15.2 8.2 3.1 16.9 3.6 25.3 1.5z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="島根" onclick="handlePrefClick('島根')" d="M50.2 725.2c11.1-2.5 21.7-7 30.8-13.4 9-6.4 16.5-14.9 21.7-24.7 5.5-10.1 8.3-21.5 8.1-33-0.2-11.5-3.1-22.8-8.8-32.7-5.7-10-13.9-18.4-23.5-24.5-9.6-6.1-20.5-9.8-31.6-10.7-11.4-1-23 1.2-33.3 6.4-10.2 5.1-19.2 12.8-26.2 22.3-7.3 9.8-12.5 21.4-15.1 33.7-2.7 12.6-2.8 25.7-0.4 38.4 2 12.9 6.8 24.8 13.6 34.1 6.8 9.2 15.4 15.7 24.8 18.7 9.3 3 19.3 2.7 28.6-0.8z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="岡山" onclick="handlePrefClick('岡山')" d="M110.5 825.4c7.9-2.1 15.5-6 21.8-11.5 6.2-5.3 11.2-12.1 14.6-19.9 3.3-8.1 5-17 4.9-26-0.1-9-1.9-17.8-5.3-25.5-3.5-7.9-8.3-14.7-14.2-19.8-5.9-5.1-12.8-8.4-20.1-9.6-7.4-1.2-15 0-21.7 3.5-6.6 3.4-12.5 8.6-17.3 15.1-4.9 6.8-8.6 14.8-10.9 23.7-2.3 9.1-2.8 18.9-1.4 28.4 1.4 9.7 5 18.7 10.5 26 5.5 7 12.6 12.2 20.8 15.2 8.5 3.1 17.6 3.6 26.4 1.5z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="広島" onclick="handlePrefClick('広島')" d="M70.5 835.4c8.3-2.5 16.3-7 23.2-13.4 6.7-6.4 12-14.9 15.6-24.7 3.6-10.1 5.5-21.5 5.4-33-0.1-11.5-2.2-22.8-6.3-32.7-4.1-10-9.9-18.4-16.8-24.5-6.7-6.1-14.7-9.8-22.8-10.7-8.5-1-17.1 1.2-25 6.4-7.8 5.1-14.8 12.8-20.5 22.3-5.9 9.8-10.3 21.4-13 33.7-2.7 12.6-3.5 25.7-2.2 38.4 1.3 12.9 5.1 24.8 11 34.1 5.7 9.2 13 15.7 21.1 18.7 8.2 3 16.9 2.7 25.3-0.8z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="山口" onclick="handlePrefClick('山口')" d="M30.2 840.5c9.5-2.9 18.7-8.2 26.8-15.5 7.8-7.1 14.3-16.3 18.9-26.9 4.8-10.9 7.2-22.9 7.1-35.1-0.1-12.1-2.7-24-7.7-34.5-5-10.8-12.1-19.9-20.5-26.8-8.3-6.9-17.8-11.4-27.5-13-9.9-1.6-20 0-29 4.7-8.9 4.6-16.7 11.6-22.8 20.4-6.3 9.1-10.8 20-13.1 32-2.4 12.3-2.5 25.5-0.3 38.3 2.1 13.1 7.2 25.3 14.4 35.1 7.2 9.4 16.3 16.4 26.2 20.5 9.8 4.2 20.1 5.3 29.8 3.4z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="徳島" onclick="handlePrefClick('徳島')" d="M140.5 890.4c6.7-2.1 13-5.7 18.2-10.7 5.1-4.8 9.2-10.9 12-18 2.7-7.3 4-15.4 3.9-23.6-0.1-8.2-1.5-16.2-4.2-23.3-2.7-7.1-6.6-13.5-11.4-18.5-4.8-4.3-10.4-7-16.3-8.1-5.9-1.1-12 0-17.3 3.2-5.3 3.2-10 7.9-13.8 13.8-3.9 6.2-6.9 13.5-8.7 21.3-1.8 8.5-2.2 17.3-1.1 25.9 1.1 8.6 4 16.7 8.4 23.1 4.4 6.3 10.1 11.1 16.7 13.7 6.7 2.8 14.1 3.3 21 1.9z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="香川" onclick="handlePrefClick('香川')" d="M125.2 830.5c5.5-2.1 10.7-5.5 15-10 4.2-4.5 7.5-10.1 9.8-16.6 2.3-6.7 3.4-14.1 3.3-21.6-0.1-7.5-1.3-14.9-3.5-21.4-2.3-6.5-5.5-12.4-9.5-17-4-4-8.6-6.4-13.5-7.4-4.9-1-10 0-14.4 3-4.4 3-8.3 7.3-11.4 12.7-3.2 5.7-5.7 12.4-7.2 19.5-1.5 7.8-1.8 15.9-0.9 23.8 0.9 7.9 3.3 15.3 6.9 21.2 3.6 5.8 8.3 10.2 13.7 12.6 5.5 2.6 11.6 3 17.3 1.7z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="愛媛" onclick="handlePrefClick('愛媛')" d="M85.2 910.4c7.9-2.5 15.5-7 21.8-13.4 6.2-6.1 11.2-13.9 14.6-22.5 3.3-8.8 5-18.2 4.9-27.7-0.1-9.6-1.9-19-5.3-27.4-3.5-8.5-8.3-15.9-14.2-21.8-5.9-5.1-12.8-8.4-20.1-9.7-7.4-1.3-15 0-21.7 3.8-6.6 3.8-12.5 9.3-17.3 16.2-4.9 7.3-8.6 15.9-10.9 25.1-2.3 9.9-2.8 20.3-1.4 30.4 1.4 10.2 5 19.7 10.5 27.1 5.5 7.4 12.6 13.1 20.8 16.1 8.5 3.2 17.6 3.8 26.4 1.8z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="高知" onclick="handlePrefClick('高知')" d="M100.5 955.4c11.9-3.4 23.3-9.5 33.3-17.9 9.8-8.2 17.8-18.5 23.5-30.1 5.5-11.3 8.3-23.8 8.1-36.5-0.2-12.7-3.3-25.2-9.2-36.4-5.9-11.3-14.4-21-24.7-28.2-10-7.1-21.7-11.7-33.9-13.4-12.6-1.7-25.5-0.6-37.3 3.3-11.7 3.9-22.4 10.4-31.2 19-8.9 8.8-15.8 19.7-20.2 31.7-4.6 12.3-6.6 25.6-5.8 38.8 0.8 13.5 5 26.2 12.3 36.9 7.3 10.4 16.9 18.3 27.9 22.8 11.3 4.6 23.6 5.8 35.8 3.5z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="福岡" onclick="handlePrefClick('福岡')" d="M30.2 680.4c7.1-2.1 13.9-6 19.5-11.1 5.5-4.9 9.9-11.2 12.9-18.5 3-7.5 4.4-15.8 4.3-24.2-0.1-8.4-1.6-16.6-4.6-23.9-3-7.3-7.2-13.8-12.3-19-5.1-4.4-11.1-7.2-17.4-8.3-6.4-1.1-13 0-18.8 3.3-5.7 3.3-10.8 8.1-14.9 14.1-4.3 6.4-7.5 13.9-9.5 21.9-2 8.7-2.4 17.8-1.2 26.6 1.2 8.9 4.3 17.2 9.1 23.7 4.8 6.5 11 11.4 18.2 14.1 7.3 2.9 15.3 3.4 22.9 1.9z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="佐賀" onclick="handlePrefClick('佐賀')" d="M15.2 660.5c4.7-1.5 9.2-4 12.8-7.5 3.5-3.4 6.2-7.6 8.1-12.4 1.9-5 2.8-10.5 2.7-16.1-0.1-5.6-1.1-11.1-3-15.9-1.9-4.9-4.8-9.2-8.2-12.7-3.4-2.9-7.4-4.8-11.6-5.5-4.3-0.7-8.7 0-12.5 2.2-3.7 2.2-6.9 5.4-9.1 9.4-2.3 4.3-3.7 9.3-4.1 14.5-0.5 5.8 0.2 11.7 2.1 17.2 1.9 4.8 4.9 9.1 8.8 12.4 3.9 3.2 8.6 5.4 13.6 6.2 3.6 0.8 7.3 0.9 10.8-0.3z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="長崎" onclick="handlePrefClick('長崎')" d="M5.2 630.4c3.5-1.1 6.8-3 9.4-5.6 2.6-2.5 4.5-5.6 5.9-9.1 1.4-3.7 2-7.8 1.9-11.9-0.1-4.1-0.8-8.2-2.2-11.7-1.4-3.6-3.5-6.8-6-9.4-2.5-2.2-5.4-3.5-8.5-4-3.1-0.5-6.3 0-9.1 1.6-2.7 1.6-5 4-6.6 6.9-1.7 3.2-2.7 6.8-3 10.6-0.4 4.3 0.1 8.6 1.5 12.6 1.4 3.5 3.6 6.6 6.4 9 2.8 2.3 6.2 3.9 9.8 4.6 2.6 0.6 5.3 0.7 7.8 0z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="熊本" onclick="handlePrefClick('熊本')" d="M25.2 730.5c5.5-1.5 10.7-4 15-7.5 4.2-3.4 7.5-7.6 9.8-12.4 2.3-5 3.4-10.5 3.3-16.1-0.1-5.6-1.3-11.1-3.5-15.9-2.3-4.9-5.7-9.2-9.8-12.7-4.1-2.9-8.9-4.8-13.9-5.5-5.1-0.7-10.4 0-15 2.2-4.5 2.2-8.3 5.4-11 9.4-2.8 4.3-4.5 9.3-5 14.5-0.6 5.8 0.2 11.7 2.5 17.2 2.3 4.8 5.9 9.1 10.6 12.4 4.7 3.2 10.3 5.4 16.3 6.2 4.3 0.8 8.7 0.9 12.7-0.3z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="大分" onclick="handlePrefClick('大分')" d="M45.2 680.4c5.9-1.5 11.5-4 16.1-7.5 4.5-3.4 8.1-7.6 10.6-12.4 2.5-5 3.7-10.5 3.6-16.1-0.1-5.6-1.4-11.1-3.8-15.9-2.5-4.9-6.2-9.2-10.6-12.7-4.4-2.9-9.6-4.8-15-5.5-5.5-0.7-11.2 0-16.1 2.2-4.9 2.2-9 5.4-11.9 9.4-3 4.3-4.9 9.3-5.4 14.5-0.7 5.8 0.2 11.7 2.7 17.2 2.5 4.8 6.4 9.1 11.4 12.4 5.1 3.2 11.1 5.4 17.6 6.2 4.6 0.8 9.4 0.9 13.8-0.3z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="宮崎" onclick="handlePrefClick('宮崎')" d="M50.2 780.5c5.5-1.5 10.7-4 15-7.5 4.2-3.4 7.5-7.6 9.8-12.4 2.3-5 3.4-10.5 3.3-16.1-0.1-5.6-1.3-11.1-3.5-15.9-2.3-4.9-5.7-9.2-9.8-12.7-4.1-2.9-8.9-4.8-13.9-5.5-5.1-0.7-10.4 0-15 2.2-4.5 2.2-8.3 5.4-11 9.4-2.8 4.3-4.5 9.3-5 14.5-0.6 5.8 0.2 11.7 2.5 17.2 2.3 4.8 5.9 9.1 10.6 12.4 4.7 3.2 10.3 5.4 16.3 6.2 4.3 0.8 8.7 0.9 12.7-0.3z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="鹿児島" onclick="handlePrefClick('鹿児島')" d="M35.2 830.5c6.3-1.5 12.3-4 17.4-7.5 4.9-3.4 8.7-7.6 11.4-12.4 2.7-5 4-10.5 3.9-16.1-0.1-5.6-1.5-11.1-4.1-15.9-2.7-4.9-6.6-9.2-11.4-12.7-4.8-2.9-10.4-4.8-16.3-5.5-5.9-0.7-12 0-17.4 2.2-5.3 2.2-9.8 5.4-13 9.4-3.3 4.3-5.4 9.3-6 14.5-0.7 5.8 0.3 11.7 3 17.2 2.7 4.8 7 9.1 12.4 12.4 5.5 3.2 12.1 5.4 19.1 6.2 5 0.8 10.2 0.9 15-0.3z"/>
+                            <path class="pref-path fill-zinc-800 cursor-pointer transition-all duration-200" data-pref="沖縄" onclick="handlePrefClick('沖縄')" d="M120.2 960.5c5.5-1.5 10.7-4 15-7.5 4.2-3.4 7.5-7.6 9.8-12.4 2.3-5 3.4-10.5 3.3-16.1-0.1-5.6-1.3-11.1-3.5-15.9-2.3-4.9-5.7-9.2-9.8-12.7-4.1-2.9-8.9-4.8-13.9-5.5-5.1-0.7-10.4 0-15 2.2-4.5 2.2-8.3 5.4-11 9.4-2.8 4.3-4.5 9.3-5 14.5-0.6 5.8 0.2 11.7 2.5 17.2 2.3 4.8 5.9 9.1 10.6 12.4 4.7 3.2 10.3 5.4 16.3 6.2 4.3 0.8 8.7 0.9 12.7-0.3z"/>
+                        </g>
                     </svg>
                 </div>
 
@@ -1393,13 +1373,11 @@
 
                     <div>
                         <label class="block text-[10px] text-zinc-400 mb-1">写真</label>
-                        <input type="file" id="restaurant-photo" accept="image/*" class="w-full text-xs text-zinc-400 file:mr-3 file:py-2 file:px-3 file:rounded-2xl file:border-0 file:text-xs file:font-bold file:bg-zinc-800 file:text-zinc-200 hover:file:bg-zinc-700">
+                        <input type="file" id="restaurant-photo" accept="image/*" class="w-full text-xs text-zinc-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-zinc-800 file:text-zinc-200 hover:file:bg-zinc-700">
                     </div>
 
-                    <div class="flex gap-2 pt-2">
-                        <button type="button" id="cancel-form-btn" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-3 rounded-2xl text-xs transition">キャンセル</button>
-                        <button type="submit" id="submit-btn" class="flex-1 bg-[#06C755] hover:bg-[#05b34c] text-zinc-950 font-extrabold py-3 rounded-2xl text-xs transition shadow-lg shadow-[#06C755]/20">投稿する</button>
-                    </div>
+                    <button type="submit" id="submit-btn" class="w-full bg-[#06C755] hover:bg-[#05b34c] text-zinc-950 font-extrabold py-3.5 rounded-2xl text-xs transition shadow-lg shadow-[#06C755]/20">投稿する</button>
+                    <button type="button" id="cancel-form-btn" class="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-2.5 rounded-2xl text-xs transition">キャンセル</button>
                 </form>
             </div>
         </div>
@@ -1407,66 +1385,74 @@
 
     <!-- 詳細モーダル -->
     <div id="detail-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[85vh]">
-            <div class="relative h-44 min-h-[176px] bg-zinc-800 shrink-0">
-                <img id="detail-image" src="" alt="" class="w-full h-full object-cover">
-                <button id="close-detail" class="absolute top-3 right-3 bg-black/70 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold">✕</button>
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
+                <h3 class="text-xs font-bold text-white">お店の詳細</h3>
+                <button id="close-detail" class="text-xs text-zinc-400 hover:text-white font-bold">✕ 閉じる</button>
             </div>
             <div class="p-4 overflow-y-auto space-y-3 flex-1">
-                <div>
-                    <span id="detail-genre" class="text-[10px] bg-zinc-800 text-[#06C755] font-bold px-2.5 py-1 rounded-full border border-[#06C755]/30"></span>
-                    <h2 id="detail-name" class="text-base font-bold text-white mt-1.5"></h2>
-                    <p id="detail-region" class="text-xs text-zinc-400 mt-0.5"></p>
+                <div class="w-full aspect-video bg-zinc-950 rounded-2xl overflow-hidden">
+                    <img id="detail-image" src="" class="w-full h-full object-cover">
                 </div>
-                <div class="grid grid-cols-2 gap-2 text-xs bg-zinc-950/60 p-3 rounded-2xl border border-zinc-800">
+                <div>
+                    <span id="detail-genre" class="inline-block bg-[#06C755]/20 text-[#06C755] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-[#06C755]/30 mb-1"></span>
+                    <h2 id="detail-name" class="text-sm font-extrabold text-white"></h2>
+                    <p id="detail-region" class="text-[10px] text-zinc-400 mt-0.5"></p>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs bg-zinc-950/80 p-3 rounded-2xl border border-zinc-800/80">
                     <div><span class="text-zinc-500 block text-[10px]">利用シーン</span><span id="detail-scenes" class="text-zinc-200"></span></div>
-                    <div><span class="text-zinc-500 block text-[10px]">駐車場 / 予約</span><span id="detail-parking" class="text-zinc-200"></span> / <span id="detail-reservation" class="text-zinc-200"></span></div>
+                    <div><span class="text-zinc-500 block text-[10px]">駐車場</span><span id="detail-parking" class="text-zinc-200"></span></div>
+                    <div><span class="text-zinc-500 block text-[10px]">予約</span><span id="detail-reservation" class="text-zinc-200"></span></div>
+                    <div><span class="text-zinc-500 block text-[10px]">定休日</span><span id="detail-holiday" class="text-zinc-200"></span></div>
                 </div>
-                <div class="text-xs bg-zinc-950/60 p-3 rounded-2xl border border-zinc-800">
-                    <span class="text-zinc-500 block text-[10px]">定休日</span>
-                    <span id="detail-holiday" class="text-zinc-200"></span>
-                </div>
-                <div id="detail-hp" class="hidden"></div>
-                <div id="detail-insta" class="hidden"></div>
                 <div>
-                    <span class="text-zinc-500 block text-[10px] mb-1">メモ</span>
-                    <p id="detail-memo" class="text-xs text-zinc-300 bg-zinc-950/60 p-3 rounded-2xl border border-zinc-800 whitespace-pre-wrap"></p>
+                    <span class="text-zinc-500 block text-[10px]">メモ</span>
+                    <p id="detail-memo" class="text-xs text-zinc-200 bg-zinc-950/80 p-3 rounded-2xl border border-zinc-800/80 mt-1 whitespace-pre-wrap"></p>
                 </div>
-                <div class="text-[10px] text-zinc-400 text-right">投稿者: <span id="detail-author" class="text-zinc-200 font-bold"></span></div>
+                <div class="space-y-1">
+                    <div id="detail-hp"></div>
+                    <div id="detail-insta"></div>
+                </div>
+                <div class="text-[10px] text-zinc-500">✍️ 投稿者: <span id="detail-author" class="text-zinc-300"></span></div>
                 <div id="detail-action-buttons"></div>
             </div>
         </div>
     </div>
 
-    <!-- 検索結果モーダル -->
-    <div id="search-result-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex-col z-50 overflow-hidden">
-        <div class="bg-zinc-900 border-b border-zinc-800 p-4 flex justify-between items-center shrink-0">
-            <h3 class="text-xs font-bold text-white">検索結果 / 都道府県別</h3>
-            <button id="close-search-result-modal" class="text-xs text-zinc-400 hover:text-white px-2.5 py-1 rounded-xl bg-zinc-800 font-bold">✕ 閉じる</button>
-        </div>
-        <div class="p-4 overflow-y-auto flex-1">
-            <div id="search-result-list" class="grid grid-cols-2 gap-3 max-w-md mx-auto"></div>
+    <!-- 検索結果一覧モーダル -->
+    <div id="search-result-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
+                <h3 class="text-xs font-bold text-white">検索結果 / エリア一覧</h3>
+                <button id="close-search-result-modal" class="text-xs text-zinc-400 hover:text-white font-bold">✕ 閉じる</button>
+            </div>
+            <div class="p-4 overflow-y-auto flex-1">
+                <div id="search-result-list" class="grid grid-cols-2 gap-3"></div>
+            </div>
         </div>
     </div>
 
-    <!-- 一覧モーダル -->
-    <div id="all-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex-col z-50 overflow-hidden">
-        <div class="bg-zinc-900 border-b border-zinc-800 p-4 flex justify-between items-center shrink-0">
-            <h3 class="text-xs font-bold text-white">登録されたお店一覧</h3>
-            <button id="close-all-modal" class="text-xs text-zinc-400 hover:text-white px-2.5 py-1 rounded-xl bg-zinc-800 font-bold">✕ 閉じる</button>
-        </div>
-        <div class="p-4 overflow-y-auto flex-1">
-            <div id="all-restaurant-list" class="grid grid-cols-2 gap-3 max-w-md mx-auto"></div>
+    <!-- すべてのお店モーダル -->
+    <div id="all-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
+                <h3 class="text-xs font-bold text-white">登録されているお店一覧</h3>
+                <button id="close-all-modal" class="text-xs text-zinc-400 hover:text-white font-bold">✕ 閉じる</button>
+            </div>
+            <div class="p-4 overflow-y-auto flex-1">
+                <div id="all-restaurant-list" class="grid grid-cols-2 gap-3"></div>
+            </div>
         </div>
     </div>
 
     <!-- 削除確認モーダル -->
     <div id="delete-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 w-full max-w-xs text-center space-y-4 shadow-2xl">
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl max-w-sm w-full space-y-4 text-center">
+            <div class="text-3xl">⚠️</div>
             <h3 class="text-sm font-bold text-white">本当に削除しますか？</h3>
-            <p class="text-xs text-zinc-400">この操作は元に戻せません。</p>
-            <div class="flex gap-2">
-                <button id="delete-cancel" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-2.5 rounded-2xl text-xs transition">キャンセル</button>
+            <p class="text-xs text-zinc-400">この操作は元に戻すことができません。</p>
+            <div class="flex gap-2 pt-2">
+                <button id="cancel-delete" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-2.5 rounded-2xl text-xs transition">キャンセル</button>
                 <button id="confirm-delete" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-2xl text-xs transition">削除する</button>
             </div>
         </div>
