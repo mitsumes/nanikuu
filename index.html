@@ -286,7 +286,7 @@
                 const latestItems = allRestaurants;
 
                 if (latestItems.length === 0) {
-                    latestListEl.innerHTML = `<div class="col-span-full text-center py-12 text-zinc-500 text-xs">登録されているお店がありません。<br>下の「＋ 投稿」ボタンから共有しよう！</div>`;
+                    latestListEl.innerHTML = `<div class="col-span-full text-center py-12 text-zinc-500 text-xs">登録されているお店がありません。<br>下のシールや投稿ボタンから共有しよう！</div>`;
                     if (openAllModalBtn) openAllModalBtn.classList.add("hidden");
                 } else {
                     if (openAllModalBtn) openAllModalBtn.classList.remove("hidden");
@@ -305,7 +305,7 @@
                 }
             }
 
-            // Leafletマップ初期化・ピン表示処理
+            // Leafletマップ初期化・店ごとの個別ピン表示処理
             function initLeafletMap() {
                 const mapContainer = document.getElementById("leaflet-map");
                 if (!mapContainer) return;
@@ -326,25 +326,7 @@
                     mapMarkersLayer.clearLayers();
                 }
 
-                const regionCounts = {};
-                allRestaurants.forEach(item => {
-                    let key = "";
-                    const country = (item.country || "").trim();
-                    const pref = (item.prefecture || "").trim();
-
-                    if (country && country !== "日本" && country !== "Japan") {
-                        key = country;
-                    } else if (pref.includes("インドネシア") || pref.includes("ジャカルタ") || pref.includes("バリ")) {
-                        key = "インドネシア";
-                    } else if (pref) {
-                        key = pref;
-                    }
-
-                    if (key) {
-                        regionCounts[key] = (regionCounts[key] || 0) + 1;
-                    }
-                });
-
+                // 各都道府県・海外主要エリアの代表座標データ（フォールバック用）
                 const regionCoords = {
                     "北海道": [43.064, 141.346], "青森県": [40.824, 140.740], "岩手県": [39.703, 141.152],
                     "宮城県": [38.268, 140.871], "秋田県": [39.718, 140.102], "山形県": [38.240, 140.363],
@@ -362,35 +344,58 @@
                     "福岡県": [33.606, 130.418], "佐賀県": [33.249, 130.298], "長崎県": [32.744, 129.873],
                     "熊本県": [32.789, 130.741], "大分県": [33.238, 131.612], "宮崎県": [31.911, 131.423],
                     "鹿児島県": [31.560, 130.558], "沖縄県": [26.212, 127.679],
-                    "インドネシア": [-6.2088, 106.8456],
-                    "Indonesia": [-6.2088, 106.8456]
+                    "インドネシア": [-6.2088, 106.8456], "Indonesia": [-6.2088, 106.8456]
                 };
 
-                Object.keys(regionCounts).forEach(region => {
-                    const count = regionCounts[region];
-                    let coords = regionCoords[region];
-                    if (!coords) {
-                        coords = regionCoords[region + "県"] || regionCoords[region + "府"] || regionCoords[region + "都"] || regionCoords[region + "道"];
+                // 各飲食店ごとにピンを立てる
+                allRestaurants.forEach(item => {
+                    let lat = item.latitude;
+                    let lng = item.longitude;
+
+                    // 座標がない場合のフォールバック（都道府県・国から算出）
+                    if (!lat || !lng) {
+                        let fallbackKey = item.prefecture || "";
+                        const country = (item.country || "").trim();
+                        if (country && country !== "日本" && country !== "Japan") {
+                            fallbackKey = country;
+                        } else if (fallbackKey.includes("インドネシア") || fallbackKey.includes("ジャカルタ")) {
+                            fallbackKey = "インドネシア";
+                        }
+
+                        let coords = regionCoords[fallbackKey];
+                        if (!coords) {
+                            coords = regionCoords[fallbackKey + "県"] || regionCoords[fallbackKey + "府"] || regionCoords[fallbackKey + "都"] || regionCoords[fallbackKey + "道"];
+                        }
+                        if (coords) {
+                            // 複数のお店が同じ都道府県に重ならないよう、わずかにランダムにずらす
+                            lat = coords[0] + (Math.random() - 0.5) * 0.05;
+                            lng = coords[1] + (Math.random() - 0.5) * 0.05;
+                        } else {
+                            lat = 35.689;
+                            lng = 139.691;
+                        }
                     }
 
-                    if (coords && count > 0) {
-                        const customIcon = L.divIcon({
-                            className: 'custom-map-marker',
-                            html: `<div style="background-color: #06C755; color: #09090b; font-weight: 800; font-size: 11px; padding: 4px 8px; border-radius: 9999px; border: 2px solid #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.3); text-align: center; white-space: nowrap;">📍 ${region} (${count}件)</div>`,
-                            iconSize: [90, 30],
-                            iconAnchor: [45, 15]
-                        });
+                    const customIcon = L.divIcon({
+                        className: 'custom-map-marker',
+                        html: `<div style="background-color: #06C755; color: #09090b; font-weight: 800; font-size: 10px; padding: 3px 6px; border-radius: 9999px; border: 2px solid #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.3); text-align: center; white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis;">📍 ${item.name}</div>`,
+                        iconSize: [110, 28],
+                        iconAnchor: [55, 14]
+                    });
 
-                        const marker = L.marker(coords, { icon: customIcon });
-                        marker.on('click', () => {
-                            filterByPrefecture(region);
-                        });
-                        mapMarkersLayer.addLayer(marker);
-                    }
+                    const marker = L.marker([lat, lng], { icon: customIcon });
+                    marker.on('click', () => {
+                        if (mapModal) {
+                            mapModal.classList.add("hidden");
+                            mapModal.classList.remove("flex");
+                        }
+                        openDetail(item.id);
+                    });
+                    mapMarkersLayer.addLayer(marker);
                 });
             }
 
-            // 日本地図モーダル内の統計テキスト更新（国内47都道府県と海外エリアを分けてカウント）
+            // 日本地図モーダル内の統計テキスト更新
             function updateJapanMapStats() {
                 const standardPrefs = [
                     "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
@@ -463,7 +468,7 @@
 
                 const shortName = prefName.replace(/(都|道|府|県)$/, '');
                 const filtered = allRestaurants.filter(item => {
-                    return (item.prefecture && item.prefecture.includes(shortName)) || (item.country && item.country.includes(prefName));
+                    return (item.prefecture && item.prefecture.includes(shortName)) || (item.country && item.country.includes(prefName)) || (item.address && item.address.includes(prefName));
                 });
 
                 searchResultListEl.innerHTML = "";
@@ -489,12 +494,12 @@
 
                     const filtered = allRestaurants.filter(item => {
                         const matchGenre = (genreVal === "すべて" || item.genre === genreVal);
-                        const matchPref = (prefVal === "" || (item.prefecture && item.prefecture.toLowerCase().includes(prefVal)) || (item.country && item.country.toLowerCase().includes(prefVal)));
+                        const matchPref = (prefVal === "" || (item.prefecture && item.prefecture.toLowerCase().includes(prefVal)) || (item.country && item.country.toLowerCase().includes(prefVal)) || (item.address && item.address.toLowerCase().includes(prefVal)));
                         const matchCity = (cityVal === "" || (item.city && item.city.toLowerCase().includes(cityVal)));
                         
                         const ramenDetailsStr = item.ramenDetails ? item.ramenDetails.join(' ') : '';
                         const paymentsStr = item.payments ? item.payments.join(' ') : '';
-                        const fullText = `${item.name || ''} ${item.genre || ''} ${item.memo || ''} ${item.prefecture || ''} ${item.city || ''} ${item.country || ''} ${item.holiday || ''} ${item.author || ''} ${ramenDetailsStr} ${paymentsStr}`.toLowerCase();
+                        const fullText = `${item.name || ''} ${item.genre || ''} ${item.memo || ''} ${item.prefecture || ''} ${item.city || ''} ${item.address || ''} ${item.country || ''} ${item.holiday || ''} ${item.author || ''} ${ramenDetailsStr} ${paymentsStr}`.toLowerCase();
                         const matchKeyword = (keywordVal === "" || fullText.includes(keywordVal));
 
                         return matchGenre && matchPref && matchCity && matchKeyword;
@@ -656,7 +661,7 @@
                 if (detailImage) detailImage.src = item.photoUrl || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=500&q=60";
                 if (detailName) detailName.textContent = item.name;
                 if (detailGenre) detailGenre.textContent = item.genre || '未設定';
-                if (detailRegion) detailRegion.textContent = `${item.country || '日本'} ${item.prefecture || ''} ${item.city || ''}`.trim() || '未設定';
+                if (detailRegion) detailRegion.textContent = `${item.country || '日本'} ${item.prefecture || ''} ${item.city || ''} ${item.address || ''}`.trim() || '未設定';
                 
                 if (detailScenes) detailScenes.textContent = item.scenes && item.scenes.length > 0 ? item.scenes.join(', ') : '未設定';
                 if (detailParking) detailParking.textContent = item.parking || '未設定';
@@ -776,13 +781,37 @@
                 });
             }
 
+            // 住所から緯度経度を取得するジオコーディング関数
+            async function getCoordinatesFromAddress(country, prefecture, city, address) {
+                const queryParts = [country, prefecture, city, address].filter(Boolean).join(" ");
+                if (!queryParts.trim()) return null;
+
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryParts)}&limit=1`, {
+                        headers: {
+                            'Accept-Language': 'ja'
+                        }
+                    });
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        return {
+                            lat: parseFloat(data[0].lat),
+                            lng: parseFloat(data[0].lon)
+                        };
+                    }
+                } catch (e) {
+                    console.error("ジオコーディングエラー:", e);
+                }
+                return null;
+            }
+
             // フォーム送信
             if (formEl) {
                 formEl.addEventListener("submit", async (e) => {
                     e.preventDefault();
                     if (submitBtn) {
                         submitBtn.disabled = true;
-                        submitBtn.textContent = "投稿中...";
+                        submitBtn.textContent = "位置情報を解析・投稿中...";
                     }
 
                     const name = document.getElementById("restaurant-name").value;
@@ -791,6 +820,7 @@
                     const country = document.getElementById("restaurant-country").value || "日本";
                     const prefecture = document.getElementById("restaurant-prefecture").value;
                     const city = document.getElementById("restaurant-city").value;
+                    const address = document.getElementById("restaurant-address").value;
                     const holiday = document.getElementById("restaurant-holiday").value;
                     const hpUrl = document.getElementById("restaurant-hp").value;
                     const instaUrl = document.getElementById("restaurant-insta").value;
@@ -822,6 +852,9 @@
                     let photoPath = currentPhotoPathInput.value;
 
                     try {
+                        // 住所から正確な緯度経度を自動取得
+                        const coords = await getCoordinatesFromAddress(country, prefecture, city, address);
+
                         if (photoFile) {
                             if (photoPath) {
                                 try {
@@ -840,16 +873,26 @@
                         const dbRef = ref(db, `groups/${STORAGE_GROUP_ID}/restaurants`);
                         
                         const restaurantData = {
-                            name, genre, country, prefecture, city, holiday, hpUrl, instaUrl, scenes, ramenDetails, payments, parking, reservation, memo, photoUrl, photoPath,
+                            name, genre, country, prefecture, city, address, holiday, hpUrl, instaUrl, scenes, ramenDetails, payments, parking, reservation, memo, photoUrl, photoPath,
                             author: authorVal || currentUserName,
                             updatedAt: Date.now()
                         };
+
+                        if (coords) {
+                            restaurantData.latitude = coords.lat;
+                            restaurantData.longitude = coords.lng;
+                        }
 
                         if (editId) {
                             const updateRef = ref(db, `groups/${STORAGE_GROUP_ID}/restaurants/${editId}`);
                             const existingItem = allRestaurants.find(r => r.id === editId);
                             if (existingItem && existingItem.likedUsers) {
                                 restaurantData.likedUsers = existingItem.likedUsers;
+                            }
+                            // 住所が変わっていない場合は既存の座標を保持
+                            if (!coords && existingItem && existingItem.latitude) {
+                                restaurantData.latitude = existingItem.latitude;
+                                restaurantData.longitude = existingItem.longitude;
                             }
                             await update(updateRef, restaurantData);
                         } else {
@@ -889,6 +932,7 @@
                 document.getElementById("restaurant-country").value = item.country || "日本";
                 document.getElementById("restaurant-prefecture").value = item.prefecture || "";
                 document.getElementById("restaurant-city").value = item.city || "";
+                document.getElementById("restaurant-address").value = item.address || "";
                 document.getElementById("restaurant-holiday").value = item.holiday || "";
                 document.getElementById("restaurant-hp").value = item.hpUrl || "";
                 document.getElementById("restaurant-insta").value = item.instaUrl || "";
@@ -995,7 +1039,7 @@
                             matchRamen = item.ramenDetails && item.ramenDetails.includes(selectedRamenDetail);
                         }
 
-                        const regionText = `${item.country || ''} ${item.prefecture || ''} ${item.city || ''}`.toLowerCase();
+                        const regionText = `${item.country || ''} ${item.prefecture || ''} ${item.city || ''} ${item.address || ''}`.toLowerCase();
                         const matchRegion = (regionKeyword === "" || regionText.includes(regionKeyword));
 
                         return matchGenre && matchRamen && matchRegion;
@@ -1136,7 +1180,7 @@
             </div>
             <div class="p-4 overflow-y-auto space-y-4 flex-1">
                 <div class="bg-zinc-950 p-2 rounded-2xl border border-zinc-800 relative">
-                    <p class="text-[10px] text-zinc-400 mb-2 text-center">投稿があるエリアがピンで光ります💡（タップで詳細）</p>
+                    <p class="text-[10px] text-zinc-400 mb-2 text-center">お店ごとの正確な位置にピンが光ります💡（タップで詳細）</p>
                     <!-- Leafletマップ描画エリア -->
                     <div id="leaflet-map" class="w-full h-72 rounded-xl z-10"></div>
                 </div>
@@ -1186,7 +1230,7 @@
                     </div>
                     <div>
                         <label class="block text-[10px] text-zinc-400 mb-1">キーワード</label>
-                        <input type="text" id="search-keyword" placeholder="店名やこだわり等" class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-3 py-2 text-xs text-white focus:border-[#06C755] focus:outline-none">
+                        <input type="text" id="search-keyword" placeholder="店名や住所・こだわり等" class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-3 py-2 text-xs text-white focus:border-[#06C755] focus:outline-none">
                     </div>
                 </div>
                 <button id="execute-search-btn" class="w-full bg-[#06C755] hover:bg-[#05b34c] text-zinc-950 font-bold py-3 rounded-2xl text-xs transition shadow-md">この条件で検索する</button>
@@ -1323,9 +1367,14 @@
                             <input type="text" id="restaurant-prefecture" placeholder="愛知県" class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-3 py-2 text-xs text-white focus:border-[#06C755] focus:outline-none">
                         </div>
                         <div>
-                            <label class="block text-[10px] text-zinc-400 mb-1">市区町村・エリア</label>
+                            <label class="block text-[10px] text-zinc-400 mb-1">市区町村</label>
                             <input type="text" id="restaurant-city" placeholder="半田市" class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-3 py-2 text-xs text-white focus:border-[#06C755] focus:outline-none">
                         </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] text-zinc-400 mb-1">詳しい住所 (番地・建物名など) <span class="text-[#06C755]">★地図の正確なピンに反映されます</span></label>
+                        <input type="text" id="restaurant-address" placeholder="例: 荒神町1-5-1" class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-3 py-2 text-xs text-white focus:border-[#06C755] focus:outline-none">
                     </div>
 
                     <div>
