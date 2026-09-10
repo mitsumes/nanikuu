@@ -286,7 +286,7 @@
                 const latestItems = allRestaurants;
 
                 if (latestItems.length === 0) {
-                    latestListEl.innerHTML = `<div class="col-span-full text-center py-12 text-zinc-500 text-xs">登録されているお店がありません。<br>下のシールや投稿ボタンから共有しよう！</div>`;
+                    latestListEl.innerHTML = `<div class="col-span-full text-center py-12 text-zinc-500 text-xs">登録されているお店がありません。<br>下の「＋ 投稿」ボタンから共有しよう！</div>`;
                     if (openAllModalBtn) openAllModalBtn.classList.add("hidden");
                 } else {
                     if (openAllModalBtn) openAllModalBtn.classList.remove("hidden");
@@ -326,7 +326,6 @@
                     mapMarkersLayer.clearLayers();
                 }
 
-                // 各都道府県・海外主要エリアの代表座標データ（フォールバック用）
                 const regionCoords = {
                     "北海道": [43.064, 141.346], "青森県": [40.824, 140.740], "岩手県": [39.703, 141.152],
                     "宮城県": [38.268, 140.871], "秋田県": [39.718, 140.102], "山形県": [38.240, 140.363],
@@ -347,12 +346,10 @@
                     "インドネシア": [-6.2088, 106.8456], "Indonesia": [-6.2088, 106.8456]
                 };
 
-                // 各飲食店ごとにピンを立てる
                 allRestaurants.forEach(item => {
                     let lat = item.latitude;
                     let lng = item.longitude;
 
-                    // 座標がない場合のフォールバック（都道府県・国から算出）
                     if (!lat || !lng) {
                         let fallbackKey = item.prefecture || "";
                         const country = (item.country || "").trim();
@@ -367,7 +364,6 @@
                             coords = regionCoords[fallbackKey + "県"] || regionCoords[fallbackKey + "府"] || regionCoords[fallbackKey + "都"] || regionCoords[fallbackKey + "道"];
                         }
                         if (coords) {
-                            // 複数のお店が同じ都道府県に重ならないよう、わずかにランダムにずらす
                             lat = coords[0] + (Math.random() - 0.5) * 0.05;
                             lng = coords[1] + (Math.random() - 0.5) * 0.05;
                         } else {
@@ -781,26 +777,30 @@
                 });
             }
 
-            // 住所から緯度経度を取得するジオコーディング関数
+            // 住所から緯度経度を取得するジオコーディング関数（フォールバック付き）
             async function getCoordinatesFromAddress(country, prefecture, city, address) {
-                const queryParts = [country, prefecture, city, address].filter(Boolean).join(" ");
-                if (!queryParts.trim()) return null;
+                const queries = [
+                    [country, prefecture, city, address].filter(Boolean).join(" "),
+                    [prefecture, city, address].filter(Boolean).join(" "),
+                    [prefecture, city].filter(Boolean).join(" ")
+                ];
 
-                try {
-                    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryParts)}&limit=1`, {
-                        headers: {
-                            'Accept-Language': 'ja'
+                for (const q of queries) {
+                    if (!q.trim()) continue;
+                    try {
+                        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`, {
+                            headers: { 'Accept-Language': 'ja' }
+                        });
+                        const data = await response.json();
+                        if (data && data.length > 0) {
+                            return {
+                                lat: parseFloat(data[0].lat),
+                                lng: parseFloat(data[0].lon)
+                            };
                         }
-                    });
-                    const data = await response.json();
-                    if (data && data.length > 0) {
-                        return {
-                            lat: parseFloat(data[0].lat),
-                            lng: parseFloat(data[0].lon)
-                        };
+                    } catch (e) {
+                        console.error("ジオコーディングエラー:", e);
                     }
-                } catch (e) {
-                    console.error("ジオコーディングエラー:", e);
                 }
                 return null;
             }
@@ -852,7 +852,7 @@
                     let photoPath = currentPhotoPathInput.value;
 
                     try {
-                        // 住所から正確な緯度経度を自動取得
+                        // 住所から緯度経度を再取得
                         const coords = await getCoordinatesFromAddress(country, prefecture, city, address);
 
                         if (photoFile) {
@@ -881,6 +881,15 @@
                         if (coords) {
                             restaurantData.latitude = coords.lat;
                             restaurantData.longitude = coords.lng;
+                        } else {
+                            // 万が一APIで取得できなかった場合のフォールバック（都道府県の簡易座標を設定）
+                            const fallbackCoords = {
+                                "北海道": [43.064, 141.346], "東京都": [35.689, 139.691], "愛知県": [35.180, 136.906],
+                                "大阪府": [34.693, 135.502], "福岡県": [33.606, 130.418], "宮城県": [38.268, 140.871]
+                            };
+                            const base = fallbackCoords[prefecture] || [35.689, 139.691];
+                            restaurantData.latitude = base[0] + (Math.random() - 0.5) * 0.05;
+                            restaurantData.longitude = base[1] + (Math.random() - 0.5) * 0.05;
                         }
 
                         if (editId) {
@@ -888,11 +897,6 @@
                             const existingItem = allRestaurants.find(r => r.id === editId);
                             if (existingItem && existingItem.likedUsers) {
                                 restaurantData.likedUsers = existingItem.likedUsers;
-                            }
-                            // 住所が変わっていない場合は既存の座標を保持
-                            if (!coords && existingItem && existingItem.latitude) {
-                                restaurantData.latitude = existingItem.latitude;
-                                restaurantData.longitude = existingItem.longitude;
                             }
                             await update(updateRef, restaurantData);
                         } else {
