@@ -6,7 +6,7 @@
     <title>なにクウ？ - グループ飲食店共有</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <!-- Leaflet CSS & JS 追加 -->
+    <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script type="module">
@@ -305,7 +305,7 @@
                 }
             }
 
-            // Leafletマップ初期化・ピン表示処理
+            // Leafletマップ初期化・ピン表示処理（北海道のキー修正対応済み）
             function initLeafletMap() {
                 const mapContainer = document.getElementById("leaflet-map");
                 if (!mapContainer) return;
@@ -314,7 +314,7 @@
                     leafletMap = L.map('leaflet-map', {
                         zoomControl: true,
                         attributionControl: false
-                    }).setView([38.0, 137.0], 5); // 日本全体を中心に
+                    }).setView([38.0, 137.0], 5);
 
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         maxZoom: 18,
@@ -326,7 +326,6 @@
                     mapMarkersLayer.clearLayers();
                 }
 
-                // 都道府県ごとの件数を集計
                 const prefCounts = {};
                 allRestaurants.forEach(item => {
                     if (item.prefecture) {
@@ -335,7 +334,7 @@
                     }
                 });
 
-                // 各都道府県の代表座標データ（主要都市・県庁所在地付近）
+                // 各都道府県の代表座標データ（北海道を「北海道」に修正・統一）
                 const prefCoords = {
                     "北海道": [43.064, 141.346], "青森": [40.824, 140.740], "岩手": [39.703, 141.152],
                     "宮城": [38.268, 140.871], "秋田": [39.718, 140.102], "山形": [38.240, 140.363],
@@ -355,7 +354,6 @@
                     "鹿児島": [31.560, 130.558], "沖縄": [26.212, 127.679]
                 };
 
-                // ピンをマップにプロット
                 Object.keys(prefCounts).forEach(pref => {
                     const count = prefCounts[pref];
                     const coords = prefCoords[pref];
@@ -391,7 +389,6 @@
                     prefectureCountEl.textContent = `${uniqueCount} / 47 都道府県制覇`;
                 }
 
-                // リスト側の表示更新
                 const mapPrefListEl = document.getElementById("map-prefecture-list");
                 if (mapPrefListEl) {
                     mapPrefListEl.innerHTML = "";
