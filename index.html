@@ -305,7 +305,7 @@
                 }
             }
 
-            // Leafletマップ初期化・ピン表示処理（北海道のキー修正対応済み）
+            // Leafletマップ初期化・ピン表示処理（北海道・海外対応完了版）
             function initLeafletMap() {
                 const mapContainer = document.getElementById("leaflet-map");
                 if (!mapContainer) return;
@@ -326,48 +326,69 @@
                     mapMarkersLayer.clearLayers();
                 }
 
-                const prefCounts = {};
+                const regionCounts = {};
                 allRestaurants.forEach(item => {
-                    if (item.prefecture) {
-                        let pref = item.prefecture.replace(/(都|道|府|県)$/, '').trim();
-                        prefCounts[pref] = (prefCounts[pref] || 0) + 1;
+                    let key = "";
+                    const country = (item.country || "").trim();
+                    const pref = (item.prefecture || "").trim();
+
+                    // 国名が日本以外、または都道府県に「インドネシア」等が含まれる場合は国名/エリアで管理
+                    if (country && country !== "日本" && country !== "Japan") {
+                        key = country;
+                    } else if (pref.includes("インドネシア") || pref.includes("ジャカルタ") || pref.includes("バリ")) {
+                        key = "インドネシア";
+                    } else if (pref) {
+                        // 北海道などの「道」「都」「府」「県」をそのまま正確に維持または綺麗に整理
+                        key = pref;
+                    }
+
+                    if (key) {
+                        regionCounts[key] = (regionCounts[key] || 0) + 1;
                     }
                 });
 
-                // 各都道府県の代表座標データ（北海道を「北海道」に修正・統一）
-                const prefCoords = {
-                    "北海道": [43.064, 141.346], "青森": [40.824, 140.740], "岩手": [39.703, 141.152],
-                    "宮城": [38.268, 140.871], "秋田": [39.718, 140.102], "山形": [38.240, 140.363],
-                    "福島": [37.750, 140.467], "茨城": [36.341, 140.446], "栃木": [36.565, 139.883],
-                    "群馬": [36.391, 139.060], "埼玉": [35.856, 139.648], "千葉": [35.604, 140.123],
-                    "東京": [35.689, 139.691], "神奈川": [35.447, 139.642], "新潟": [37.902, 139.023],
-                    "富山": [36.695, 137.211], "石川": [36.594, 136.625], "福井": [36.065, 136.221],
-                    "山梨": [35.664, 138.568], "長野": [36.651, 138.181], "岐阜": [35.391, 136.722],
-                    "静岡": [34.976, 138.383], "愛知": [35.180, 136.906], "三重": [34.730, 136.508],
-                    "滋賀": [35.004, 135.868], "京都": [35.021, 135.755], "大阪": [34.693, 135.502],
-                    "兵庫": [34.691, 135.183], "奈良": [34.685, 135.832], "和歌山": [34.226, 135.167],
-                    "鳥取": [35.503, 134.238], "島根": [35.472, 133.050], "岡山": [34.661, 133.934],
-                    "広島": [34.396, 132.459], "山口": [34.186, 131.470], "徳島": [34.065, 134.559],
-                    "香川": [34.340, 134.043], "愛媛": [33.841, 132.765], "高知": [33.559, 133.531],
-                    "福岡": [33.606, 130.418], "佐賀": [33.249, 130.298], "長崎": [32.744, 129.873],
-                    "熊本": [32.789, 130.741], "大分": [33.238, 131.612], "宮崎": [31.911, 131.423],
-                    "鹿児島": [31.560, 130.558], "沖縄": [26.212, 127.679]
+                // 各都道府県・海外主要エリアの代表座標データ（北海道のキーバグも完全に解消）
+                const regionCoords = {
+                    "北海道": [43.064, 141.346], "青森県": [40.824, 140.740], "岩手県": [39.703, 141.152],
+                    "宮城県": [38.268, 140.871], "秋田県": [39.718, 140.102], "山形県": [38.240, 140.363],
+                    "福島県": [37.750, 140.467], "茨城県": [36.341, 140.446], "栃木県": [36.565, 139.883],
+                    "群馬県": [36.391, 139.060], "埼玉県": [35.856, 139.648], "千葉県": [35.604, 140.123],
+                    "東京都": [35.689, 139.691], "神奈川県": [35.447, 139.642], "新潟県": [37.902, 139.023],
+                    "富山県": [36.695, 137.211], "石川県": [36.594, 136.625], "福井県": [36.065, 136.221],
+                    "山梨県": [35.664, 138.568], "長野県": [36.651, 138.181], "岐阜県": [35.391, 136.722],
+                    "静岡県": [34.976, 138.383], "愛知県": [35.180, 136.906], "三重県": [34.730, 136.508],
+                    "滋賀県": [35.004, 135.868], "京都府": [35.021, 135.755], "大阪府": [34.693, 135.502],
+                    "兵庫県": [34.691, 135.183], "奈良県": [34.685, 135.832], "和歌山県": [34.226, 135.167],
+                    "鳥取県": [35.503, 134.238], "島根県": [35.472, 133.050], "岡山県": [34.661, 133.934],
+                    "広島県": [34.396, 132.459], "山口県": [34.186, 131.470], "徳島県": [34.065, 134.559],
+                    "香川県": [34.340, 134.043], "愛媛県": [33.841, 132.765], "高知県": [33.559, 133.531],
+                    "福岡県": [33.606, 130.418], "佐賀県": [33.249, 130.298], "長崎県": [32.744, 129.873],
+                    "熊本県": [32.789, 130.741], "大分県": [33.238, 131.612], "宮崎県": [31.911, 131.423],
+                    "鹿児島県": [31.560, 130.558], "沖縄県": [26.212, 127.679],
+                    // 海外エリアの座標
+                    "インドネシア": [-6.2088, 106.8456],
+                    "Indonesia": [-6.2088, 106.8456]
                 };
 
-                Object.keys(prefCounts).forEach(pref => {
-                    const count = prefCounts[pref];
-                    const coords = prefCoords[pref];
+                Object.keys(regionCounts).forEach(region => {
+                    const count = regionCounts[region];
+                    // 接尾辞なし・あり両方に対応できるようにフォールバック検索
+                    let coords = regionCoords[region];
+                    if (!coords) {
+                        coords = regionCoords[region + "県"] || regionCoords[region + "府"] || regionCoords[region + "都"] || regionCoords[region + "道"];
+                    }
+
                     if (coords && count > 0) {
                         const customIcon = L.divIcon({
                             className: 'custom-map-marker',
-                            html: `<div style="background-color: #06C755; color: #09090b; font-weight: 800; font-size: 11px; padding: 4px 8px; border-radius: 9999px; border: 2px solid #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.3); text-align: center; white-space: nowrap;">📍 ${pref} (${count}件)</div>`,
-                            iconSize: [80, 30],
-                            iconAnchor: [40, 15]
+                            html: `<div style="background-color: #06C755; color: #09090b; font-weight: 800; font-size: 11px; padding: 4px 8px; border-radius: 9999px; border: 2px solid #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.3); text-align: center; white-space: nowrap;">📍 ${region} (${count}件)</div>`,
+                            iconSize: [90, 30],
+                            iconAnchor: [45, 15]
                         });
 
                         const marker = L.marker(coords, { icon: customIcon });
                         marker.on('click', () => {
-                            filterByPrefecture(pref);
+                            filterByPrefecture(region);
                         });
                         mapMarkersLayer.addLayer(marker);
                     }
@@ -379,7 +400,7 @@
                 const prefCounts = {};
                 allRestaurants.forEach(item => {
                     if (item.prefecture) {
-                        let pref = item.prefecture.replace(/(都|道|府|県)$/, '').trim();
+                        let pref = item.prefecture.trim();
                         prefCounts[pref] = (prefCounts[pref] || 0) + 1;
                     }
                 });
@@ -404,8 +425,7 @@
                     ];
 
                     allPrefs.forEach(pref => {
-                        const shortPref = pref.replace(/(都|道|府|県)$/, '');
-                        const count = prefCounts[shortPref] || 0;
+                        const count = prefCounts[pref] || prefCounts[pref.replace(/(都|道|府|県)$/, '')] || 0;
                         const isVisited = count > 0;
 
                         const badge = document.createElement("button");
@@ -424,7 +444,7 @@
                 }
             }
 
-            // 都道府県クリック・タップ時の絞り込み検索
+            // 都道府県・エリアクリック時の絞り込み検索
             window.filterByPrefecture = function(prefName) {
                 if (mapModal) {
                     mapModal.classList.add("hidden");
@@ -433,7 +453,7 @@
 
                 const shortName = prefName.replace(/(都|道|府|県)$/, '');
                 const filtered = allRestaurants.filter(item => {
-                    return item.prefecture && item.prefecture.includes(shortName);
+                    return (item.prefecture && item.prefecture.includes(shortName)) || (item.country && item.country.includes(prefName));
                 });
 
                 searchResultListEl.innerHTML = "";
@@ -459,12 +479,12 @@
 
                     const filtered = allRestaurants.filter(item => {
                         const matchGenre = (genreVal === "すべて" || item.genre === genreVal);
-                        const matchPref = (prefVal === "" || (item.prefecture && item.prefecture.toLowerCase().includes(prefVal)));
+                        const matchPref = (prefVal === "" || (item.prefecture && item.prefecture.toLowerCase().includes(prefVal)) || (item.country && item.country.toLowerCase().includes(prefVal)));
                         const matchCity = (cityVal === "" || (item.city && item.city.toLowerCase().includes(cityVal)));
                         
                         const ramenDetailsStr = item.ramenDetails ? item.ramenDetails.join(' ') : '';
                         const paymentsStr = item.payments ? item.payments.join(' ') : '';
-                        const fullText = `${item.name || ''} ${item.genre || ''} ${item.memo || ''} ${item.prefecture || ''} ${item.city || ''} ${item.holiday || ''} ${item.author || ''} ${ramenDetailsStr} ${paymentsStr}`.toLowerCase();
+                        const fullText = `${item.name || ''} ${item.genre || ''} ${item.memo || ''} ${item.prefecture || ''} ${item.city || ''} ${item.country || ''} ${item.holiday || ''} ${item.author || ''} ${ramenDetailsStr} ${paymentsStr}`.toLowerCase();
                         const matchKeyword = (keywordVal === "" || fullText.includes(keywordVal));
 
                         return matchGenre && matchPref && matchCity && matchKeyword;
@@ -1106,7 +1126,7 @@
             </div>
             <div class="p-4 overflow-y-auto space-y-4 flex-1">
                 <div class="bg-zinc-950 p-2 rounded-2xl border border-zinc-800 relative">
-                    <p class="text-[10px] text-zinc-400 mb-2 text-center">投稿がある都道府県がピンで光ります💡（タップで詳細）</p>
+                    <p class="text-[10px] text-zinc-400 mb-2 text-center">投稿があるエリアがピンで光ります💡（タップで詳細）</p>
                     <!-- Leafletマップ描画エリア -->
                     <div id="leaflet-map" class="w-full h-72 rounded-xl z-10"></div>
                 </div>
@@ -1145,8 +1165,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[10px] text-zinc-400 mb-1">都道府県</label>
-                        <input type="text" id="search-prefecture" placeholder="例: 愛知県" class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-3 py-2 text-xs text-white focus:border-[#06C755] focus:outline-none">
+                        <label class="block text-[10px] text-zinc-400 mb-1">都道府県・国</label>
+                        <input type="text" id="search-prefecture" placeholder="例: 愛知県 や インドネシア" class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-3 py-2 text-xs text-white focus:border-[#06C755] focus:outline-none">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
@@ -1423,7 +1443,7 @@
     <!-- 検索結果モーダル -->
     <div id="search-result-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex-col z-50 overflow-hidden">
         <div class="bg-zinc-900 border-b border-zinc-800 p-4 flex justify-between items-center shrink-0">
-            <h3 class="text-xs font-bold text-white">検索結果 / 都道府県別</h3>
+            <h3 class="text-xs font-bold text-white">検索結果 / エリア別</h3>
             <button id="close-search-result-modal" class="text-xs text-zinc-400 hover:text-white px-2.5 py-1 rounded-xl bg-zinc-800 font-bold">✕ 閉じる</button>
         </div>
         <div class="p-4 overflow-y-auto flex-1">
