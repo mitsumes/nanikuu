@@ -34,7 +34,49 @@
         let leafletMap = null;
         let mapMarkersLayer = null;
 
+        // 【パスワード認証設定】ここを変更すると合言葉を変えられます
+        const APP_PASSWORD = "nanikuu123"; 
+
         document.addEventListener("DOMContentLoaded", () => {
+            // パスワード認証のチェック処理
+            const authModal = document.getElementById("auth-modal");
+            const authForm = document.getElementById("auth-form");
+            const authPasswordInput = document.getElementById("auth-password");
+            const authErrorMsg = document.getElementById("auth-error-msg");
+
+            function checkAppAuthentication() {
+                const isAuthed = localStorage.getItem("nanikuu_authenticated");
+                if (isAuthed === "true") {
+                    if (authModal) authModal.classList.add("hidden");
+                    initLiff(); // 認証済みならLIFF初期化・データロードへ進む
+                } else {
+                    if (authModal) {
+                        authModal.classList.remove("hidden");
+                        authModal.classList.add("flex");
+                    }
+                }
+            }
+
+            if (authForm) {
+                authForm.addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    const inputVal = authPasswordInput.value.trim();
+                    if (inputVal === APP_PASSWORD) {
+                        localStorage.setItem("nanikuu_authenticated", "true");
+                        if (authModal) {
+                            authModal.classList.add("hidden");
+                            authModal.classList.remove("flex");
+                        }
+                        initLiff();
+                    } else {
+                        if (authErrorMsg) {
+                            authErrorMsg.textContent = "パスワードが違います。正しい合言葉を入力してください。";
+                            authErrorMsg.classList.remove("hidden");
+                        }
+                    }
+                });
+            }
+
             const groupNameDisplay = document.getElementById("group-name-display");
             const latestListEl = document.getElementById("latest-restaurant-list");
             const allListEl = document.getElementById("all-restaurant-list");
@@ -251,7 +293,9 @@
                 }
                 loadRestaurants();
             }
-            initLiff();
+
+            // 初回起動時に認証チェックを実行
+            checkAppAuthentication();
 
             // データのリアルタイム読み込み
             function loadRestaurants() {
@@ -1171,6 +1215,20 @@
             </button>
         </div>
     </nav>
+
+    <!-- パスワード認証モーダル (追加) -->
+    <div id="auth-modal" class="fixed inset-0 bg-zinc-950/95 backdrop-blur-md hidden items-center justify-center p-4 z-[100]">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 w-full max-w-xs text-center space-y-4 shadow-2xl">
+            <div class="text-3xl">🔒</div>
+            <h3 class="text-sm font-bold text-white">合言葉を入力してください</h3>
+            <p class="text-[10px] text-zinc-400 leading-relaxed">このアプリを利用するには、LINEグループで共有されたパスワード（合言葉）が必要です。</p>
+            <form id="auth-form" class="space-y-3">
+                <input type="password" id="auth-password" placeholder="合言葉を入力" required class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-3 py-2.5 text-xs text-white text-center focus:border-[#06C755] focus:outline-none">
+                <p id="auth-error-msg" class="text-[10px] text-red-400 hidden"></p>
+                <button type="submit" class="w-full bg-[#06C755] hover:bg-[#05b34c] text-zinc-950 font-bold py-3 rounded-2xl text-xs transition shadow-lg shadow-[#06C755]/20">認証する</button>
+            </form>
+        </div>
+    </div>
 
     <!-- 日本地図モーダル (Leafletマップ) -->
     <div id="map-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
