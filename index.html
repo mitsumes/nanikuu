@@ -37,7 +37,7 @@
         // 【パスワード認証設定】ここを変更すると合言葉を変えられます
         const APP_PASSWORD = "nanikuu123"; 
 
-        // 【修正】新しい都道府県・市区町村が登録されたときの紙吹雪演出関数（市町村のときは文字色を蛍光緑に指定）
+        // 新しい都道府県・市区町村が登録されたときの紙吹雪演出関数（市町村のときは文字色を蛍光緑に指定）
         function triggerConfetti(messageText = "🏆 新しい都道府県開拓！", isCity = false) {
             const container = document.createElement('div');
             container.style.position = 'fixed';
@@ -521,7 +521,7 @@
                 });
             }
 
-            // 日本地図モーダル内の統計テキスト・全国制覇進捗更新（市町村数も追加表示）
+            // 日本地図モーダル内の統計テキスト・全国制覇進捗更新（%表示を削除）
             function updateJapanMapStats() {
                 const standardPrefs = [
                     "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
@@ -563,7 +563,7 @@
                 const uniqueCityCount = uniqueCitiesSet.size;
 
                 if (prefectureCountEl) {
-                    let prefText = `${uniqueJapanCount} / 47 都道府県制覇 (${percentage}%)`;
+                    let prefText = `${uniqueJapanCount} / 47 都道府県制覇`;
                     if (uniqueJapanCount === 47) {
                         prefText = `<span class="text-yellow-400 font-extrabold animate-pulse">🏆 47都道府県完全制覇達成！！</span>`;
                     }
