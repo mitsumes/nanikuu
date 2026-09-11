@@ -435,7 +435,7 @@
                 });
             }
 
-            // 日本地図モーダル内の統計テキスト更新
+            // 日本地図モーダル内の統計テキスト・全国制覇進捗更新
             function updateJapanMapStats() {
                 const standardPrefs = [
                     "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
@@ -467,12 +467,29 @@
                 });
 
                 const uniqueJapanCount = Object.keys(prefCounts).filter(p => standardPrefs.includes(p) && prefCounts[p] > 0).length;
+                const percentage = Math.round((uniqueJapanCount / 47) * 100);
+
                 if (prefectureCountEl) {
-                    if (overseasCount > 0) {
-                        prefectureCountEl.textContent = `${uniqueJapanCount} / 47 都道府県制覇 (海外: ${overseasCount}件)`;
+                    if (uniqueJapanCount === 47) {
+                        prefectureCountEl.innerHTML = `<span class="text-yellow-400 font-extrabold animate-pulse">🏆 47都道府県完全制覇達成！！ (${overseasCount > 0 ? `海外: ${overseasCount}件` : ''})</span>`;
                     } else {
-                        prefectureCountEl.textContent = `${uniqueJapanCount} / 47 都道府県制覇`;
+                        if (overseasCount > 0) {
+                            prefectureCountEl.textContent = `${uniqueJapanCount} / 47 都道府県制覇 (${percentage}%) - 海外: ${overseasCount}件`;
+                        } else {
+                            prefectureCountEl.textContent = `${uniqueJapanCount} / 47 都道府県制覇 (${percentage}%)`;
+                        }
                     }
+                }
+
+                // 全国制覇プログレスバー要素の更新または追加
+                let progressBarEl = document.getElementById("japan-progress-bar");
+                if (!progressBarEl && prefectureCountEl && prefectureCountEl.parentElement) {
+                    const barContainer = document.createElement("div");
+                    barContainer.className = "w-full bg-zinc-950 rounded-full h-2 mt-2 border border-zinc-800 overflow-hidden";
+                    barContainer.innerHTML = `<div id="japan-progress-bar" class="bg-[#06C755] h-full transition-all duration-500" style="width: ${percentage}%"></div>`;
+                    prefectureCountEl.parentElement.appendChild(barContainer);
+                } else if (progressBarEl) {
+                    progressBarEl.style.width = `${percentage}%`;
                 }
 
                 const mapPrefListEl = document.getElementById("map-prefecture-list");
@@ -691,6 +708,22 @@
                         };
                     };
                 });
+            }
+
+            // 新着通知をLINEに送る機能
+            async function sendLineNotification(restaurantName, genre, regionStr, author) {
+                try {
+                    if (liff && liff.isApiAvailable && liff.isApiAvailable('sendMessages')) {
+                        await liff.sendMessages([
+                            {
+                                type: 'text',
+                                text: `【新着のお店が投稿されました！ 🟢 なにクウ？】\n店名: ${restaurantName}\nジャンル: ${genre}\nエリア: ${regionStr}\n投稿者: ${author}\n\nアプリを開いてチェックしてね！`
+                            }
+                        ]);
+                    }
+                } catch (error) {
+                    console.log("LINE通知の送信スキップまたはエラー（通常のブラウザ環境や権限外）", error);
+                }
             }
 
             // 詳細モーダル
@@ -947,6 +980,10 @@
                             restaurantData.createdAt = Date.now();
                             const newRef = push(dbRef);
                             await set(newRef, restaurantData);
+                            
+                            // 新規投稿時にLINEへ通知を送信
+                            const regionStr = `${prefecture || ''} ${city || ''}`.trim() || 'エリア未設定';
+                            sendLineNotification(name, genre, regionStr, authorVal || currentUserName);
                         }
 
                         formEl.reset();
