@@ -37,8 +37,8 @@
         // 【パスワード認証設定】ここを変更すると合言葉を変えられます
         const APP_PASSWORD = "nanikuu123"; 
 
-        // 【追加】新しい都道府県・市区町村が登録されたときの紙吹雪演出関数（6秒間・ゴールドの文字）
-        function triggerConfetti(messageText = "🏆 新しい都道府県開拓！") {
+        // 【修正】新しい都道府県・市区町村が登録されたときの紙吹雪演出関数（市町村のときは文字色を蛍光緑に指定）
+        function triggerConfetti(messageText = "🏆 新しい都道府県開拓！", isCity = false) {
             const container = document.createElement('div');
             container.style.position = 'fixed';
             container.style.top = '0';
@@ -49,7 +49,7 @@
             container.style.zIndex = '99999';
             document.body.appendChild(container);
 
-            // 中央にゴールドで派手なポップアップテキストを表示（6秒間持続）
+            // 中央に派手なポップアップテキストを表示（6秒間持続）
             const banner = document.createElement('div');
             banner.textContent = messageText;
             banner.style.position = 'absolute';
@@ -57,14 +57,17 @@
             banner.style.left = '50%';
             banner.style.transform = 'translate(-50%, -50%) scale(0.4)';
             banner.style.background = 'linear-gradient(135deg, #111111 0%, #1c1c1e 100%)';
-            banner.style.color = '#ffd700';
+            
+            // 市町村開拓のときは蛍光緑色(#06C755)、都道府県はゴールド(#ffd700)
+            const mainColor = isCity ? '#06C755' : '#ffd700';
+            banner.style.color = mainColor;
             banner.style.padding = '18px 32px';
             banner.style.borderRadius = '9999px';
             banner.style.fontWeight = '900';
             banner.style.fontSize = '20px';
-            banner.style.boxShadow = '0 0 30px rgba(255, 215, 0, 0.6), 0 10px 25px rgba(0, 0, 0, 0.8)';
-            banner.style.border = '3px solid #ffd700';
-            banner.style.textShadow = '0 2px 4px rgba(0,0,0,0.8), 0 0 12px rgba(255, 215, 0, 0.8)';
+            banner.style.boxShadow = `0 0 30px ${isCity ? 'rgba(6, 199, 85, 0.6)' : 'rgba(255, 215, 0, 0.6)'}, 0 10px 25px rgba(0, 0, 0, 0.8)`;
+            banner.style.border = `3px solid ${mainColor}`;
+            banner.style.textShadow = `0 2px 4px rgba(0,0,0,0.8), 0 0 12px ${isCity ? 'rgba(6, 199, 85, 0.8)' : 'rgba(255, 215, 0, 0.8)'}`;
             banner.style.whiteSpace = 'nowrap';
             banner.style.transition = 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease-in';
             banner.style.opacity = '0';
@@ -518,7 +521,7 @@
                 });
             }
 
-            // 日本地図モーダル内の統計テキスト・全国制覇進捗更新
+            // 日本地図モーダル内の統計テキスト・全国制覇進捗更新（市町村数も追加表示）
             function updateJapanMapStats() {
                 const standardPrefs = [
                     "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
@@ -531,11 +534,17 @@
                 ];
 
                 const prefCounts = {};
+                const uniqueCitiesSet = new Set();
                 let overseasCount = 0;
 
                 allRestaurants.forEach(item => {
                     const country = (item.country || "").trim();
                     const pref = (item.prefecture || "").trim();
+                    const city = (item.city || "").trim();
+
+                    if (city) {
+                        uniqueCitiesSet.add(`${pref}_${city}`);
+                    }
 
                     if ((country && country !== "日本" && country !== "Japan") || pref.includes("インドネシア") || pref.includes("ジャカルタ") || pref.includes("バリ")) {
                         overseasCount++;
@@ -551,16 +560,18 @@
 
                 const uniqueJapanCount = Object.keys(prefCounts).filter(p => standardPrefs.includes(p) && prefCounts[p] > 0).length;
                 const percentage = Math.round((uniqueJapanCount / 47) * 100);
+                const uniqueCityCount = uniqueCitiesSet.size;
 
                 if (prefectureCountEl) {
+                    let prefText = `${uniqueJapanCount} / 47 都道府県制覇 (${percentage}%)`;
                     if (uniqueJapanCount === 47) {
-                        prefectureCountEl.innerHTML = `<span class="text-yellow-400 font-extrabold animate-pulse">🏆 47都道府県完全制覇達成！！ (${overseasCount > 0 ? `海外: ${overseasCount}件` : ''})</span>`;
+                        prefText = `<span class="text-yellow-400 font-extrabold animate-pulse">🏆 47都道府県完全制覇達成！！</span>`;
+                    }
+                    
+                    if (overseasCount > 0) {
+                        prefectureCountEl.innerHTML = `${prefText} / 市町村数: <strong class="text-white">${uniqueCityCount}</strong>市町村 (海外: ${overseasCount}件)`;
                     } else {
-                        if (overseasCount > 0) {
-                            prefectureCountEl.textContent = `${uniqueJapanCount} / 47 都道府県制覇 (${percentage}%) - 海外: ${overseasCount}件`;
-                        } else {
-                            prefectureCountEl.textContent = `${uniqueJapanCount} / 47 都道府県制覇 (${percentage}%)`;
-                        }
+                        prefectureCountEl.innerHTML = `${prefText} / 市町村数: <strong class="text-white">${uniqueCityCount}</strong>市町村`;
                     }
                 }
 
@@ -1011,7 +1022,7 @@
                     let photoUrl = currentPhotoUrlInput.value;
                     let photoPath = currentPhotoPathInput.value;
 
-                    // 【追加】新規登録時、すでに登録されている都道府県・市区町村リストに存在するか判定
+                    // 新規登録時、すでに登録されている都道府県・市区町村リストに存在するか判定
                     const existingPrefs = new Set(allRestaurants.map(r => (r.prefecture || "").trim()));
                     const existingCities = new Set(allRestaurants.map(r => (r.city || "").trim()));
 
@@ -1075,14 +1086,14 @@
                             const regionStr = `${prefecture || ''} ${city || ''}`.trim() || 'エリア未設定';
                             sendLineNotification(name, genre, regionStr, authorVal || currentUserName);
 
-                            // 【追加】新規都道府県または新規市町村が登録された瞬間ならゴールドの派手なテキスト＆紙吹雪を6秒間舞わせる
+                            // 新規都道府県または新規市区町村が登録された瞬間なら紙吹雪を6秒間舞わせる
                             if (isNewPrefecture) {
                                 setTimeout(() => {
-                                    triggerConfetti("🏆 新しい都道府県開拓！");
+                                    triggerConfetti("🏆 新しい都道府県開拓！", false);
                                 }, 300);
                             } else if (isNewCity) {
                                 setTimeout(() => {
-                                    triggerConfetti("✨ 新しい市町村開拓！");
+                                    triggerConfetti("✨ 新しい市町村開拓！", true);
                                 }, 300);
                             }
                         }
