@@ -37,7 +37,7 @@
         // 【パスワード認証設定】ここを変更すると合言葉を変えられます
         const APP_PASSWORD = "nanikuu123"; 
 
-        // 【追加】新しい都道府県が登録されたときの紙吹雪演出関数（ゴールドの文字と長時間の派手な演出にアップデート）
+        // 【追加】新しい都道府県が登録されたときの紙吹雪演出関数（ゴールドの文字と6秒間の長時間演出にアップデート）
         function triggerConfetti() {
             const container = document.createElement('div');
             container.style.position = 'fixed';
@@ -49,7 +49,7 @@
             container.style.zIndex = '99999';
             document.body.appendChild(container);
 
-            // 中央に「新しい都道府県開拓」のゴールドで派手なポップアップテキストを表示（表示時間を長めに延長）
+            // 中央に「新しい都道府県開拓」のゴールドで派手なポップアップテキストを表示（表示時間を6秒間に変更）
             const banner = document.createElement('div');
             banner.textContent = "🏆 新しい都道府県開拓！";
             banner.style.position = 'absolute';
@@ -80,11 +80,11 @@
                 banner.style.transform = 'translate(-50%, -50%) scale(1)';
             }, 350);
 
-            // 表示時間を長めに設定（約3.5秒後にフェードアウト）
+            // 表示時間を6秒間（6000ミリ秒）に設定してフェードアウト
             setTimeout(() => {
                 banner.style.transform = 'translate(-50%, -80%) scale(1)';
                 banner.style.opacity = '0';
-            }, 3500);
+            }, 6000);
 
             const colors = ['#ffd700', '#ffaa00', '#06C755', '#34d399', '#60a5fa', '#a78bfa', '#f43f5e', '#ffffff'];
 
@@ -104,8 +104,8 @@
                 const tx = Math.cos(angle) * distance;
                 const ty = Math.sin(angle) * distance - 80;
 
-                // 紙吹雪の舞う時間も長めに設定（約3.5秒間じっくり舞い散る）
-                const duration = Math.random() * 1.5 + 2.5;
+                // 紙吹雪が舞う時間も6秒間（最大約6秒）じっくり舞い散るように延長
+                const duration = Math.random() * 2.0 + 4.0;
                 
                 particle.style.transition = `transform ${duration}s cubic-bezier(0.1, 0.8, 0.3, 1), opacity ${duration}s ease-in`;
                 particle.style.transform = `translate(0, 0) rotate(0deg)`;
@@ -116,9 +116,10 @@
                     particle.style.opacity = '0';
                 }, 30);
 
+                // 演出終了後に全体コンテナを削除（余裕を持たせて7秒後にクリーンアップ）
                 setTimeout(() => {
                     container.remove();
-                }, (duration + 0.5) * 1000);
+                }, 7000);
             }
         }
 
@@ -1074,7 +1075,7 @@
                             const regionStr = `${prefecture || ''} ${city || ''}`.trim() || 'エリア未設定';
                             sendLineNotification(name, genre, regionStr, authorVal || currentUserName);
 
-                            // 【追加】新規都道府県が登録された瞬間ならゴールドの派手なテキスト＆紙吹雪を舞わせる
+                            // 【追加】新規都道府県が登録された瞬間ならゴールドの派手なテキスト＆紙吹雪を6秒間舞わせる
                             if (isNewPrefecture) {
                                 setTimeout(() => {
                                     triggerConfetti();
