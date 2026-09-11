@@ -37,6 +37,50 @@
         // 【パスワード認証設定】ここを変更すると合言葉を変えられます
         const APP_PASSWORD = "nanikuu123"; 
 
+        // 【追加】新しい都道府県が登録されたときの紙吹雪演出関数
+        function triggerConfetti() {
+            const container = document.createElement('div');
+            container.style.position = 'fixed';
+            container.style.top = '0';
+            container.style.left = '0';
+            container.style.width = '100%';
+            container.style.height = '100%';
+            container.style.pointerEvents = 'none';
+            container.style.zIndex = '99999';
+            document.body.appendChild(container);
+
+            const colors = ['#06C755', '#fbbf24', '#34d399', '#60a5fa', '#a78bfa', '#f43f5e'];
+
+            for (let i = 0; i < 150; i++) {
+                const particle = document.createElement('div');
+                particle.style.position = 'absolute';
+                particle.style.width = Math.random() * 10 + 5 + 'px';
+                particle.style.height = Math.random() * 5 + 5 + 'px';
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.top = '-10px';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.opacity = Math.random() * 1 + 0.5;
+                particle.style.transform = `rotate(${Math.random() * 360}deg)`;
+                particle.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                
+                const duration = Math.random() * 2 + 1.5;
+                const delay = Math.random() * 0.5;
+                
+                particle.style.transition = `transform ${duration}s ease-in, top ${duration}s ease-in, opacity ${duration}s ease-in`;
+                container.appendChild(particle);
+
+                setTimeout(() => {
+                    particle.style.top = '105vh';
+                    particle.style.transform = `translate(${(Math.random() - 0.5) * 200}px, 0) rotate(${Math.random() * 720}deg)`;
+                    particle.style.opacity = '0';
+                }, delay * 1000);
+
+                setTimeout(() => {
+                    container.remove();
+                }, (duration + delay) * 1000);
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             // パスワード認証のチェック処理
             const authModal = document.getElementById("auth-modal");
@@ -330,7 +374,7 @@
                 const latestItems = allRestaurants;
 
                 if (latestItems.length === 0) {
-                    latestListEl.innerHTML = `<div class="col-span-full text-center py-12 text-zinc-500 text-xs">登録されているお店がありません。<br>下の「＋ 投稿」ボタンから共有しよう！</div>`;
+                    latestListEl.innerHTML = `<div class="col-span-full text-center py-12 text-zinc-500 text-xs">登録されているお店がありません。<br>下の்க 投稿ボタンから共有しよう！</div>`;
                     if (openAllModalBtn) openAllModalBtn.classList.add("hidden");
                 } else {
                     if (openAllModalBtn) openAllModalBtn.classList.remove("hidden");
@@ -895,7 +939,7 @@
                     const authorVal = authorInput.value.trim();
                     const genre = document.getElementById("restaurant-genre").value;
                     const country = document.getElementById("restaurant-country").value || "日本";
-                    const prefecture = document.getElementById("restaurant-prefecture").value;
+                    const prefecture = document.getElementById("restaurant-prefecture").value.trim();
                     const city = document.getElementById("restaurant-city").value;
                     const address = document.getElementById("restaurant-address").value;
                     const holiday = document.getElementById("restaurant-holiday").value;
@@ -927,6 +971,10 @@
                     
                     let photoUrl = currentPhotoUrlInput.value;
                     let photoPath = currentPhotoPathInput.value;
+
+                    // 【追加】新規登録時、すでに登録されている都道府県リストに存在するか判定
+                    const existingPrefs = new Set(allRestaurants.map(r => (r.prefecture || "").trim()));
+                    const isNewPrefecture = prefecture && !existingPrefs.has(prefecture);
 
                     try {
                         // 住所から緯度経度を再取得
@@ -984,6 +1032,13 @@
                             // 新規投稿時にLINEへ通知を送信
                             const regionStr = `${prefecture || ''} ${city || ''}`.trim() || 'エリア未設定';
                             sendLineNotification(name, genre, regionStr, authorVal || currentUserName);
+
+                            // 【追加】新規都道府県が登録された瞬間なら紙吹雪を舞わせる
+                            if (isNewPrefecture) {
+                                setTimeout(() => {
+                                    triggerConfetti();
+                                }, 300);
+                            }
                         }
 
                         formEl.reset();
