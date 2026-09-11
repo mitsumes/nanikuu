@@ -37,8 +37,8 @@
         // 【パスワード認証設定】ここを変更すると合言葉を変えられます
         const APP_PASSWORD = "nanikuu123"; 
 
-        // 【追加】新しい都道府県が登録されたときの紙吹雪演出関数（ゴールドの文字と6秒間の長時間演出にアップデート）
-        function triggerConfetti() {
+        // 【追加】新しい都道府県・市区町村が登録されたときの紙吹雪演出関数（6秒間・ゴールドの文字）
+        function triggerConfetti(messageText = "🏆 新しい都道府県開拓！") {
             const container = document.createElement('div');
             container.style.position = 'fixed';
             container.style.top = '0';
@@ -49,9 +49,9 @@
             container.style.zIndex = '99999';
             document.body.appendChild(container);
 
-            // 中央に「新しい都道府県開拓」のゴールドで派手なポップアップテキストを表示（表示時間を6秒間に変更）
+            // 中央にゴールドで派手なポップアップテキストを表示（6秒間持続）
             const banner = document.createElement('div');
-            banner.textContent = "🏆 新しい都道府県開拓！";
+            banner.textContent = messageText;
             banner.style.position = 'absolute';
             banner.style.top = '40%';
             banner.style.left = '50%';
@@ -75,12 +75,11 @@
                 banner.style.opacity = '1';
             }, 50);
 
-            // 登場後に少し弾むようなアニメーション
             setTimeout(() => {
                 banner.style.transform = 'translate(-50%, -50%) scale(1)';
             }, 350);
 
-            // 表示時間を6秒間（6000ミリ秒）に設定してフェードアウト
+            // 6秒間（6000ミリ秒）に設定してフェードアウト
             setTimeout(() => {
                 banner.style.transform = 'translate(-50%, -80%) scale(1)';
                 banner.style.opacity = '0';
@@ -104,7 +103,6 @@
                 const tx = Math.cos(angle) * distance;
                 const ty = Math.sin(angle) * distance - 80;
 
-                // 紙吹雪が舞う時間も6秒間（最大約6秒）じっくり舞い散るように延長
                 const duration = Math.random() * 2.0 + 4.0;
                 
                 particle.style.transition = `transform ${duration}s cubic-bezier(0.1, 0.8, 0.3, 1), opacity ${duration}s ease-in`;
@@ -116,7 +114,6 @@
                     particle.style.opacity = '0';
                 }, 30);
 
-                // 演出終了後に全体コンテナを削除（余裕を持たせて7秒後にクリーンアップ）
                 setTimeout(() => {
                     container.remove();
                 }, 7000);
@@ -982,7 +979,7 @@
                     const genre = document.getElementById("restaurant-genre").value;
                     const country = document.getElementById("restaurant-country").value || "日本";
                     const prefecture = document.getElementById("restaurant-prefecture").value.trim();
-                    const city = document.getElementById("restaurant-city").value;
+                    const city = document.getElementById("restaurant-city").value.trim();
                     const address = document.getElementById("restaurant-address").value;
                     const holiday = document.getElementById("restaurant-holiday").value;
                     const hpUrl = document.getElementById("restaurant-hp").value;
@@ -1014,9 +1011,12 @@
                     let photoUrl = currentPhotoUrlInput.value;
                     let photoPath = currentPhotoPathInput.value;
 
-                    // 【追加】新規登録時、すでに登録されている都道府県リストに存在するか判定
+                    // 【追加】新規登録時、すでに登録されている都道府県・市区町村リストに存在するか判定
                     const existingPrefs = new Set(allRestaurants.map(r => (r.prefecture || "").trim()));
+                    const existingCities = new Set(allRestaurants.map(r => (r.city || "").trim()));
+
                     const isNewPrefecture = prefecture && !existingPrefs.has(prefecture);
+                    const isNewCity = city && !existingCities.has(city);
 
                     try {
                         // 住所から緯度経度を再取得
@@ -1075,10 +1075,14 @@
                             const regionStr = `${prefecture || ''} ${city || ''}`.trim() || 'エリア未設定';
                             sendLineNotification(name, genre, regionStr, authorVal || currentUserName);
 
-                            // 【追加】新規都道府県が登録された瞬間ならゴールドの派手なテキスト＆紙吹雪を6秒間舞わせる
+                            // 【追加】新規都道府県または新規市町村が登録された瞬間ならゴールドの派手なテキスト＆紙吹雪を6秒間舞わせる
                             if (isNewPrefecture) {
                                 setTimeout(() => {
-                                    triggerConfetti();
+                                    triggerConfetti("🏆 新しい都道府県開拓！");
+                                }, 300);
+                            } else if (isNewCity) {
+                                setTimeout(() => {
+                                    triggerConfetti("✨ 新しい市町村開拓！");
                                 }, 300);
                             }
                         }
