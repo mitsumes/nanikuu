@@ -620,7 +620,7 @@
                 });
             }
 
-            // 日本地図モーダル内の統計テキスト・全国制覇進捗更新（%表示を削除）
+            // 日本地図モーダル内の統計テキスト・全国制覇進捗更新 ＆ グループバッジ表示
             function updateJapanMapStats() {
                 const standardPrefs = [
                     "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
@@ -634,7 +634,7 @@
 
                 const prefCounts = {};
                 const uniqueCitiesSet = new Set();
-                let overseasCount = 0;
+                const overseasCountriesSet = new Set();
 
                 allRestaurants.forEach(item => {
                     const country = (item.country || "").trim();
@@ -646,7 +646,7 @@
                     }
 
                     if ((country && country !== "日本" && country !== "Japan") || pref.includes("インドネシア") || pref.includes("ジャカルタ") || pref.includes("バリ")) {
-                        overseasCount++;
+                        overseasCountriesSet.add(country || "海外");
                     } else if (pref) {
                         let normalizedPref = pref;
                         if (!standardPrefs.includes(pref)) {
@@ -660,6 +660,7 @@
                 const uniqueJapanCount = Object.keys(prefCounts).filter(p => standardPrefs.includes(p) && prefCounts[p] > 0).length;
                 const percentage = Math.round((uniqueJapanCount / 47) * 100);
                 const uniqueCityCount = uniqueCitiesSet.size;
+                const overseasCount = overseasCountriesSet.size;
 
                 if (prefectureCountEl) {
                     let prefText = `${uniqueJapanCount} / 47 都道府県制覇`;
@@ -668,7 +669,7 @@
                     }
                     
                     if (overseasCount > 0) {
-                        prefectureCountEl.innerHTML = `${prefText} / 市町村数: <strong class="text-white">${uniqueCityCount}</strong>市町村 (海外: ${overseasCount}件)`;
+                        prefectureCountEl.innerHTML = `${prefText} / 市町村数: <strong class="text-white">${uniqueCityCount}</strong>市町村 (海外: ${overseasCount}カ国)`;
                     } else {
                         prefectureCountEl.innerHTML = `${prefText} / 市町村数: <strong class="text-white">${uniqueCityCount}</strong>市町村`;
                     }
@@ -683,6 +684,58 @@
                     prefectureCountEl.parentElement.appendChild(barContainer);
                 } else if (progressBarEl) {
                     progressBarEl.style.width = `${percentage}%`;
+                }
+
+                // グループバッジコレクションの描画
+                let badgeSectionEl = document.getElementById("group-badge-section");
+                if (!badgeSectionEl && prefectureCountEl && prefectureCountEl.parentElement) {
+                    badgeSectionEl = document.createElement("div");
+                    badgeSectionEl.id = "group-badge-section";
+                    badgeSectionEl.className = "mt-3 bg-zinc-950 p-3 rounded-2xl border border-zinc-800 space-y-2";
+                    prefectureCountEl.parentElement.appendChild(badgeSectionEl);
+                }
+
+                if (badgeSectionEl) {
+                    // バッジの判定
+                    const hasOverseasHunter = overseasCount > 0;
+                    const hasPref10 = uniqueJapanCount >= 10;
+                    const hasPref20 = uniqueJapanCount >= 20;
+                    const hasPref30 = uniqueJapanCount >= 30;
+                    const hasPref40 = uniqueJapanCount >= 40;
+                    const hasPref47 = uniqueJapanCount >= 47;
+
+                    badgeSectionEl.innerHTML = `
+                        <h4 class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center justify-between">
+                            <span>🏅 グループ獲得バッジコレクション</span>
+                            <span class="text-[#06C755] font-mono">${[hasOverseasHunter, hasPref10, hasPref20, hasPref30, hasPref40, hasPref47].filter(Boolean).length} / 6</span>
+                        </h4>
+                        <div class="grid grid-cols-3 gap-2 text-center">
+                            <div class="p-2 rounded-xl border text-[10px] flex flex-col items-center justify-center gap-1 ${hasOverseasHunter ? 'bg-amber-500/10 border-amber-500 text-white shadow-sm' : 'bg-zinc-900 border-zinc-800 text-zinc-600 opacity-50'}">
+                                <span class="text-base">${hasOverseasHunter ? '🌍' : '🔒'}</span>
+                                <span class="font-bold leading-tight">海外ハンター</span>
+                            </div>
+                            <div class="p-2 rounded-xl border text-[10px] flex flex-col items-center justify-center gap-1 ${hasPref10 ? 'bg-emerald-500/10 border-emerald-500 text-white shadow-sm' : 'bg-zinc-900 border-zinc-800 text-zinc-600 opacity-50'}">
+                                <span class="text-base">${hasPref10 ? '🥉' : '🔒'}</span>
+                                <span class="font-bold leading-tight">都道府県 10</span>
+                            </div>
+                            <div class="p-2 rounded-xl border text-[10px] flex flex-col items-center justify-center gap-1 ${hasPref20 ? 'bg-emerald-500/10 border-emerald-500 text-white shadow-sm' : 'bg-zinc-900 border-zinc-800 text-zinc-600 opacity-50'}">
+                                <span class="text-base">${hasPref20 ? '🥈' : '🔒'}</span>
+                                <span class="font-bold leading-tight">都道府県 20</span>
+                            </div>
+                            <div class="p-2 rounded-xl border text-[10px] flex flex-col items-center justify-center gap-1 ${hasPref30 ? 'bg-emerald-500/10 border-emerald-500 text-white shadow-sm' : 'bg-zinc-900 border-zinc-800 text-zinc-600 opacity-50'}">
+                                <span class="text-base">${hasPref30 ? '🥇' : '🔒'}</span>
+                                <span class="font-bold leading-tight">都道府県 30</span>
+                            </div>
+                            <div class="p-2 rounded-xl border text-[10px] flex flex-col items-center justify-center gap-1 ${hasPref40 ? 'bg-indigo-500/10 border-indigo-500 text-white shadow-sm' : 'bg-zinc-900 border-zinc-800 text-zinc-600 opacity-50'}">
+                                <span class="text-base">${hasPref40 ? '💎' : '🔒'}</span>
+                                <span class="font-bold leading-tight">都道府県 40</span>
+                            </div>
+                            <div class="p-2 rounded-xl border text-[10px] flex flex-col items-center justify-center gap-1 ${hasPref47 ? 'bg-yellow-500/20 border-yellow-400 text-yellow-300 shadow-sm animate-pulse' : 'bg-zinc-900 border-zinc-800 text-zinc-600 opacity-50'}">
+                                <span class="text-base">${hasPref47 ? '👑' : '🔒'}</span>
+                                <span class="font-bold leading-tight">全国完全制覇</span>
+                            </div>
+                        </div>
+                    `;
                 }
 
                 const mapPrefListEl = document.getElementById("map-prefecture-list");
