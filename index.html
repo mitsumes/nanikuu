@@ -123,8 +123,8 @@
             }
         }
 
-        // 新しい国が登録されたときの花火＆輝く文字演出関数
-        function triggerFireworks(messageText = "🎆 NEW COUNTRY CONQUERED 🎆") {
+        // 新しい国が登録されたときの花火＆輝く文字演出関数（見切れないように改行・調整）
+        function triggerFireworks(countryName = "") {
             const container = document.createElement('div');
             container.style.position = 'fixed';
             container.style.top = '0';
@@ -135,30 +135,32 @@
             container.style.zIndex = '99999';
             document.body.appendChild(container);
 
-            // 中央に輝くネオン風のポップアップテキストを表示（6秒間持続）
+            // 中央に輝くネオン風のポップアップテキストを表示（スマホ画面に収まるよう調整・改行）
             const banner = document.createElement('div');
-            banner.textContent = messageText;
+            banner.innerHTML = `🎆 NEW COUNTRY CONQUERED 🎆<br><span style="font-size: 16px; font-weight: 700; color: #34d399;">(${countryName})</span>`;
             banner.style.position = 'absolute';
             banner.style.top = '38%';
             banner.style.left = '50%';
             banner.style.transform = 'translate(-50%, -50%) scale(0.3)';
             banner.style.background = 'radial-gradient(circle, rgba(20,20,30,0.95) 0%, rgba(5,5,10,0.95) 100%)';
             banner.style.color = '#ffffff';
-            banner.style.padding = '22px 36px';
-            banner.style.borderRadius = '9999px';
+            banner.style.padding = '16px 20px';
+            banner.style.borderRadius = '24px';
             banner.style.fontWeight = '900';
-            banner.style.fontSize = '22px';
-            banner.style.letterSpacing = '1px';
-            banner.style.boxShadow = '0 0 40px rgba(52, 211, 153, 0.8), 0 0 80px rgba(96, 165, 250, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.5)';
-            banner.style.border = '3px solid #34d399';
-            banner.style.textShadow = '0 0 10px #ffffff, 0 0 20px #34d399, 0 0 30px #60a5fa';
+            banner.style.fontSize = '17px';
+            banner.style.textAlign = 'center';
+            banner.style.letterSpacing = '0.5px';
+            banner.style.boxShadow = '0 0 30px rgba(52, 211, 153, 0.8), 0 0 60px rgba(96, 165, 250, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.5)';
+            banner.style.border = '2.5px solid #34d399';
+            banner.style.textShadow = '0 0 8px #ffffff, 0 0 15px #34d399, 0 0 25px #60a5fa';
             banner.style.whiteSpace = 'nowrap';
+            banner.style.maxWidth = '90vw';
             banner.style.transition = 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease-in';
             banner.style.opacity = '0';
             container.appendChild(banner);
 
             setTimeout(() => {
-                banner.style.transform = 'translate(-50%, -50%) scale(1.15)';
+                banner.style.transform = 'translate(-50%, -50%) scale(1.1)';
                 banner.style.opacity = '1';
             }, 50);
 
@@ -1188,7 +1190,7 @@
                             // 新規国、都道府県、市区町村に応じた演出分岐
                             if (isNewCountry) {
                                 setTimeout(() => {
-                                    triggerFireworks(`🎆 NEW COUNTRY CONQUERED (${country}) 🎆`);
+                                    triggerFireworks(country);
                                 }, 300);
                             } else if (isNewPrefecture) {
                                 setTimeout(() => {
