@@ -930,16 +930,11 @@
                 }
             };
 
-            // カード生成関数
+            // カード生成関数 (写真を少し大きくし、イッタヨボタン位置に都道府県名を配置)
             function createCardElement(item) {
                 const card = document.createElement("div");
                 const imageUrl = item.photoUrl || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=500&q=60";
-                const locationStr = `${item.city || ''} ${item.prefecture || ''}`.trim() || '未設定';
-                
-                const likedUsers = item.likedUsers || {};
-                const likeCount = Object.keys(likedUsers).length;
-                const userKey = currentUserName.replace(/[.#$\/\[\]]/g, "_");
-                const hasLiked = !!likedUsers[userKey];
+                const locationStr = item.prefecture || '未設定';
 
                 card.onclick = () => {
                     if (searchResultModal) {
@@ -955,21 +950,18 @@
 
                 card.className = "bg-zinc-900/80 rounded-2xl overflow-hidden flex flex-col border border-zinc-800/80 hover:border-[#06C755]/50 transition shadow-lg cursor-pointer group";
                 card.innerHTML = `
-                    <div class="w-full aspect-video bg-zinc-950 relative overflow-hidden flex items-center justify-center">
+                    <div class="w-full aspect-[4/3] bg-zinc-950 relative overflow-hidden flex items-center justify-center">
                         <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
                         <span class="absolute top-2 right-2 bg-black/70 backdrop-blur-md text-[#06C755] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-[#06C755]/30">${item.genre || 'その他'}</span>
                     </div>
                     <div class="p-3 flex flex-col justify-between flex-1 space-y-2">
                         <div>
                             <h3 class="font-bold text-xs text-white truncate">${item.name}</h3>
-                            <div class="text-[10px] text-zinc-400 truncate mt-0.5">📍 ${locationStr}</div>
+                            <div class="text-[10px] text-zinc-400 truncate mt-0.5">${item.city ? `📍 ${item.city}` : ''}</div>
                         </div>
                         <div class="pt-2 border-t border-zinc-800/80 flex items-center justify-between">
                             <span class="text-[9px] text-zinc-500 truncate max-w-[80px]">✍️ ${item.author || '不明'}</span>
-                            <button onclick="window.toggleItkayo('${item.id}', event)" class="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-lg border transition ${hasLiked ? 'bg-[#06C755]/20 border-[#06C755] text-[#06C755] font-bold' : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700'}">
-                                <span>🚀</span>
-                                <span>イッタヨ (${likeCount})</span>
-                            </button>
+                            <span class="text-[10px] text-[#06C755] font-bold truncate max-w-[100px]">📍 ${locationStr}</span>
                         </div>
                     </div>
                 `;
@@ -1928,7 +1920,7 @@
         </div>
     </div>
 
-    <!-- 詳細モーダル (写真を見切れないサイズ（object-contain）に調整) -->
+    <!-- 詳細モーダル -->
     <div id="detail-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[85vh] relative">
             <button id="close-detail" class="absolute top-3 right-3 bg-black/70 hover:bg-black text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold z-10 shadow-md">✕</button>
