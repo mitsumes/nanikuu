@@ -1576,7 +1576,7 @@
         </section>
     </div>
 
-    <!-- 下部固定アクションナビゲーション (ルーレット、メダル、探す、地図、投稿の順に並び替え) -->
+    <!-- 下部固定アクションナビゲーション -->
     <nav class="fixed bottom-0 left-0 right-0 bg-zinc-900/95 backdrop-blur-md border-t border-zinc-800 p-2.5 z-40 shadow-2xl">
         <div class="max-w-md mx-auto grid grid-cols-5 gap-1">
             <button id="open-roulette-modal" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs py-2 px-0.5 rounded-2xl font-bold border border-zinc-700/60 transition flex flex-col items-center justify-center gap-0.5 shadow-md active:scale-95">
@@ -1928,14 +1928,14 @@
         </div>
     </div>
 
-    <!-- 詳細モーダル -->
+    <!-- 詳細モーダル (写真を見切れないサイズ（object-contain）に調整) -->
     <div id="detail-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[85vh]">
-            <div class="relative h-44 min-h-[176px] bg-zinc-800 shrink-0">
-                <img id="detail-image" src="" alt="" class="w-full h-full object-cover">
-                <button id="close-detail" class="absolute top-3 right-3 bg-black/70 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold">✕</button>
-            </div>
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[85vh] relative">
+            <button id="close-detail" class="absolute top-3 right-3 bg-black/70 hover:bg-black text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold z-10 shadow-md">✕</button>
             <div class="p-4 overflow-y-auto space-y-3 flex-1">
+                <div class="w-full bg-zinc-950 rounded-2xl overflow-hidden flex items-center justify-center border border-zinc-800 relative">
+                    <img id="detail-image" src="" alt="" class="w-full max-h-72 object-contain">
+                </div>
                 <div>
                     <span id="detail-genre" class="text-[10px] bg-zinc-800 text-[#06C755] font-bold px-2.5 py-1 rounded-full border border-[#06C755]/30"></span>
                     <h2 id="detail-name" class="text-base font-bold text-white mt-1.5"></h2>
