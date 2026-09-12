@@ -123,6 +123,103 @@
             }
         }
 
+        // 新しい国が登録されたときの花火＆輝く文字演出関数
+        function triggerFireworks(messageText = "🎆 NEW COUNTRY CONQUERED 🎆") {
+            const container = document.createElement('div');
+            container.style.position = 'fixed';
+            container.style.top = '0';
+            container.style.left = '0';
+            container.style.width = '100%';
+            container.style.height = '100%';
+            container.style.pointerEvents = 'none';
+            container.style.zIndex = '99999';
+            document.body.appendChild(container);
+
+            // 中央に輝くネオン風のポップアップテキストを表示（6秒間持続）
+            const banner = document.createElement('div');
+            banner.textContent = messageText;
+            banner.style.position = 'absolute';
+            banner.style.top = '38%';
+            banner.style.left = '50%';
+            banner.style.transform = 'translate(-50%, -50%) scale(0.3)';
+            banner.style.background = 'radial-gradient(circle, rgba(20,20,30,0.95) 0%, rgba(5,5,10,0.95) 100%)';
+            banner.style.color = '#ffffff';
+            banner.style.padding = '22px 36px';
+            banner.style.borderRadius = '9999px';
+            banner.style.fontWeight = '900';
+            banner.style.fontSize = '22px';
+            banner.style.letterSpacing = '1px';
+            banner.style.boxShadow = '0 0 40px rgba(52, 211, 153, 0.8), 0 0 80px rgba(96, 165, 250, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.5)';
+            banner.style.border = '3px solid #34d399';
+            banner.style.textShadow = '0 0 10px #ffffff, 0 0 20px #34d399, 0 0 30px #60a5fa';
+            banner.style.whiteSpace = 'nowrap';
+            banner.style.transition = 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease-in';
+            banner.style.opacity = '0';
+            container.appendChild(banner);
+
+            setTimeout(() => {
+                banner.style.transform = 'translate(-50%, -50%) scale(1.15)';
+                banner.style.opacity = '1';
+            }, 50);
+
+            setTimeout(() => {
+                banner.style.transform = 'translate(-50%, -50%) scale(1)';
+            }, 350);
+
+            // 6秒後にフェードアウト
+            setTimeout(() => {
+                banner.style.transform = 'translate(-50%, -85%) scale(1)';
+                banner.style.opacity = '0';
+            }, 6000);
+
+            // 花火が打ち上がるようなパーティクルを複数地点から発生させる
+            const fireworkColors = ['#34d399', '#60a5fa', '#f43f5e', '#ffd700', '#c084fc', '#38bdf8', '#ffffff'];
+            const centers = [
+                { x: '30%', y: '30%' },
+                { x: '70%', y: '30%' },
+                { x: '50%', y: '50%' },
+                { x: '25%', y: '65%' },
+                { x: '75%', y: '65%' }
+            ];
+
+            centers.forEach((pos, index) => {
+                setTimeout(() => {
+                    for (let i = 0; i < 50; i++) {
+                        const particle = document.createElement('div');
+                        particle.style.position = 'absolute';
+                        particle.style.width = Math.random() * 10 + 4 + 'px';
+                        particle.style.height = Math.random() * 10 + 4 + 'px';
+                        particle.style.backgroundColor = fireworkColors[Math.floor(Math.random() * fireworkColors.length)];
+                        particle.style.top = pos.y;
+                        particle.style.left = pos.x;
+                        particle.style.opacity = '1';
+                        particle.style.borderRadius = '50%';
+                        particle.style.boxShadow = '0 0 8px currentColor';
+
+                        const angle = Math.random() * Math.PI * 2;
+                        const distance = Math.random() * 160 + 30;
+                        const tx = Math.cos(angle) * distance;
+                        const ty = Math.sin(angle) * distance;
+
+                        const duration = Math.random() * 1.5 + 1.5;
+
+                        particle.style.transition = `transform ${duration}s cubic-bezier(0.1, 0.8, 0.3, 1), opacity ${duration}s ease-out`;
+                        particle.style.transform = `translate(0, 0) scale(1)`;
+                        container.appendChild(particle);
+
+                        setTimeout(() => {
+                            particle.style.transform = `translate(${tx}px, ${ty + 60}px) scale(0.2)`;
+                            particle.style.opacity = '0';
+                        }, 30);
+                    }
+                }, index * 300);
+            });
+
+            setTimeout(() => {
+                container.remove();
+            }, 7500);
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             // パスワード認証のチェック処理
             const authModal = document.getElementById("auth-modal");
@@ -988,7 +1085,7 @@
                     const name = document.getElementById("restaurant-name").value;
                     const authorVal = authorInput.value.trim();
                     const genre = document.getElementById("restaurant-genre").value;
-                    const country = document.getElementById("restaurant-country").value || "日本";
+                    const country = document.getElementById("restaurant-country").value.trim() || "日本";
                     const prefecture = document.getElementById("restaurant-prefecture").value.trim();
                     const city = document.getElementById("restaurant-city").value.trim();
                     const address = document.getElementById("restaurant-address").value;
@@ -1022,10 +1119,12 @@
                     let photoUrl = currentPhotoUrlInput.value;
                     let photoPath = currentPhotoPathInput.value;
 
-                    // 新規登録時、すでに登録されている都道府県・市区町村リストに存在するか判定
+                    // 新規登録時、すでに登録されている国・都道府県・市区町村リストに存在するか判定
+                    const existingCountries = new Set(allRestaurants.map(r => (r.country || "日本").trim().toLowerCase()));
                     const existingPrefs = new Set(allRestaurants.map(r => (r.prefecture || "").trim()));
                     const existingCities = new Set(allRestaurants.map(r => (r.city || "").trim()));
 
+                    const isNewCountry = country && country !== "日本" && country !== "Japan" && !existingCountries.has(country.toLowerCase());
                     const isNewPrefecture = prefecture && !existingPrefs.has(prefecture);
                     const isNewCity = city && !existingCities.has(city);
 
@@ -1086,8 +1185,12 @@
                             const regionStr = `${prefecture || ''} ${city || ''}`.trim() || 'エリア未設定';
                             sendLineNotification(name, genre, regionStr, authorVal || currentUserName);
 
-                            // 新規都道府県または新規市区町村が登録された瞬間なら紙吹雪を6秒間舞わせる
-                            if (isNewPrefecture) {
+                            // 新規国、都道府県、市区町村に応じた演出分岐
+                            if (isNewCountry) {
+                                setTimeout(() => {
+                                    triggerFireworks(`🎆 NEW COUNTRY CONQUERED (${country}) 🎆`);
+                                }, 300);
+                            } else if (isNewPrefecture) {
                                 setTimeout(() => {
                                     triggerConfetti("🏆 新しい都道府県開拓！", false);
                                 }, 300);
