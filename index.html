@@ -1738,6 +1738,7 @@
                         <option value="こってり">こってり</option>
                         <option value="あっさり">あっさり</option>
                         <option value="まぜそば">まぜそば</option>
+                        <option value="冷やし中華">冷やし中華</option>
                         <option value="台湾">台湾</option>
                         <option value="担々麺">担々麺</option>
                         <option value="つけ麺">つけ麺</option>
@@ -1809,6 +1810,7 @@
                             <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="こってり"> こってり</label>
                             <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="あっさり"> あっさり</label>
                             <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="まぜそば"> まぜそば</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="冷やし中華"> 冷やし中華</label>
                             <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="台湾"> 台湾</label>
                             <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="担々麺"> 担々麺</label>
                             <label class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="ramen-detail" value="つけ麺"> つけ麺</label>
@@ -1843,14 +1845,14 @@
                         <label class="block text-[10px] text-zinc-400 mb-1">利用シーン</label>
                         <div class="grid grid-cols-3 gap-2 text-xs text-zinc-300">
                             <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="1人OK"> 1人OK</label>
-                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="女子会"> 女子会</label>
-                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="飲み会"> 飲み会</label>
-                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="家族向け"> 家族向け</label>
-                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="接待向け"> 接待向け</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="朝食"> 朝食</label>
                             <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="ランチ"> ランチ</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="ディナー"> ディナー</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="家族向け"> 家族向け</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="女子会"> 女子会</label>
                             <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="男子会"> 男子会</label>
                             <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="記念日"> 記念日</label>
-                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="ディナー"> ディナー</label>
+                            <label class="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 p-2 rounded-xl"><input type="checkbox" name="restaurant-scene" value="接待向け"> 接待向け</label>
                         </div>
                     </div>
 
@@ -1940,50 +1942,54 @@
                     <div><span class="text-zinc-500 block text-[10px]">利用シーン</span><span id="detail-scenes" class="text-zinc-200"></span></div>
                     <div><span class="text-zinc-500 block text-[10px]">駐車場 / 予約</span><span id="detail-parking" class="text-zinc-200"></span> / <span id="detail-reservation" class="text-zinc-200"></span></div>
                 </div>
-                <div class="text-xs bg-zinc-950/60 p-3 rounded-2xl border border-zinc-800">
-                    <span class="text-zinc-500 block text-[10px]">定休日</span>
-                    <span id="detail-holiday" class="text-zinc-200"></span>
+                <div class="text-xs space-y-2 bg-zinc-950/60 p-3 rounded-2xl border border-zinc-800">
+                    <div><span class="text-zinc-500 block text-[10px]">定休日</span><span id="detail-holiday" class="text-zinc-200"></span></div>
+                    <div><span class="text-zinc-500 block text-[10px]">投稿者</span><span id="detail-author" class="text-zinc-200"></span></div>
+                    <div id="detail-hp" class="hidden"></div>
+                    <div id="detail-insta" class="hidden"></div>
                 </div>
-                <div id="detail-hp" class="hidden"></div>
-                <div id="detail-insta" class="hidden"></div>
                 <div>
                     <span class="text-zinc-500 block text-[10px] mb-1">メモ</span>
-                    <p id="detail-memo" class="text-xs text-zinc-300 bg-zinc-950/60 p-3 rounded-2xl border border-zinc-800 whitespace-pre-wrap"></p>
+                    <p id="detail-memo" class="text-xs text-zinc-200 bg-zinc-950/60 p-3 rounded-2xl border border-zinc-800 whitespace-pre-wrap"></p>
                 </div>
-                <div class="text-[10px] text-zinc-400 text-right">投稿者: <span id="detail-author" class="text-zinc-200 font-bold"></span></div>
                 <div id="detail-action-buttons"></div>
             </div>
         </div>
     </div>
 
-    <!-- 検索結果モーダル -->
-    <div id="search-result-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex-col z-50 overflow-hidden">
-        <div class="bg-zinc-900 border-b border-zinc-800 p-4 flex justify-between items-center shrink-0">
-            <h3 class="text-xs font-bold text-white">検索結果 / エリア別</h3>
-            <button id="close-search-result-modal" class="text-xs text-zinc-400 hover:text-white px-2.5 py-1 rounded-xl bg-zinc-800 font-bold">✕ 閉じる</button>
-        </div>
-        <div class="p-4 overflow-y-auto flex-1">
-            <div id="search-result-list" class="grid grid-cols-2 gap-3 max-w-md mx-auto"></div>
+    <!-- すべて見るモーダル -->
+    <div id="all-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-t-3xl sm:rounded-3xl w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
+                <h3 class="text-xs font-bold text-white flex items-center gap-1.5"><span>📜</span> 登録されたお店一覧</h3>
+                <button id="close-all-modal" class="text-xs text-zinc-400 hover:text-white px-2 py-1 font-bold">✕ 閉じる</button>
+            </div>
+            <div class="p-4 overflow-y-auto flex-1">
+                <div id="all-restaurant-list" class="grid grid-cols-2 gap-3"></div>
+            </div>
         </div>
     </div>
 
-    <!-- 一覧モーダル -->
-    <div id="all-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex-col z-50 overflow-hidden">
-        <div class="bg-zinc-900 border-b border-zinc-800 p-4 flex justify-between items-center shrink-0">
-            <h3 class="text-xs font-bold text-white">登録されたお店一覧</h3>
-            <button id="close-all-modal" class="text-xs text-zinc-400 hover:text-white px-2.5 py-1 rounded-xl bg-zinc-800 font-bold">✕ 閉じる</button>
-        </div>
-        <div class="p-4 overflow-y-auto flex-1">
-            <div id="all-restaurant-list" class="grid grid-cols-2 gap-3 max-w-md mx-auto"></div>
+    <!-- 検索結果モーダル -->
+    <div id="search-result-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-t-3xl sm:rounded-3xl w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
+                <h3 class="text-xs font-bold text-white flex items-center gap-1.5"><span>🔍</span> 検索結果</h3>
+                <button id="close-search-result-modal" class="text-xs text-zinc-400 hover:text-white px-2 py-1 font-bold">✕ 閉じる</button>
+            </div>
+            <div class="p-4 overflow-y-auto flex-1">
+                <div id="search-result-list" class="grid grid-cols-2 gap-3"></div>
+            </div>
         </div>
     </div>
 
     <!-- 削除確認モーダル -->
-    <div id="delete-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 w-full max-w-xs text-center space-y-4 shadow-2xl">
+    <div id="delete-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-[60]">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 w-full max-w-xs text-center space-y-4 shadow-2xl">
+            <div class="text-3xl">⚠️</div>
             <h3 class="text-sm font-bold text-white">本当に削除しますか？</h3>
-            <p class="text-xs text-zinc-400">この操作は元に戻せません。</p>
-            <div class="flex gap-2">
+            <p class="text-[10px] text-zinc-400 leading-relaxed">この操作は元に戻すことができません。グループ全員のリストから削除されます。</p>
+            <div class="flex gap-2 pt-2">
                 <button id="delete-cancel" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-2.5 rounded-2xl text-xs transition">キャンセル</button>
                 <button id="confirm-delete" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-2xl text-xs transition">削除する</button>
             </div>
