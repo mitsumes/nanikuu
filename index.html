@@ -62,7 +62,36 @@
         // 【パスワード認証設定】ここを変更すると合言葉を変えられます
         const APP_PASSWORD = "nanikuu123"; 
 
-        // 都道府県制覇の達成段階（20、30、40、47コンプリート）に応じた紙吹雪＆特別演出関数
+        // 住所から正確な緯度経度を非同期で取得する関数（詳細住所を最優先）
+        async function getCoordinatesFromAddress(country, prefecture, city, address) {
+            const queries = [
+                [country, prefecture, city, address].filter(Boolean).join(" "),
+                [prefecture, city, address].filter(Boolean).join(" "),
+                [city, address].filter(Boolean).join(" "),
+                [prefecture, city].filter(Boolean).join(" ")
+            ];
+
+            for (const q of queries) {
+                if (!q.trim()) continue;
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`, {
+                        headers: { 'Accept-Language': 'ja' }
+                    });
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        return {
+                            lat: parseFloat(data[0].lat),
+                            lng: parseFloat(data[0].lon)
+                        };
+                    }
+                } catch (e) {
+                    console.error("ジオコーディングエラー:", e);
+                }
+            }
+            return null;
+        }
+
+        // 都道府県制覇の達成段階に応じた特別演出
         function triggerPrefectureStageEffect(visitedCount) {
             let messageText = "🏆 新しい都道府県開拓！";
             let isGrandComplete = false;
@@ -617,14 +646,33 @@
 
             function loadRestaurants() {
                 const dbRef = ref(db, 'groups/' + STORAGE_GROUP_ID + '/restaurants');
-                onValue(dbRef, (snapshot) => {
+                onValue(dbRef, async (snapshot) => {
                     if (loadingEl) loadingEl.classList.add("hidden");
                     allRestaurants = [];
                     if (snapshot.exists()) {
                         const data = snapshot.val();
-                        Object.keys(data).forEach((key) => {
-                            allRestaurants.push({ id: key, ...data[key] });
-                        });
+                        const updates = {};
+
+                        for (const key of Object.keys(data)) {
+                            let item = data[key];
+                            // 過去データで緯度経度がない場合、または市区町村レベルで不正確な場合の自動再取得・補正
+                            if (!item.latitude || !item.longitude || item.isLegacyMapped) {
+                                const coords = await getCoordinatesFromAddress(item.country, item.prefecture, item.city, item.address);
+                                if (coords) {
+                                    item.latitude = coords.lat + (Math.random() - 0.5) * 0.001;
+                                    item.longitude = coords.lng + (Math.random() - 0.5) * 0.001;
+                                    updates[key + '/latitude'] = item.latitude;
+                                    updates[key + '/longitude'] = item.longitude;
+                                }
+                            }
+                            allRestaurants.push({ id: key, ...item });
+                        }
+
+                        // データベース上の過去データの緯度経度を一括アップデート（自動バックグラウンド修復）
+                        if (Object.keys(updates).length > 0) {
+                            update(dbRef, updates).catch(err => console.log("過去データ補正エラー", err));
+                        }
+
                         allRestaurants.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
                     }
                     renderRestaurants();
@@ -1274,35 +1322,6 @@
                 });
             }
 
-            async function getCoordinatesFromAddress(country, prefecture, city, address) {
-                // 詳しい住所（address）を最優先にしてクエリの組み合わせを生成
-                const queries = [
-                    [country, prefecture, city, address].filter(Boolean).join(" "),
-                    [prefecture, city, address].filter(Boolean).join(" "),
-                    [city, address].filter(Boolean).join(" "),
-                    [prefecture, city].filter(Boolean).join(" ")
-                ];
-
-                for (const q of queries) {
-                    if (!q.trim()) continue;
-                    try {
-                        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`, {
-                            headers: { 'Accept-Language': 'ja' }
-                        });
-                        const data = await response.json();
-                        if (data && data.length > 0) {
-                            return {
-                                lat: parseFloat(data[0].lat),
-                                lng: parseFloat(data[0].lon)
-                            };
-                        }
-                    } catch (e) {
-                        console.error("ジオコーディングエラー:", e);
-                    }
-                }
-                return null;
-            }
-
             if (formEl) {
                 formEl.addEventListener("submit", async (e) => {
                     e.preventDefault();
@@ -1408,9 +1427,9 @@
                             resolvedLng = base[1] + (Math.random() - 0.5) * 0.05;
                         }
 
-                        // 同一住所や同じ中心地でピンが完璧に重ならないよう微小な乱数を付与して分散
-                        resolvedLat += (Math.random() - 0.5) * 0.0015;
-                        resolvedLng += (Math.random() - 0.5) * 0.0015;
+                        // 同一地点での完全重なり防止の微小ランダムオフセット
+                        resolvedLat += (Math.random() - 0.5) * 0.001;
+                        resolvedLng += (Math.random() - 0.5) * 0.001;
 
                         restaurantData.latitude = resolvedLat;
                         restaurantData.longitude = resolvedLng;
