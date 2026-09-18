@@ -685,7 +685,7 @@
                 if (!genreTabsContainer) return;
                 genreTabsContainer.innerHTML = "";
 
-                const genres = ["すべて", "ラーメン", "麺類", "居酒屋", "和食", "焼肉・肉料理", "洋食", "中華", "アジア料理", "カフェ・スイーツ", "和菓子", "洋菓子", "ファミレス", "テイクアウト", "その他"];
+                const genres = ["すべて", "ラーメン", "麺類", "居酒屋", "和食", "焼肉・肉料理", "洋食", "中華", "アジア料理", "カフェ", "喫茶店", "カレー屋", "和菓子", "洋菓子", "ファミレス", "テイクアウト", "その他"];
                 
                 genres.forEach(genre => {
                     const count = genre === "すべて" ? allRestaurants.length : allRestaurants.filter(r => r.genre === genre).length;
@@ -1108,7 +1108,6 @@
                     openDetail(item.id);
                 };
 
-                // 修正: 横幅いっぱい（w-full）にしつつ、画像が絶対につぶれない（高さ固定・flex-shrink-0）カード構造に刷新
                 card.className = "bg-zinc-900/85 rounded-2xl overflow-hidden flex flex-col shrink-0 border border-zinc-800/80 hover:border-[#06C755]/50 transition shadow-lg cursor-pointer group w-full";
                 card.innerHTML = `
                     <div class="w-full h-36 bg-zinc-950 relative overflow-hidden flex items-center justify-center shrink-0">
@@ -1810,7 +1809,9 @@
                             <option value="洋食">洋食</option>
                             <option value="中華">中華</option>
                             <option value="アジア料理">アジア料理</option>
-                            <option value="カフェ・スイーツ">カフェ・スイーツ</option>
+                            <option value="カフェ">カフェ</option>
+                            <option value="喫茶店">喫茶店</option>
+                            <option value="カレー屋">カレー屋</option>
                             <option value="和菓子">和菓子</option>
                             <option value="洋菓子">洋菓子</option>
                             <option value="ファミレス">ファミレス</option>
@@ -1859,7 +1860,9 @@
                             <option value="洋食">洋食</option>
                             <option value="中華">中華</option>
                             <option value="アジア料理">アジア料理</option>
-                            <option value="カフェ・スイーツ">カフェ・スイーツ</option>
+                            <option value="カフェ">カフェ</option>
+                            <option value="喫茶店">喫茶店</option>
+                            <option value="カレー屋">カレー屋</option>
                             <option value="和菓子">和菓子</option>
                             <option value="洋菓子">洋菓子</option>
                             <option value="ファミレス">ファミレス</option>
@@ -1936,7 +1939,9 @@
                                 <option value="洋食">洋食</option>
                                 <option value="中華">中華</option>
                                 <option value="アジア料理">アジア料理</option>
-                                <option value="カフェ・スイーツ">カフェ・スイーツ</option>
+                                <option value="カフェ">カフェ</option>
+                                <option value="喫茶店">喫茶店</option>
+                                <option value="カレー屋">カレー屋</option>
                                 <option value="和菓子">和菓子</option>
                                 <option value="洋菓子">洋菓子</option>
                                 <option value="ファミレス">ファミレス</option>
@@ -2126,7 +2131,6 @@
                 <h3 class="text-xs font-bold text-white flex items-center gap-1.5"><span>🔍</span> 検索結果</h3>
                 <button id="close-search-result-modal" class="text-xs text-zinc-400 hover:text-white px-2 py-1 font-bold">✕ 閉じる</button>
             </div>
-            <!-- 修正: 2カラムグリッドをやめ、1列の縦並び（space-y-3）と明確な overflow-y-auto, min-h-0 を設定して確実にスクロールできるように改善 -->
             <div class="p-4 overflow-y-auto space-y-3 flex-1 min-h-0" id="search-result-list"></div>
         </div>
     </div>
