@@ -752,11 +752,10 @@
                     mapMarkersLayer.addLayer(marker);
                 });
 
-                // 指定座標へズームインする演出
                 if (targetLat !== null && targetLng !== null) {
                     leafletMap.flyTo([targetLat, targetLng], 16, {
                         animate: true,
-                        duration: 1.8 // スムーズに2秒弱かけてズームイン
+                        duration: 1.8
                     });
                 }
             }
@@ -1276,9 +1275,11 @@
             }
 
             async function getCoordinatesFromAddress(country, prefecture, city, address) {
+                // 詳しい住所（address）を最優先にしてクエリの組み合わせを生成
                 const queries = [
                     [country, prefecture, city, address].filter(Boolean).join(" "),
                     [prefecture, city, address].filter(Boolean).join(" "),
+                    [city, address].filter(Boolean).join(" "),
                     [prefecture, city].filter(Boolean).join(" ")
                 ];
 
@@ -1407,6 +1408,10 @@
                             resolvedLng = base[1] + (Math.random() - 0.5) * 0.05;
                         }
 
+                        // 同一住所や同じ中心地でピンが完璧に重ならないよう微小な乱数を付与して分散
+                        resolvedLat += (Math.random() - 0.5) * 0.0015;
+                        resolvedLng += (Math.random() - 0.5) * 0.0015;
+
                         restaurantData.latitude = resolvedLat;
                         restaurantData.longitude = resolvedLng;
 
@@ -1452,7 +1457,6 @@
                         resetFormState();
                         closeFormModal();
 
-                        // 【投稿演出】新規投稿・編集完了後に自動で地図モーダルを開き、投稿した住所へズーム＆ピン留め
                         if (mapModal) {
                             mapModal.classList.remove("hidden");
                             mapModal.classList.add("flex");
