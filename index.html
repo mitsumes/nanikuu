@@ -1108,8 +1108,8 @@
                     openDetail(item.id);
                 };
 
-                // 修正: 画像やテキスト枠が潰れないよう flex-shrink-0 を付与してカードのレイアウトを安定化
-                card.className = "bg-zinc-900/85 rounded-2xl overflow-hidden flex flex-col border border-zinc-800/80 hover:border-[#06C755]/50 transition shadow-lg cursor-pointer group";
+                // 修正: カード自体に shrink-0 を付与して潰れを防止
+                card.className = "bg-zinc-900/85 rounded-2xl overflow-hidden flex flex-col shrink-0 border border-zinc-800/80 hover:border-[#06C755]/50 transition shadow-lg cursor-pointer group";
                 card.innerHTML = `
                     <div class="w-full aspect-square bg-zinc-950 relative overflow-hidden flex items-center justify-center shrink-0">
                         <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
@@ -2126,7 +2126,7 @@
                 <h3 class="text-xs font-bold text-white flex items-center gap-1.5"><span>🔍</span> 検索結果</h3>
                 <button id="close-search-result-modal" class="text-xs text-zinc-400 hover:text-white px-2 py-1 font-bold">✕ 閉じる</button>
             </div>
-            <!-- 修正: 検索結果一覧に grid grid-cols-2 gap-3 と overflow-y-auto を適用し、縦長になってもスクロール可能に保持 -->
+            <!-- 修正: 検索結果一覧に grid grid-cols-2 gap-3 と overflow-y-auto、さらにカード側の shrink-0 適用により画像がつぶれないよう完全対応 -->
             <div class="p-4 overflow-y-auto grid grid-cols-2 gap-3 flex-1" id="search-result-list"></div>
         </div>
     </div>
