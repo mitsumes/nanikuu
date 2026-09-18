@@ -53,6 +53,7 @@
         const STORAGE_GROUP_ID = "nanikuu_shared_group_data";
         let allRestaurants = [];
         let currentUserName = "ゲストユーザー";
+        let currentGenreTab = "すべて";
 
         let targetDeleteId = null;
         let targetDeletePhotoPath = null;
@@ -415,7 +416,7 @@
 
             const groupNameDisplay = document.getElementById("group-name-display");
             const latestListEl = document.getElementById("latest-restaurant-list");
-            const allListEl = document.getElementById("all-restaurant-list");
+            const genreTabsContainer = document.getElementById("genre-tabs-container");
             const loadingEl = document.getElementById("loading");
             const restaurantCountEl = document.getElementById("restaurant-count");
             
@@ -497,10 +498,6 @@
             const searchResultModal = document.getElementById("search-result-modal");
             const searchResultListEl = document.getElementById("search-result-list");
             const closeSearchResultModalBtn = document.getElementById("close-search-result-modal");
-
-            const allModal = document.getElementById("all-modal");
-            const openAllModalBtn = document.getElementById("open-all-modal");
-            const closeAllModalBtn = document.getElementById("close-all-modal");
 
             const deleteModal = document.getElementById("delete-modal");
             const confirmDeleteBtn = document.getElementById("confirm-delete");
@@ -672,6 +669,7 @@
 
                         allRestaurants.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
                     }
+                    renderGenreTabs();
                     renderRestaurants();
                     updateJapanMapStats();
                     if (medalModal && !medalModal.classList.contains("hidden")) {
@@ -683,32 +681,44 @@
                 });
             }
 
+            function renderGenreTabs() {
+                if (!genreTabsContainer) return;
+                genreTabsContainer.innerHTML = "";
+
+                const genres = ["すべて", "ラーメン", "麺類", "居酒屋", "和食", "焼肉・肉料理", "洋食", "中華", "アジア料理", "カフェ・スイーツ", "和菓子", "洋菓子", "ファミレス", "テイクアウト", "その他"];
+                
+                genres.forEach(genre => {
+                    const count = genre === "すべて" ? allRestaurants.length : allRestaurants.filter(r => r.genre === genre).length;
+                    if (genre !== "すべて" && count === 0) return; // 登録がないジャンルは非表示（すべては常に表示）
+
+                    const btn = document.createElement("button");
+                    const isActive = currentGenreTab === genre;
+                    btn.className = `px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition border ${isActive ? 'bg-[#06C755] text-zinc-950 border-[#06C755] shadow-md' : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700'}`;
+                    btn.textContent = `${genre} (${count})`;
+                    btn.onclick = () => {
+                        currentGenreTab = genre;
+                        renderGenreTabs();
+                        renderRestaurants();
+                    };
+                    genreTabsContainer.appendChild(btn);
+                });
+            }
+
             function renderRestaurants() {
-                if (!latestListEl || !allListEl) return;
+                if (!latestListEl) return;
                 
                 if (restaurantCountEl) {
                     restaurantCountEl.textContent = `(${allRestaurants.length}件)`;
                 }
 
                 latestListEl.innerHTML = "";
-                const latestItems = allRestaurants;
+                const filteredItems = currentGenreTab === "すべて" ? allRestaurants : allRestaurants.filter(r => r.genre === currentGenreTab);
 
-                if (latestItems.length === 0) {
-                    latestListEl.innerHTML = `<div class="col-span-full text-center py-12 text-zinc-500 text-xs">登録されているお店がありません。<br>下の投稿ボタンから共有しよう！</div>`;
-                    if (openAllModalBtn) openAllModalBtn.classList.add("hidden");
+                if (filteredItems.length === 0) {
+                    latestListEl.innerHTML = `<div class="col-span-full text-center py-12 text-zinc-500 text-xs">このジャンルに登録されているお店はありません。</div>`;
                 } else {
-                    if (openAllModalBtn) openAllModalBtn.classList.remove("hidden");
-                    latestItems.forEach((item) => {
+                    filteredItems.forEach((item) => {
                         latestListEl.appendChild(createCardElement(item));
-                    });
-                }
-
-                allListEl.innerHTML = "";
-                if (allRestaurants.length === 0) {
-                    allListEl.innerHTML = `<div class="text-center py-8 text-zinc-500 text-xs col-span-2">登録されているお店がありません。</div>`;
-                } else {
-                    allRestaurants.forEach((item) => {
-                        allListEl.appendChild(createCardElement(item));
                     });
                 }
             }
@@ -1095,10 +1105,6 @@
                         searchResultModal.classList.add("hidden");
                         searchResultModal.classList.remove("flex");
                     }
-                    if (allModal) {
-                        allModal.classList.add("hidden");
-                        allModal.classList.remove("flex");
-                    }
                     openDetail(item.id);
                 };
 
@@ -1304,20 +1310,6 @@
                 closeDetailBtn.addEventListener("click", () => {
                     detailModal.classList.add("hidden");
                     detailModal.classList.remove("flex");
-                });
-            }
-
-            if (openAllModalBtn) {
-                openAllModalBtn.addEventListener("click", () => {
-                    allModal.classList.remove("hidden");
-                    allModal.classList.add("flex");
-                });
-            }
-
-            if (closeAllModalBtn) {
-                closeAllModalBtn.addEventListener("click", () => {
-                    allModal.classList.add("hidden");
-                    allModal.classList.remove("flex");
                 });
             }
 
@@ -1703,15 +1695,17 @@
 
         <div id="loading" class="text-center py-12 text-zinc-500 text-xs">データを読み込んでいます...</div>
 
-        <!-- 最近追加されたお店セクション -->
+        <!-- ジャンル別タブ切り替えセクション -->
         <section class="mb-6">
             <div class="flex justify-between items-center mb-3">
                 <div class="flex items-center gap-2">
-                    <h2 class="text-xs font-bold text-zinc-300 uppercase tracking-widest">最近追加されたお店</h2>
+                    <h2 class="text-xs font-bold text-zinc-300 uppercase tracking-widest">お店一覧</h2>
                     <span id="restaurant-count" class="text-[10px] text-[#06C755] font-mono font-bold"></span>
                 </div>
-                <button id="open-all-modal" class="text-[10px] text-[#06C755] underline font-bold hidden">すべて見る</button>
             </div>
+            <!-- 横スクロール可能なジャンルタブ -->
+            <div id="genre-tabs-container" class="flex gap-1.5 overflow-x-auto pb-2 scrollbar-none mb-3"></div>
+            
             <div id="latest-restaurant-list" class="grid grid-cols-2 gap-3"></div>
         </section>
     </div>
@@ -2121,17 +2115,6 @@
                 </div>
                 <div id="detail-action-buttons"></div>
             </div>
-        </div>
-    </div>
-
-    <!-- すべて見るモーダル -->
-    <div id="all-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
-        <div class="bg-zinc-900 border border-zinc-800 rounded-t-3xl sm:rounded-3xl w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]">
-            <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
-                <h3 class="text-xs font-bold text-white flex items-center gap-1.5"><span>📋</span> すべてのお店一覧</h3>
-                <button id="close-all-modal" class="text-xs text-zinc-400 hover:text-white px-2 py-1 font-bold">✕ 閉じる</button>
-            </div>
-            <div class="p-4 overflow-y-auto grid grid-cols-2 gap-3 flex-1" id="all-restaurant-list"></div>
         </div>
     </div>
 
