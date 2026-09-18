@@ -25,6 +25,14 @@
         .jackpot-effect {
             animation: jackpot-glow 0.8s infinite alternate;
         }
+        @keyframes pin-drop {
+            0% { transform: translateY(-30px) scale(0.5); opacity: 0; }
+            60% { transform: translateY(5px) scale(1.1); opacity: 1; }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        .pin-animation {
+            animation: pin-drop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
     </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -660,7 +668,7 @@
                 }
             }
 
-            function initLeafletMap() {
+            function initLeafletMap(targetLat = null, targetLng = null) {
                 const mapContainer = document.getElementById("leaflet-map");
                 if (!mapContainer) return;
 
@@ -728,7 +736,7 @@
 
                     const customIcon = L.divIcon({
                         className: 'custom-map-marker',
-                        html: `<div style="background-color: #06C755; color: #09090b; font-weight: 800; font-size: 10px; padding: 3px 6px; border-radius: 9999px; border: 2px solid #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.3); text-align: center; white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis;">📍 ${item.name}</div>`,
+                        html: `<div class="pin-animation" style="background-color: #06C755; color: #09090b; font-weight: 800; font-size: 10px; padding: 3px 6px; border-radius: 9999px; border: 2px solid #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.3); text-align: center; white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis;">📍 ${item.name}</div>`,
                         iconSize: [110, 28],
                         iconAnchor: [55, 14]
                     });
@@ -743,6 +751,14 @@
                     });
                     mapMarkersLayer.addLayer(marker);
                 });
+
+                // 指定座標へズームインする演出
+                if (targetLat !== null && targetLng !== null) {
+                    leafletMap.flyTo([targetLat, targetLng], 16, {
+                        animate: true,
+                        duration: 1.8 // スムーズに2秒弱かけてズームイン
+                    });
+                }
             }
 
             function updateMedalModalContent() {
@@ -1375,18 +1391,24 @@
                             updatedAt: Date.now()
                         };
 
+                        let resolvedLat = 35.689;
+                        let resolvedLng = 139.691;
+
                         if (coords) {
-                            restaurantData.latitude = coords.lat;
-                            restaurantData.longitude = coords.lng;
+                            resolvedLat = coords.lat;
+                            resolvedLng = coords.lng;
                         } else {
                             const fallbackCoords = {
                                 "北海道": [43.064, 141.346], "東京都": [35.689, 139.691], "愛知県": [35.180, 136.906],
                                 "大阪府": [34.693, 135.502], "福岡県": [33.606, 130.418], "宮城県": [38.268, 140.871]
                             };
                             const base = fallbackCoords[prefecture] || [35.689, 139.691];
-                            restaurantData.latitude = base[0] + (Math.random() - 0.5) * 0.05;
-                            restaurantData.longitude = base[1] + (Math.random() - 0.5) * 0.05;
+                            resolvedLat = base[0] + (Math.random() - 0.5) * 0.05;
+                            resolvedLng = base[1] + (Math.random() - 0.5) * 0.05;
                         }
+
+                        restaurantData.latitude = resolvedLat;
+                        restaurantData.longitude = resolvedLng;
 
                         if (editId) {
                             const updateRef = ref(db, `groups/${STORAGE_GROUP_ID}/restaurants/${editId}`);
@@ -1429,6 +1451,16 @@
                         toggleRamenDetails();
                         resetFormState();
                         closeFormModal();
+
+                        // 【投稿演出】新規投稿・編集完了後に自動で地図モーダルを開き、投稿した住所へズーム＆ピン留め
+                        if (mapModal) {
+                            mapModal.classList.remove("hidden");
+                            mapModal.classList.add("flex");
+                            setTimeout(() => {
+                                initLeafletMap(resolvedLat, resolvedLng);
+                            }, 300);
+                        }
+
                     } catch (error) {
                         console.error("保存エラー:", error);
                         alert("投稿に失敗しました。もう一度お試しください。");
