@@ -62,7 +62,6 @@
         // 【パスワード認証設定】ここを変更すると合言葉を変えられます
         const APP_PASSWORD = "nanikuu123"; 
 
-        // 住所から正確な緯度経度を非同期で取得する関数（詳細住所を最優先）
         async function getCoordinatesFromAddress(country, prefecture, city, address) {
             const queries = [
                 [country, prefecture, city, address].filter(Boolean).join(" "),
@@ -91,7 +90,6 @@
             return null;
         }
 
-        // 都道府県制覇の達成段階に応じた特別演出
         function triggerPrefectureStageEffect(visitedCount) {
             let messageText = "🏆 新しい都道府県開拓！";
             let isGrandComplete = false;
@@ -655,8 +653,7 @@
 
                         for (const key of Object.keys(data)) {
                             let item = data[key];
-                            // 過去データで緯度経度がない場合、または市区町村レベルで不正確な場合の自動再取得・補正
-                            if (!item.latitude || !item.longitude || item.isLegacyMapped) {
+                            if (!item.latitude || !item.longitude) {
                                 const coords = await getCoordinatesFromAddress(item.country, item.prefecture, item.city, item.address);
                                 if (coords) {
                                     item.latitude = coords.lat + (Math.random() - 0.5) * 0.001;
@@ -668,7 +665,6 @@
                             allRestaurants.push({ id: key, ...item });
                         }
 
-                        // データベース上の過去データの緯度経度を一括アップデート（自動バックグラウンド修復）
                         if (Object.keys(updates).length > 0) {
                             update(dbRef, updates).catch(err => console.log("過去データ補正エラー", err));
                         }
@@ -1427,7 +1423,6 @@
                             resolvedLng = base[1] + (Math.random() - 0.5) * 0.05;
                         }
 
-                        // 同一地点での完全重なり防止の微小ランダムオフセット
                         resolvedLat += (Math.random() - 0.5) * 0.001;
                         resolvedLng += (Math.random() - 0.5) * 0.001;
 
@@ -1996,7 +1991,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-[10px] text-zinc-400 mb-1">詳しい住所 (番地・建物名など) <span class="text-[#06C755]">★地図の正確なピンに反映されます</span></label>
+                        <label class="block text-[10px] text-zinc-400 mb-1">詳しい住所 (番地・建物名など) <span class="text-zinc-500 font-normal">（地図データは市区町村単位のみ判別します）</span></label>
                         <input type="text" id="restaurant-address" placeholder="例: 荒神町1-5-1" class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-3 py-2 text-xs text-white focus:border-[#06C755] focus:outline-none">
                     </div>
 
