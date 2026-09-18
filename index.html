@@ -37,7 +37,7 @@
         // 【パスワード認証設定】ここを変更すると合言葉を変えられます
         const APP_PASSWORD = "nanikuu123"; 
 
-        // 都道府県制覇の達成段階（20、30、40、47コンプリート）に応じた紙吹雪＆特別演出関数
+        // 都道府県制覇の達成段階（20、30、40、47コンプリート）に応じた紙吹雪＆特別演出関数（文字切れ防止対応）
         function triggerPrefectureStageEffect(visitedCount) {
             let messageText = "🏆 新しい都道府県開拓！";
             let isGrandComplete = false;
@@ -76,22 +76,23 @@
             
             const mainColor = isGrandComplete ? '#ffffff' : '#ffd700';
             banner.style.color = mainColor;
-            banner.style.padding = '20px 36px';
+            banner.style.padding = '18px 28px';
             banner.style.borderRadius = '9999px';
             banner.style.fontWeight = '900';
-            banner.style.fontSize = isGrandComplete ? '22px' : '18px';
+            banner.style.fontSize = isGrandComplete ? '18px' : '15px';
             banner.style.boxShadow = '0 0 40px rgba(255, 215, 0, 0.8), 0 10px 25px rgba(0, 0, 0, 0.8)';
             banner.style.border = '3px solid #ffd700';
             banner.style.textShadow = '0 2px 4px rgba(0,0,0,0.8), 0 0 15px rgba(255, 215, 0, 0.8)';
-            banner.style.whiteSpace = 'nowrap';
-            banner.style.maxWidth = '90vw';
+            banner.style.whiteSpace = 'normal';
             banner.style.textAlign = 'center';
+            banner.style.wordBreak = 'break-word';
+            banner.style.maxWidth = '88vw';
             banner.style.transition = 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease-in';
             banner.style.opacity = '0';
             container.appendChild(banner);
 
             setTimeout(() => {
-                banner.style.transform = 'translate(-50%, -50%) scale(1.1)';
+                banner.style.transform = 'translate(-50%, -50%) scale(1.05)';
                 banner.style.opacity = '1';
             }, 50);
 
@@ -158,24 +159,27 @@
             banner.style.top = '40%';
             banner.style.left = '50%';
             banner.style.transform = 'translate(-50%, -50%) scale(0.4)';
-            banner.style.background = 'linear-gradient(135deg, #111111 0%, #1c1c1e 100% )';
+            banner.style.background = 'linear-gradient(135deg, #111111 0%, #1c1c1e 100%)';
             
             const mainColor = isCity ? '#06C755' : '#ffd700';
             banner.style.color = mainColor;
-            banner.style.padding = '18px 32px';
+            banner.style.padding = '18px 28px';
             banner.style.borderRadius = '9999px';
             banner.style.fontWeight = '900';
-            banner.style.fontSize = '20px';
+            banner.style.fontSize = '17px';
             banner.style.boxShadow = `0 0 30px ${isCity ? 'rgba(6, 199, 85, 0.6)' : 'rgba(255, 215, 0, 0.6)'}, 0 10px 25px rgba(0, 0, 0, 0.8)`;
             banner.style.border = `3px solid ${mainColor}`;
             banner.style.textShadow = `0 2px 4px rgba(0,0,0,0.8), 0 0 12px ${isCity ? 'rgba(6, 199, 85, 0.8)' : 'rgba(255, 215, 0, 0.8)'}`;
-            banner.style.whiteSpace = 'nowrap';
+            banner.style.whiteSpace = 'normal';
+            banner.style.textAlign = 'center';
+            banner.style.wordBreak = 'break-word';
+            banner.style.maxWidth = '88vw';
             banner.style.transition = 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease-in';
             banner.style.opacity = '0';
             container.appendChild(banner);
 
             setTimeout(() => {
-                banner.style.transform = 'translate(-50%, -50%) scale(1.1)';
+                banner.style.transform = 'translate(-50%, -50%) scale(1.05)';
                 banner.style.opacity = '1';
             }, 50);
 
@@ -236,7 +240,7 @@
             document.body.appendChild(container);
 
             const banner = document.createElement('div');
-            banner.innerHTML = `🎆 NEW COUNTRY CONQUERED 🎆<br><span style="font-size: 16px; font-weight: 700; color: #34d399;">(${countryName})</span>`;
+            banner.innerHTML = `🎆 NEW COUNTRY CONQUERED 🎆<br><span style="font-size: 15px; font-weight: 700; color: #34d399;">(${countryName})</span>`;
             banner.style.position = 'absolute';
             banner.style.top = '38%';
             banner.style.left = '50%';
@@ -246,20 +250,21 @@
             banner.style.padding = '16px 20px';
             banner.style.borderRadius = '24px';
             banner.style.fontWeight = '900';
-            banner.style.fontSize = '17px';
+            banner.style.fontSize = '16px';
             banner.style.textAlign = 'center';
+            banner.style.wordBreak = 'break-word';
             banner.style.letterSpacing = '0.5px';
             banner.style.boxShadow = '0 0 30px rgba(52, 211, 153, 0.8), 0 0 60px rgba(96, 165, 250, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.5)';
             banner.style.border = '2.5px solid #34d399';
             banner.style.textShadow = '0 0 8px #ffffff, 0 0 15px #34d399, 0 0 25px #60a5fa';
-            banner.style.whiteSpace = 'nowrap';
-            banner.style.maxWidth = '90vw';
+            banner.style.whiteSpace = 'normal';
+            banner.style.maxWidth = '88vw';
             banner.style.transition = 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease-in';
             banner.style.opacity = '0';
             container.appendChild(banner);
 
             setTimeout(() => {
-                banner.style.transform = 'translate(-50%, -50%) scale(1.1)';
+                banner.style.transform = 'translate(-50%, -50%) scale(1.05)';
                 banner.style.opacity = '1';
             }, 50);
 
