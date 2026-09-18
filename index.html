@@ -1541,7 +1541,7 @@
                 });
             }
 
-            // 【超ド派手スロット風ルーレット機能】
+            // 【腹ペコルーレット機能】
             if (startRouletteBtn) {
                 startRouletteBtn.addEventListener("click", () => {
                     if (allRestaurants.length === 0) {
@@ -1583,7 +1583,7 @@
                     startRouletteBtn.classList.add("opacity-50", "cursor-not-allowed");
 
                     let count = 0;
-                    const maxCount = 28; // 回転回数を増やしてワクワク感を演出
+                    const maxCount = 28;
                     let speed = 40;
 
                     const spin = () => {
@@ -1593,7 +1593,7 @@
                         if (rouletteResult) {
                             rouletteResult.innerHTML = `
                                 <div class="bg-zinc-950 border-2 border-[#06C755] p-3 rounded-2xl text-center space-y-2 shadow-2xl slot-rolling jackpot-effect">
-                                    <div class="inline-block bg-[#06C755] text-zinc-950 text-[10px] font-black px-3 py-0.5 rounded-full animate-pulse tracking-wider">🔥 運命の選択中... 🔥</div>
+                                    <div class="inline-block bg-[#06C755] text-zinc-950 text-[10px] font-black px-3 py-0.5 rounded-full animate-pulse tracking-wider">🔥 腹ペコ選択中... 🔥</div>
                                     <div class="flex items-center gap-3 bg-zinc-900/95 p-2.5 rounded-xl border border-[#06C755]/50">
                                         <img src="${randomImg}" class="w-14 h-14 object-cover rounded-xl shrink-0 shadow-md">
                                         <div class="text-left overflow-hidden">
@@ -1607,7 +1607,7 @@
 
                         count++;
                         if (count < maxCount) {
-                            speed += 12; // 徐々にスピードがスローダウンする演出
+                            speed += 12;
                             setTimeout(spin, speed);
                         } else {
                             const winner = filtered[Math.floor(Math.random() * filtered.length)];
@@ -1616,12 +1616,13 @@
                             if (rouletteResult) {
                                 rouletteResult.innerHTML = `
                                     <div class="bg-gradient-to-b from-[#06C755]/30 via-zinc-950 to-zinc-950 border-2 border-[#06C755] p-4 rounded-2xl text-center space-y-2.5 shadow-2xl animate-bounce">
-                                        <div class="inline-block bg-[#06C755] text-zinc-950 text-xs font-black px-4 py-1.5 rounded-full shadow-lg tracking-widest uppercase">🌟 JACKPOT! 今日のお店決定！ 🌟</div>
+                                        <div class="inline-block bg-[#06C755] text-zinc-950 text-xs font-black px-4 py-1.5 rounded-full shadow-lg tracking-widest uppercase">🎉 お店決定！ 🎉</div>
                                         <div class="bg-zinc-900/90 p-3 rounded-2xl border-2 border-[#06C755] flex items-center gap-3 cursor-pointer group shadow-xl hover:border-white transition" onclick="openDetail('${winner.id}')">
                                             <img src="${winnerImg}" class="w-16 h-16 object-cover rounded-xl shrink-0 group-hover:scale-105 transition shadow-md">
                                             <div class="text-left overflow-hidden flex-1">
                                                 <p class="text-sm font-black text-white truncate">${winner.name}</p>
                                                 <p class="text-[10px] text-[#06C755] font-bold mt-0.5">📍 ${winner.city || 'エリア未設定'} (${winner.genre})</p>
+                                                <p class="text-[9px] text-amber-300 font-extrabold mt-1">🕒 営業時間、定休日を確認してね</p>
                                                 <p class="text-[10px] text-yellow-300 font-extrabold underline mt-1">👆 タップして詳細を見る・決定！</p>
                                             </div>
                                         </div>
@@ -1795,7 +1796,7 @@
     <div id="roulette-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
         <div class="bg-zinc-900 border border-zinc-800 rounded-t-3xl sm:rounded-3xl w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]">
             <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
-                <h3 class="text-xs font-bold text-[#06C755] flex items-center gap-1.5"><span>🎰</span> 今日どこ行く？超ド派手スロット</h3>
+                <h3 class="text-xs font-bold text-[#06C755] flex items-center gap-1.5"><span>🎲</span> どこイク？ルーレット</h3>
                 <button id="close-roulette-modal" class="text-xs text-zinc-400 hover:text-white px-2 py-1 font-bold">✕ 閉じる</button>
             </div>
             <div class="p-4 overflow-y-auto space-y-3 flex-1">
@@ -1844,7 +1845,7 @@
                     </select>
                 </div>
 
-                <button id="start-roulette" class="w-full bg-gradient-to-r from-[#06C755] to-emerald-400 hover:from-[#05b34c] hover:to-emerald-300 text-zinc-950 font-black py-4 rounded-2xl text-xs transition shadow-xl shadow-[#06C755]/30 active:scale-95 tracking-wider">🔥 超スロットを回す！ 🔥</button>
+                <button id="start-roulette" class="w-full bg-gradient-to-r from-[#06C755] to-emerald-400 hover:from-[#05b34c] hover:to-emerald-300 text-zinc-950 font-black py-4 rounded-2xl text-xs transition shadow-xl shadow-[#06C755]/30 active:scale-95 tracking-wider">🔥 腹ペコルーレットを回す！ 🔥</button>
                 <div id="roulette-result" class="mt-2"></div>
             </div>
         </div>
