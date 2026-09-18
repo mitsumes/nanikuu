@@ -37,7 +37,110 @@
         // 【パスワード認証設定】ここを変更すると合言葉を変えられます
         const APP_PASSWORD = "nanikuu123"; 
 
-        // 新しい都道府県・市区町村が登録されたときの紙吹雪演出関数（市町村のときは文字色を蛍光緑に指定）
+        // 都道府県制覇の達成段階（20、30、40、47コンプリート）に応じた紙吹雪＆特別演出関数
+        function triggerPrefectureStageEffect(visitedCount) {
+            let messageText = "🏆 新しい都道府県開拓！";
+            let isGrandComplete = false;
+
+            if (visitedCount === 47) {
+                messageText = "🔥👑 47都道府県完全制覇コンプリート！！ 👑🔥";
+                isGrandComplete = true;
+            } else if (visitedCount === 40) {
+                messageText = "🌟 40都道府県突破！制覇まであと少し！ 🌟";
+            } else if (visitedCount === 30) {
+                messageText = "🎉 30都道府県達成！順調に開拓中！ 🎉";
+            } else if (visitedCount === 20) {
+                messageText = "🚀 20都道府県突破！全国へ広がってるよ！ 🚀";
+            } else {
+                triggerConfetti("🏆 新しい都道府県開拓！", false);
+                return;
+            }
+
+            const container = document.createElement('div');
+            container.style.position = 'fixed';
+            container.style.top = '0';
+            container.style.left = '0';
+            container.style.width = '100%';
+            container.style.height = '100%';
+            container.style.pointerEvents = 'none';
+            container.style.zIndex = '99999';
+            document.body.appendChild(container);
+
+            const banner = document.createElement('div');
+            banner.textContent = messageText;
+            banner.style.position = 'absolute';
+            banner.style.top = '38%';
+            banner.style.left = '50%';
+            banner.style.transform = 'translate(-50%, -50%) scale(0.3)';
+            banner.style.background = isGrandComplete ? 'linear-gradient(135deg, #ffd700 0%, #ff4500 100%)' : 'linear-gradient(135deg, #111111 0%, #1c1c1e 100%)';
+            
+            const mainColor = isGrandComplete ? '#ffffff' : '#ffd700';
+            banner.style.color = mainColor;
+            banner.style.padding = '20px 36px';
+            banner.style.borderRadius = '9999px';
+            banner.style.fontWeight = '900';
+            banner.style.fontSize = isGrandComplete ? '22px' : '18px';
+            banner.style.boxShadow = '0 0 40px rgba(255, 215, 0, 0.8), 0 10px 25px rgba(0, 0, 0, 0.8)';
+            banner.style.border = '3px solid #ffd700';
+            banner.style.textShadow = '0 2px 4px rgba(0,0,0,0.8), 0 0 15px rgba(255, 215, 0, 0.8)';
+            banner.style.whiteSpace = 'nowrap';
+            banner.style.maxWidth = '90vw';
+            banner.style.textAlign = 'center';
+            banner.style.transition = 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease-in';
+            banner.style.opacity = '0';
+            container.appendChild(banner);
+
+            setTimeout(() => {
+                banner.style.transform = 'translate(-50%, -50%) scale(1.1)';
+                banner.style.opacity = '1';
+            }, 50);
+
+            setTimeout(() => {
+                banner.style.transform = 'translate(-50%, -50%) scale(1)';
+            }, 350);
+
+            setTimeout(() => {
+                banner.style.transform = 'translate(-50%, -85%) scale(1)';
+                banner.style.opacity = '0';
+            }, 6500);
+
+            const colors = ['#ffd700', '#ffaa00', '#06C755', '#34d399', '#60a5fa', '#a78bfa', '#f43f5e', '#ffffff'];
+            const particleCount = isGrandComplete ? 350 : 220;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.style.position = 'absolute';
+                particle.style.width = Math.random() * 14 + 6 + 'px';
+                particle.style.height = Math.random() * 6 + 6 + 'px';
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.top = '38%';
+                particle.style.left = '50%';
+                particle.style.opacity = Math.random() * 1 + 0.5;
+                particle.style.borderRadius = Math.random() > 0.5 ? '50%' : '3px';
+                
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * 320 + 60;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance - 80;
+
+                const duration = Math.random() * 2.0 + 4.0;
+                
+                particle.style.transition = `transform ${duration}s cubic-bezier(0.1, 0.8, 0.3, 1), opacity ${duration}s ease-in`;
+                particle.style.transform = `translate(0, 0) rotate(0deg)`;
+                container.appendChild(particle);
+
+                setTimeout(() => {
+                    particle.style.transform = `translate(${tx}px, ${ty + 350}px) rotate(${Math.random() * 1440}deg)`;
+                    particle.style.opacity = '0';
+                }, 30);
+            }
+
+            setTimeout(() => {
+                container.remove();
+            }, 7500);
+        }
+
+        // 新しい都道府県・市区町村が登録されたときの通常紙吹雪演出関数
         function triggerConfetti(messageText = "🏆 新しい都道府県開拓！", isCity = false) {
             const container = document.createElement('div');
             container.style.position = 'fixed';
@@ -49,16 +152,14 @@
             container.style.zIndex = '99999';
             document.body.appendChild(container);
 
-            // 中央に派手なポップアップテキストを表示（6秒間持続）
             const banner = document.createElement('div');
             banner.textContent = messageText;
             banner.style.position = 'absolute';
             banner.style.top = '40%';
             banner.style.left = '50%';
             banner.style.transform = 'translate(-50%, -50%) scale(0.4)';
-            banner.style.background = 'linear-gradient(135deg, #111111 0%, #1c1c1e 100%)';
+            banner.style.background = 'linear-gradient(135deg, #111111 0%, #1c1c1e 100% )';
             
-            // 市町村開拓のときは蛍光緑色(#06C755)、都道府県はゴールド(#ffd700)
             const mainColor = isCity ? '#06C755' : '#ffd700';
             banner.style.color = mainColor;
             banner.style.padding = '18px 32px';
@@ -82,7 +183,6 @@
                 banner.style.transform = 'translate(-50%, -50%) scale(1)';
             }, 350);
 
-            // 6秒間（6000ミリ秒）に設定してフェードアウト
             setTimeout(() => {
                 banner.style.transform = 'translate(-50%, -80%) scale(1)';
                 banner.style.opacity = '0';
@@ -123,7 +223,7 @@
             }
         }
 
-        // 新しい国が登録されたときの花火＆輝く文字演出関数（見切れないように改行・調整）
+        // 新しい国が登録されたときの花火＆輝く文字演出関数
         function triggerFireworks(countryName = "") {
             const container = document.createElement('div');
             container.style.position = 'fixed';
@@ -135,7 +235,6 @@
             container.style.zIndex = '99999';
             document.body.appendChild(container);
 
-            // 中央に輝くネオン風のポップアップテキストを表示（スマホ画面に収まるよう調整・改行）
             const banner = document.createElement('div');
             banner.innerHTML = `🎆 NEW COUNTRY CONQUERED 🎆<br><span style="font-size: 16px; font-weight: 700; color: #34d399;">(${countryName})</span>`;
             banner.style.position = 'absolute';
@@ -168,13 +267,11 @@
                 banner.style.transform = 'translate(-50%, -50%) scale(1)';
             }, 350);
 
-            // 6秒後にフェードアウト
             setTimeout(() => {
                 banner.style.transform = 'translate(-50%, -85%) scale(1)';
                 banner.style.opacity = '0';
             }, 6000);
 
-            // 花火が打ち上がるようなパーティクルを複数地点から発生させる
             const fireworkColors = ['#34d399', '#60a5fa', '#f43f5e', '#ffd700', '#c084fc', '#38bdf8', '#ffffff'];
             const centers = [
                 { x: '30%', y: '30%' },
@@ -223,7 +320,6 @@
         }
 
         document.addEventListener("DOMContentLoaded", () => {
-            // パスワード認証のチェック処理
             const authModal = document.getElementById("auth-modal");
             const authForm = document.getElementById("auth-form");
             const authPasswordInput = document.getElementById("auth-password");
@@ -233,7 +329,7 @@
                 const isAuthed = localStorage.getItem("nanikuu_authenticated");
                 if (isAuthed === "true") {
                     if (authModal) authModal.classList.add("hidden");
-                    initLiff(); // 認証済みならLIFF初期化・データロードへ進む
+                    initLiff();
                 } else {
                     if (authModal) {
                         authModal.classList.remove("hidden");
@@ -268,7 +364,6 @@
             const loadingEl = document.getElementById("loading");
             const restaurantCountEl = document.getElementById("restaurant-count");
             
-            // 投稿モーダル関連
             const formModal = document.getElementById("form-modal");
             const openFormModalBtn = document.getElementById("open-form-modal");
             const closeFormModalBtn = document.getElementById("close-form-modal");
@@ -282,7 +377,6 @@
             const currentPhotoPathInput = document.getElementById("current-photo-path");
             const formModalTitle = document.getElementById("form-modal-title");
 
-            // ジャンル変更によるこだわり表示切替 (投稿フォーム)
             const genreSelect = document.getElementById("restaurant-genre");
             const ramenDetailsContainer = document.getElementById("ramen-details-container");
 
@@ -302,7 +396,6 @@
                 toggleRamenDetails();
             }
 
-            // ルーレット用のラーメンこだわり表示切替
             const rouletteGenreSelect = document.getElementById("roulette-genre");
             const rouletteRamenContainer = document.getElementById("roulette-ramen-container");
             const rouletteRamenSelect = document.getElementById("roulette-ramen-genre");
@@ -323,14 +416,12 @@
                 toggleRouletteRamenSelect();
             }
 
-            // 検索要素
             const searchGenreEl = document.getElementById("search-genre");
             const searchPrefectureEl = document.getElementById("search-prefecture");
             const searchCityEl = document.getElementById("search-city");
             const searchKeywordEl = document.getElementById("search-keyword");
             const executeSearchBtn = document.getElementById("execute-search-btn");
 
-            // モーダル要素
             const detailModal = document.getElementById("detail-modal");
             const detailImage = document.getElementById("detail-image");
             const detailName = document.getElementById("detail-name");
@@ -359,7 +450,6 @@
             const confirmDeleteBtn = document.getElementById("confirm-delete");
             const deleteCancelBtn = document.getElementById("delete-cancel");
 
-            // 下部ナビからのモーダル制御
             const searchModal = document.getElementById("search-modal");
             const openSearchModalBtn = document.getElementById("open-search-modal");
             const closeSearchModalBtn = document.getElementById("close-search-modal");
@@ -368,13 +458,11 @@
             const openRouletteModalBtn = document.getElementById("open-roulette-modal");
             const closeRouletteModalBtn = document.getElementById("close-roulette-modal");
 
-            // 日本地図モーダル関連
             const mapModal = document.getElementById("map-modal");
             const openMapModalBtn = document.getElementById("open-map-modal");
             const closeMapModalBtn = document.getElementById("close-map-modal");
             const prefectureCountEl = document.getElementById("prefecture-count");
 
-            // メダル確認モーダル関連
             const medalModal = document.getElementById("medal-modal");
             const openMedalModalBtn = document.getElementById("open-medal-modal");
             const closeMedalModalBtn = document.getElementById("close-medal-modal");
@@ -440,7 +528,6 @@
             const startRouletteBtn = document.getElementById("start-roulette");
             const rouletteResult = document.getElementById("roulette-result");
 
-            // 投稿モーダルの開閉制御
             if (openFormModalBtn) {
                 openFormModalBtn.addEventListener("click", () => {
                     resetFormState();
@@ -461,7 +548,6 @@
             if (closeFormModalBtn) closeFormModalBtn.addEventListener("click", closeFormModal);
             if (cancelFormBtn) cancelFormBtn.addEventListener("click", closeFormModal);
 
-            // LIFF初期化処理 ＆ ブラウザ判定
             async function initLiff() {
                 try {
                     await liff.init({ liffId: "2011348764-dl9CNIS4" });
@@ -499,10 +585,8 @@
                 loadRestaurants();
             }
 
-            // 初回起動時に認証チェックを実行
             checkAppAuthentication();
 
-            // データのリアルタイム読み込み
             function loadRestaurants() {
                 const dbRef = ref(db, 'groups/' + STORAGE_GROUP_ID + '/restaurants');
                 onValue(dbRef, (snapshot) => {
@@ -526,7 +610,6 @@
                 });
             }
 
-            // リスト描画（全件表示）
             function renderRestaurants() {
                 if (!latestListEl || !allListEl) return;
                 
@@ -557,7 +640,6 @@
                 }
             }
 
-            // Leafletマップ初期化・店ごとの個別ピン表示処理
             function initLeafletMap() {
                 const mapContainer = document.getElementById("leaflet-map");
                 if (!mapContainer) return;
@@ -643,7 +725,6 @@
                 });
             }
 
-            // メダル確認モーダルの内容を生成する関数
             function updateMedalModalContent() {
                 if (!medalContentEl) return;
 
@@ -676,12 +757,9 @@
                     }
                 });
 
-                // 国ごとのメダルリスト構築
                 const overseasList = Array.from(overseasCountriesSet);
-
                 let html = '';
 
-                // 海外メダルセクション
                 html += `
                     <div class="space-y-2">
                         <h4 class="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center justify-between">
@@ -708,7 +786,6 @@
                 }
                 html += `</div>`;
 
-                // 都道府県メダルセクション
                 const visitedPrefs = standardPrefs.filter(pref => (prefCounts[pref] || 0) > 0);
                 const unvisitedPrefs = standardPrefs.filter(pref => (prefCounts[pref] || 0) === 0);
 
@@ -749,7 +826,6 @@
                 medalContentEl.innerHTML = html;
             }
 
-            // 日本地図モーダル内の統計テキスト更新
             function updateJapanMapStats() {
                 const standardPrefs = [
                     "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
@@ -837,7 +913,6 @@
                 }
             }
 
-            // エリアクリック時の絞り込み検索
             window.filterByPrefecture = function(prefName) {
                 if (mapModal) {
                     mapModal.classList.add("hidden");
@@ -862,7 +937,6 @@
                 searchResultModal.classList.add("flex");
             };
 
-            // 検索処理
             if (executeSearchBtn) {
                 executeSearchBtn.addEventListener("click", () => {
                     const genreVal = searchGenreEl.value;
@@ -907,7 +981,6 @@
                 });
             }
 
-            // イッタヨ！ボタン
             window.toggleItkayo = async function(id, event) {
                 event.stopPropagation();
                 const item = allRestaurants.find(r => r.id === id);
@@ -930,7 +1003,6 @@
                 }
             };
 
-            // カード生成関数 ((投稿者、都道府県、市町村)の並び、お店名を下げて写真をさらに大きく調整)
             function createCardElement(item) {
                 const card = document.createElement("div");
                 const imageUrl = item.photoUrl || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=500&q=60";
@@ -971,7 +1043,6 @@
                 return card;
             }
 
-            // 写真圧縮
             function compressImage(file, maxWidth = 800, quality = 0.7) {
                 return new Promise((resolve) => {
                     if (!file || !file.type.startsWith('image/')) {
@@ -1026,7 +1097,6 @@
                 });
             }
 
-            // 新着通知をLINEに送る機能
             async function sendLineNotification(restaurantName, genre, regionStr, author) {
                 try {
                     if (liff && liff.isApiAvailable && liff.isApiAvailable('sendMessages')) {
@@ -1038,11 +1108,10 @@
                         ]);
                     }
                 } catch (error) {
-                    console.log("LINE通知の送信スキップまたはエラー（通常のブラウザ環境や権限外）", error);
+                    console.log("LINE通知の送信スキップまたはエラー", error);
                 }
             }
 
-            // 詳細モーダル
             window.openDetail = function(id) {
                 const item = allRestaurants.find(r => r.id === id);
                 if (!item) return;
@@ -1170,7 +1239,6 @@
                 });
             }
 
-            // 住所から緯度経度を取得するジオコーディング関数（フォールバック付き）
             async function getCoordinatesFromAddress(country, prefecture, city, address) {
                 const queries = [
                     [country, prefecture, city, address].filter(Boolean).join(" "),
@@ -1198,7 +1266,6 @@
                 return null;
             }
 
-            // フォーム送信
             if (formEl) {
                 formEl.addEventListener("submit", async (e) => {
                     e.preventDefault();
@@ -1244,7 +1311,16 @@
                     let photoUrl = currentPhotoUrlInput.value;
                     let photoPath = currentPhotoPathInput.value;
 
-                    // 新規登録時、すでに登録されている国・都道府県・市区町村リストに存在するか判定
+                    const standardPrefs = [
+                        "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
+                        "茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県",
+                        "新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県","静岡県","愛知県",
+                        "三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県",
+                        "鳥取県","島根県","岡山県","広島県","山口県",
+                        "徳島県","香川県","愛媛県","高知県",
+                        "福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"
+                    ];
+
                     const existingCountries = new Set(allRestaurants.map(r => (r.country || "日本").trim().toLowerCase()));
                     const existingPrefs = new Set(allRestaurants.map(r => (r.prefecture || "").trim()));
                     const existingCities = new Set(allRestaurants.map(r => (r.city || "").trim()));
@@ -1254,7 +1330,6 @@
                     const isNewCity = city && !existingCities.has(city);
 
                     try {
-                        // 住所から緯度経度を再取得
                         const coords = await getCoordinatesFromAddress(country, prefecture, city, address);
 
                         if (photoFile) {
@@ -1284,7 +1359,6 @@
                             restaurantData.latitude = coords.lat;
                             restaurantData.longitude = coords.lng;
                         } else {
-                            // 万が一APIで取得できなかった場合のフォールバック（都道府県の簡易座標を設定）
                             const fallbackCoords = {
                                 "北海道": [43.064, 141.346], "東京都": [35.689, 139.691], "愛知県": [35.180, 136.906],
                                 "大阪府": [34.693, 135.502], "福岡県": [33.606, 130.418], "宮城県": [38.268, 140.871]
@@ -1306,18 +1380,21 @@
                             const newRef = push(dbRef);
                             await set(newRef, restaurantData);
                             
-                            // 新規投稿時にLINEへ通知を送信
                             const regionStr = `${prefecture || ''} ${city || ''}`.trim() || 'エリア未設定';
                             sendLineNotification(name, genre, regionStr, authorVal || currentUserName);
 
-                            // 新規国、都道府県、市区町村に応じた演出分岐
                             if (isNewCountry) {
                                 setTimeout(() => {
                                     triggerFireworks(country);
                                 }, 300);
                             } else if (isNewPrefecture) {
+                                const currentVisitedCount = new Set([
+                                    ...allRestaurants.map(r => r.prefecture).filter(Boolean),
+                                    prefecture
+                                ].filter(p => standardPrefs.includes(p))).size;
+
                                 setTimeout(() => {
-                                    triggerConfetti("🏆 新しい都道府県開拓！", false);
+                                    triggerPrefectureStageEffect(currentVisitedCount);
                                 }, 300);
                             } else if (isNewCity) {
                                 setTimeout(() => {
@@ -1444,7 +1521,6 @@
                 });
             }
 
-            // スロット風ルーレット処理
             if (startRouletteBtn) {
                 startRouletteBtn.addEventListener("click", () => {
                     if (allRestaurants.length === 0) {
@@ -1638,7 +1714,6 @@
             <div class="p-4 overflow-y-auto space-y-4 flex-1">
                 <div class="bg-zinc-950 p-2 rounded-2xl border border-zinc-800 relative">
                     <p class="text-[10px] text-zinc-400 mb-2 text-center">お店ごとの正確な位置にピンが光ります💡（タップで詳細）</p>
-                    <!-- Leafletマップ描画エリア -->
                     <div id="leaflet-map" class="w-full h-72 rounded-xl z-10"></div>
                 </div>
 
@@ -1935,22 +2010,25 @@
                 </div>
                 <div>
                     <span id="detail-genre" class="text-[10px] bg-zinc-800 text-[#06C755] font-bold px-2.5 py-1 rounded-full border border-[#06C755]/30"></span>
-                    <h2 id="detail-name" class="text-base font-bold text-white mt-1.5"></h2>
-                    <p id="detail-region" class="text-xs text-zinc-400 mt-0.5"></p>
+                    <h2 id="detail-name" class="text-base font-extrabold text-white mt-1"></h2>
+                    <p id="detail-region" class="text-xs text-[#06C755] font-bold mt-0.5 flex items-center gap-1"></p>
                 </div>
-                <div class="grid grid-cols-2 gap-2 text-xs bg-zinc-950/60 p-3 rounded-2xl border border-zinc-800">
-                    <div><span class="text-zinc-500 block text-[10px]">利用シーン</span><span id="detail-scenes" class="text-zinc-200"></span></div>
-                    <div><span class="text-zinc-500 block text-[10px]">駐車場 / 予約</span><span id="detail-parking" class="text-zinc-200"></span> / <span id="detail-reservation" class="text-zinc-200"></span></div>
-                </div>
-                <div class="text-xs space-y-2 bg-zinc-950/60 p-3 rounded-2xl border border-zinc-800">
-                    <div><span class="text-zinc-500 block text-[10px]">定休日</span><span id="detail-holiday" class="text-zinc-200"></span></div>
-                    <div><span class="text-zinc-500 block text-[10px]">投稿者</span><span id="detail-author" class="text-zinc-200"></span></div>
-                    <div id="detail-hp" class="hidden"></div>
-                    <div id="detail-insta" class="hidden"></div>
+                <div class="grid grid-cols-2 gap-2 text-xs bg-zinc-950 p-3 rounded-2xl border border-zinc-800">
+                    <div><span class="text-zinc-500 block text-[10px]">利用シーン</span><span id="detail-scenes" class="text-zinc-300 font-bold"></span></div>
+                    <div><span class="text-zinc-500 block text-[10px]">定休日</span><span id="detail-holiday" class="text-zinc-300 font-bold"></span></div>
+                    <div><span class="text-zinc-500 block text-[10px]">駐車場</span><span id="detail-parking" class="text-zinc-300 font-bold"></span></div>
+                    <div><span class="text-zinc-500 block text-[10px]">予約</span><span id="detail-reservation" class="text-zinc-300 font-bold"></span></div>
                 </div>
                 <div>
                     <span class="text-zinc-500 block text-[10px] mb-1">メモ</span>
-                    <p id="detail-memo" class="text-xs text-zinc-200 bg-zinc-950/60 p-3 rounded-2xl border border-zinc-800 whitespace-pre-wrap"></p>
+                    <p id="detail-memo" class="text-xs text-zinc-200 bg-zinc-950 p-3 rounded-2xl border border-zinc-800 leading-relaxed whitespace-pre-wrap"></p>
+                </div>
+                <div class="space-y-1">
+                    <div id="detail-hp"></div>
+                    <div id="detail-insta"></div>
+                </div>
+                <div class="pt-2 text-[10px] text-zinc-500 flex items-center justify-between border-t border-zinc-800">
+                    <span>✍️ 投稿者: <strong id="detail-author" class="text-zinc-300"></strong></span>
                 </div>
                 <div id="detail-action-buttons"></div>
             </div>
@@ -1961,12 +2039,10 @@
     <div id="all-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
         <div class="bg-zinc-900 border border-zinc-800 rounded-t-3xl sm:rounded-3xl w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]">
             <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
-                <h3 class="text-xs font-bold text-white flex items-center gap-1.5"><span>📜</span> 登録されたお店一覧</h3>
+                <h3 class="text-xs font-bold text-white flex items-center gap-1.5"><span>📋</span> すべてのお店一覧</h3>
                 <button id="close-all-modal" class="text-xs text-zinc-400 hover:text-white px-2 py-1 font-bold">✕ 閉じる</button>
             </div>
-            <div class="p-4 overflow-y-auto flex-1">
-                <div id="all-restaurant-list" class="grid grid-cols-2 gap-3"></div>
-            </div>
+            <div class="p-4 overflow-y-auto grid grid-cols-2 gap-3 flex-1" id="all-restaurant-list"></div>
         </div>
     </div>
 
@@ -1977,21 +2053,19 @@
                 <h3 class="text-xs font-bold text-white flex items-center gap-1.5"><span>🔍</span> 検索結果</h3>
                 <button id="close-search-result-modal" class="text-xs text-zinc-400 hover:text-white px-2 py-1 font-bold">✕ 閉じる</button>
             </div>
-            <div class="p-4 overflow-y-auto flex-1">
-                <div id="search-result-list" class="grid grid-cols-2 gap-3"></div>
-            </div>
+            <div class="p-4 overflow-y-auto grid grid-cols-2 gap-3 flex-1" id="search-result-list"></div>
         </div>
     </div>
 
     <!-- 削除確認モーダル -->
-    <div id="delete-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-[60]">
+    <div id="delete-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 w-full max-w-xs text-center space-y-4 shadow-2xl">
             <div class="text-3xl">⚠️</div>
-            <h3 class="text-sm font-bold text-white">本当に削除しますか？</h3>
-            <p class="text-[10px] text-zinc-400 leading-relaxed">この操作は元に戻すことができません。グループ全員のリストから削除されます。</p>
-            <div class="flex gap-2 pt-2">
-                <button id="delete-cancel" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-2.5 rounded-2xl text-xs transition">キャンセル</button>
-                <button id="confirm-delete" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-2xl text-xs transition">削除する</button>
+            <h3 class="text-xs font-bold text-white">本当に削除しますか？</h3>
+            <p class="text-[10px] text-zinc-400 leading-relaxed">一度削除したデータは元に戻せません。</p>
+            <div class="flex gap-2">
+                <button id="delete-cancel" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-2.5 rounded-xl text-xs transition">キャンセル</button>
+                <button id="confirm-delete" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-xl text-xs transition">削除する</button>
             </div>
         </div>
     </div>
