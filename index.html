@@ -1471,13 +1471,7 @@
                         resetFormState();
                         closeFormModal();
 
-                        if (mapModal) {
-                            mapModal.classList.remove("hidden");
-                            mapModal.classList.add("flex");
-                            setTimeout(() => {
-                                initLeafletMap(resolvedLat, resolvedLng);
-                            }, 300);
-                        }
+                        // 投稿完了後に自動で地図モーダルを開く処理を削除しました
 
                     } catch (error) {
                         console.error("保存エラー:", error);
