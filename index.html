@@ -9,6 +9,23 @@
     <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <style>
+        @keyframes slot-roll {
+            0% { transform: translateY(0) scale(1); filter: blur(0px); }
+            50% { transform: translateY(-4px) scale(1.02); filter: blur(1px); }
+            100% { transform: translateY(0) scale(1); filter: blur(0px); }
+        }
+        .slot-rolling {
+            animation: slot-roll 0.08s infinite ease-in-out;
+        }
+        @keyframes jackpot-glow {
+            0%, 100% { box-shadow: 0 0 25px rgba(6, 199, 85, 0.6), inset 0 0 15px rgba(6, 199, 85, 0.4); }
+            50% { box-shadow: 0 0 50px rgba(6, 199, 85, 0.9), inset 0 0 30px rgba(6, 199, 85, 0.8); }
+        }
+        .jackpot-effect {
+            animation: jackpot-glow 0.8s infinite alternate;
+        }
+    </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -37,7 +54,7 @@
         // 【パスワード認証設定】ここを変更すると合言葉を変えられます
         const APP_PASSWORD = "nanikuu123"; 
 
-        // 都道府県制覇の達成段階（20、30、40、47コンプリート）に応じた紙吹雪＆特別演出関数（文字切れ防止対応）
+        // 都道府県制覇の達成段階（20、30、40、47コンプリート）に応じた紙吹雪＆特別演出関数
         function triggerPrefectureStageEffect(visitedCount) {
             let messageText = "🏆 新しい都道府県開拓！";
             let isGrandComplete = false;
@@ -141,7 +158,6 @@
             }, 7500);
         }
 
-        // 新しい都道府県・市区町村が登録されたときの通常紙吹雪演出関数
         function triggerConfetti(messageText = "🏆 新しい都道府県開拓！", isCity = false) {
             const container = document.createElement('div');
             container.style.position = 'fixed';
@@ -227,7 +243,6 @@
             }
         }
 
-        // 新しい国が登録されたときの花火＆輝く文字演出関数
         function triggerFireworks(countryName = "") {
             const container = document.createElement('div');
             container.style.position = 'fixed';
@@ -1526,6 +1541,7 @@
                 });
             }
 
+            // 【超ド派手スロット風ルーレット機能】
             if (startRouletteBtn) {
                 startRouletteBtn.addEventListener("click", () => {
                     if (allRestaurants.length === 0) {
@@ -1567,8 +1583,8 @@
                     startRouletteBtn.classList.add("opacity-50", "cursor-not-allowed");
 
                     let count = 0;
-                    const maxCount = 20;
-                    let speed = 50;
+                    const maxCount = 28; // 回転回数を増やしてワクワク感を演出
+                    let speed = 40;
 
                     const spin = () => {
                         const randomItem = filtered[Math.floor(Math.random() * filtered.length)];
@@ -1576,13 +1592,13 @@
                         
                         if (rouletteResult) {
                             rouletteResult.innerHTML = `
-                                <div class="bg-zinc-950 border border-[#06C755]/50 p-3 rounded-2xl text-center space-y-2 shadow-inner animate-pulse">
-                                    <div class="inline-block bg-[#06C755]/20 text-[#06C755] text-[9px] font-bold px-2 py-0.5 rounded-full">🎰 スロット回転中...</div>
-                                    <div class="flex items-center gap-3 bg-zinc-900/90 p-2 rounded-xl border border-zinc-800">
-                                        <img src="${randomImg}" class="w-12 h-12 object-cover rounded-lg shrink-0">
+                                <div class="bg-zinc-950 border-2 border-[#06C755] p-3 rounded-2xl text-center space-y-2 shadow-2xl slot-rolling jackpot-effect">
+                                    <div class="inline-block bg-[#06C755] text-zinc-950 text-[10px] font-black px-3 py-0.5 rounded-full animate-pulse tracking-wider">🔥 運命の選択中... 🔥</div>
+                                    <div class="flex items-center gap-3 bg-zinc-900/95 p-2.5 rounded-xl border border-[#06C755]/50">
+                                        <img src="${randomImg}" class="w-14 h-14 object-cover rounded-xl shrink-0 shadow-md">
                                         <div class="text-left overflow-hidden">
-                                            <p class="text-xs font-bold text-white truncate">${randomItem.name}</p>
-                                            <p class="text-[10px] text-zinc-400 truncate">${randomItem.genre} / ${randomItem.city || 'エリア未設定'}</p>
+                                            <p class="text-xs font-black text-white truncate">${randomItem.name}</p>
+                                            <p class="text-[10px] text-[#06C755] font-bold truncate">✨ ${randomItem.genre} / ${randomItem.city || 'エリア未設定'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1591,7 +1607,7 @@
 
                         count++;
                         if (count < maxCount) {
-                            speed += 10;
+                            speed += 12; // 徐々にスピードがスローダウンする演出
                             setTimeout(spin, speed);
                         } else {
                             const winner = filtered[Math.floor(Math.random() * filtered.length)];
@@ -1599,14 +1615,14 @@
                             
                             if (rouletteResult) {
                                 rouletteResult.innerHTML = `
-                                    <div class="bg-gradient-to-b from-[#06C755]/20 to-zinc-950 border-2 border-[#06C755] p-4 rounded-2xl text-center space-y-2 shadow-2xl animate-bounce">
-                                        <div class="inline-block bg-[#06C755] text-zinc-950 text-[10px] font-extrabold px-3 py-1 rounded-full shadow-md">🎉 当選！今日のお店はここ！</div>
-                                        <div class="bg-zinc-900 p-3 rounded-xl border border-[#06C755]/40 flex items-center gap-3 cursor-pointer group" onclick="openDetail('${winner.id}')">
-                                            <img src="${winnerImg}" class="w-14 h-14 object-cover rounded-xl shrink-0 group-hover:scale-105 transition">
+                                    <div class="bg-gradient-to-b from-[#06C755]/30 via-zinc-950 to-zinc-950 border-2 border-[#06C755] p-4 rounded-2xl text-center space-y-2.5 shadow-2xl animate-bounce">
+                                        <div class="inline-block bg-[#06C755] text-zinc-950 text-xs font-black px-4 py-1.5 rounded-full shadow-lg tracking-widest uppercase">🌟 JACKPOT! 今日のお店決定！ 🌟</div>
+                                        <div class="bg-zinc-900/90 p-3 rounded-2xl border-2 border-[#06C755] flex items-center gap-3 cursor-pointer group shadow-xl hover:border-white transition" onclick="openDetail('${winner.id}')">
+                                            <img src="${winnerImg}" class="w-16 h-16 object-cover rounded-xl shrink-0 group-hover:scale-105 transition shadow-md">
                                             <div class="text-left overflow-hidden flex-1">
-                                                <p class="text-sm font-extrabold text-white truncate">${winner.name}</p>
+                                                <p class="text-sm font-black text-white truncate">${winner.name}</p>
                                                 <p class="text-[10px] text-[#06C755] font-bold mt-0.5">📍 ${winner.city || 'エリア未設定'} (${winner.genre})</p>
-                                                <p class="text-[9px] text-zinc-400 underline mt-1">👆 タップして詳細を見る・決定！</p>
+                                                <p class="text-[10px] text-yellow-300 font-extrabold underline mt-1">👆 タップして詳細を見る・決定！</p>
                                             </div>
                                         </div>
                                     </div>
@@ -1779,7 +1795,7 @@
     <div id="roulette-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
         <div class="bg-zinc-900 border border-zinc-800 rounded-t-3xl sm:rounded-3xl w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]">
             <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
-                <h3 class="text-xs font-bold text-[#06C755] flex items-center gap-1.5"><span>🎰</span> 今日どこ行く？スロットルーレット</h3>
+                <h3 class="text-xs font-bold text-[#06C755] flex items-center gap-1.5"><span>🎰</span> 今日どこ行く？超ド派手スロット</h3>
                 <button id="close-roulette-modal" class="text-xs text-zinc-400 hover:text-white px-2 py-1 font-bold">✕ 閉じる</button>
             </div>
             <div class="p-4 overflow-y-auto space-y-3 flex-1">
@@ -1828,7 +1844,7 @@
                     </select>
                 </div>
 
-                <button id="start-roulette" class="w-full bg-[#06C755] hover:bg-[#05b34c] text-zinc-950 font-extrabold py-3.5 rounded-2xl text-xs transition shadow-lg shadow-[#06C755]/20 active:scale-95">🎲 スロットを回す！</button>
+                <button id="start-roulette" class="w-full bg-gradient-to-r from-[#06C755] to-emerald-400 hover:from-[#05b34c] hover:to-emerald-300 text-zinc-950 font-black py-4 rounded-2xl text-xs transition shadow-xl shadow-[#06C755]/30 active:scale-95 tracking-wider">🔥 超スロットを回す！ 🔥</button>
                 <div id="roulette-result" class="mt-2"></div>
             </div>
         </div>
