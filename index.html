@@ -1016,10 +1016,10 @@
 
                 searchResultListEl.innerHTML = "";
                 if (filtered.length === 0) {
-                    searchResultListEl.innerHTML = `<div class="text-center py-8 text-zinc-500 text-xs">${prefName}のお店は見つかりませんでした。</div>`;
+                    searchResultListEl.innerHTML = `<div class="text-center py-8 text-zinc-500 text-xs col-span-2">${prefName}のお店は見つかりませんでした。</div>`;
                 } else {
                     filtered.forEach(item => {
-                        searchResultListEl.appendChild(createSearchResultCardElement(item));
+                        searchResultListEl.appendChild(createCardElement(item));
                     });
                 }
 
@@ -1050,10 +1050,10 @@
 
                     searchResultListEl.innerHTML = "";
                     if (filtered.length === 0) {
-                        searchResultListEl.innerHTML = `<div class="text-center py-8 text-zinc-500 text-xs">条件に一致するお店が見つかりませんでした。</div>`;
+                        searchResultListEl.innerHTML = `<div class="text-center py-8 text-zinc-500 text-xs col-span-2">条件に一致するお店が見つかりませんでした。</div>`;
                     } else {
                         filtered.forEach(item => {
-                            searchResultListEl.appendChild(createSearchResultCardElement(item));
+                            searchResultListEl.appendChild(createCardElement(item));
                         });
                     }
 
@@ -1094,41 +1094,7 @@
                 }
             };
 
-            // ホーム画面用の横2列カード
             function createCardElement(item) {
-                const card = document.createElement("div");
-                const imageUrl = item.photoUrl || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=500&q=60";
-                const prefectureStr = item.prefecture || '未設定';
-                const cityStr = item.city || '';
-
-                card.onclick = () => {
-                    openDetail(item.id);
-                };
-
-                card.className = "bg-zinc-900/85 rounded-2xl overflow-hidden flex flex-col border border-zinc-800/80 hover:border-[#06C755]/50 transition shadow-lg cursor-pointer group";
-                card.innerHTML = `
-                    <div class="w-full aspect-square bg-zinc-950 relative overflow-hidden flex items-center justify-center">
-                        <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                        <span class="absolute top-2 right-2 bg-black/70 backdrop-blur-md text-[#06C755] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-[#06C755]/30">${item.genre || 'その他'}</span>
-                    </div>
-                    <div class="p-3 flex flex-col justify-between flex-1 space-y-1.5">
-                        <div class="pt-0.5">
-                            <h3 class="font-bold text-xs text-white truncate">${item.name}</h3>
-                        </div>
-                        <div class="pt-1.5 border-t border-zinc-800/80 flex items-center justify-between text-[9px]">
-                            <span class="text-zinc-500 truncate max-w-[70px]">✍️ ${item.author || '不明'}</span>
-                            <div class="flex items-center gap-1 text-[#06C755] font-bold truncate">
-                                <span>📍 ${prefectureStr}</span>
-                                ${cityStr ? `<span class="text-zinc-400 font-normal truncate">(${cityStr})</span>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
-                return card;
-            }
-
-            // 【新設】検索結果モーダル用の横1列（1カラム）で見やすい大型カード
-            function createSearchResultCardElement(item) {
                 const card = document.createElement("div");
                 const imageUrl = item.photoUrl || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=500&q=60";
                 const prefectureStr = item.prefecture || '未設定';
@@ -1142,17 +1108,23 @@
                     openDetail(item.id);
                 };
 
-                card.className = "bg-zinc-900/90 rounded-2xl overflow-hidden border border-zinc-800 hover:border-[#06C755]/60 transition shadow-xl cursor-pointer group flex flex-col";
+                // 修正: 横幅いっぱい（w-full）にしつつ、画像が絶対につぶれない（高さ固定・flex-shrink-0）カード構造に刷新
+                card.className = "bg-zinc-900/85 rounded-2xl overflow-hidden flex flex-col shrink-0 border border-zinc-800/80 hover:border-[#06C755]/50 transition shadow-lg cursor-pointer group w-full";
                 card.innerHTML = `
-                    <div class="w-full aspect-[16/10] bg-zinc-950 relative overflow-hidden flex items-center justify-center">
+                    <div class="w-full h-36 bg-zinc-950 relative overflow-hidden flex items-center justify-center shrink-0">
                         <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                        <span class="absolute top-2.5 right-2.5 bg-black/75 backdrop-blur-md text-[#06C755] text-xs font-bold px-3 py-1 rounded-full border border-[#06C755]/40">${item.genre || 'その他'}</span>
+                        <span class="absolute top-2 right-2 bg-black/70 backdrop-blur-md text-[#06C755] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-[#06C755]/30">${item.genre || 'その他'}</span>
                     </div>
-                    <div class="p-3.5 flex flex-col space-y-2">
-                        <h3 class="font-black text-sm text-white truncate">${item.name}</h3>
-                        <div class="pt-2 border-t border-zinc-800 flex items-center justify-between text-xs">
-                            <span class="text-zinc-400 truncate">✍️ ${item.author || '不明'}</span>
-                            <span class="text-[#06C755] font-bold truncate">📍 ${prefectureStr} ${cityStr ? `(${cityStr})` : ''}</span>
+                    <div class="p-3 flex flex-col justify-between flex-1 space-y-1.5">
+                        <div class="pt-0.5">
+                            <h3 class="font-bold text-xs text-white truncate">${item.name}</h3>
+                        </div>
+                        <div class="pt-1.5 border-t border-zinc-800/80 flex items-center justify-between text-[9px]">
+                            <span class="text-zinc-500 truncate max-w-[70px]">✍️ ${item.author || '不明'}</span>
+                            <div class="flex items-center gap-1 text-[#06C755] font-bold truncate">
+                                <span>📍 ${prefectureStr}</span>
+                                ${cityStr ? `<span class="text-zinc-400 font-normal truncate">(${cityStr})</span>` : ''}
+                            </div>
                         </div>
                     </div>
                 `;
@@ -2154,8 +2126,8 @@
                 <h3 class="text-xs font-bold text-white flex items-center gap-1.5"><span>🔍</span> 検索結果</h3>
                 <button id="close-search-result-modal" class="text-xs text-zinc-400 hover:text-white px-2 py-1 font-bold">✕ 閉じる</button>
             </div>
-            <!-- 修正: 横1列（1カラム）で画像が大きく綺麗に見えるように変更 -->
-            <div class="p-4 overflow-y-auto flex flex-col space-y-3 flex-1" id="search-result-list"></div>
+            <!-- 修正: 2カラムグリッドをやめ、1列の縦並び（space-y-3）と明確な overflow-y-auto, min-h-0 を設定して確実にスクロールできるように改善 -->
+            <div class="p-4 overflow-y-auto space-y-3 flex-1 min-h-0" id="search-result-list"></div>
         </div>
     </div>
 
