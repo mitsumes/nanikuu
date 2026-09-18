@@ -689,7 +689,7 @@
                 
                 genres.forEach(genre => {
                     const count = genre === "すべて" ? allRestaurants.length : allRestaurants.filter(r => r.genre === genre).length;
-                    if (genre !== "すべて" && count === 0) return; // 登録がないジャンルは非表示（すべては常に表示）
+                    if (genre !== "すべて" && count === 0) return;
 
                     const btn = document.createElement("button");
                     const isActive = currentGenreTab === genre;
@@ -1776,7 +1776,7 @@
             </div>
             <div class="p-4 overflow-y-auto space-y-4 flex-1">
                 <div class="bg-zinc-950 p-2 rounded-2xl border border-zinc-800 relative">
-                    <p class="text-[10px] text-zinc-400 mb-2 text-center">お店ごとの正確な位置にピンが光ります💡（タップで詳細）</p>
+                    <p class="text-[10px] text-zinc-400 mb-2 text-center">正確な位置情報ではありません</p>
                     <div id="leaflet-map" class="w-full h-72 rounded-xl z-10"></div>
                 </div>
 
