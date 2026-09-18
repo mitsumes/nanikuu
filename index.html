@@ -988,11 +988,11 @@
                         const isVisited = count > 0;
 
                         const badge = document.createElement("button");
-                        // 修正: p-2 および flex items-center justify-between gap-1 を適用し、件数が多い時もテキストが潰れないように調整
-                        badge.className = `p-2 rounded-xl text-xs font-bold border transition flex items-center justify-between gap-1 ${isVisited ? 'bg-[#06C755]/10 border-[#06C755] text-white shadow-sm' : 'bg-zinc-950 border-zinc-900 text-zinc-500 opacity-60'}`;
+                        // 修正: 投稿数（「64件」など）が増えても文字が潰れないよう flex-nowrap と shrink-0 を適用しレイアウトを完全に安定化
+                        badge.className = `p-2 rounded-xl text-xs font-bold border transition flex items-center justify-between gap-1.5 ${isVisited ? 'bg-[#06C755]/10 border-[#06C755] text-white shadow-sm' : 'bg-zinc-950 border-zinc-900 text-zinc-500 opacity-60'}`;
                         badge.innerHTML = `
                             <span class="truncate">${pref}</span>
-                            <span class="text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ${isVisited ? 'bg-[#06C755] text-zinc-950 font-extrabold' : 'bg-zinc-900 text-zinc-600'}">${isVisited ? `📍 ${count}件` : '未'}</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full shrink-0 ${isVisited ? 'bg-[#06C755] text-zinc-950 font-extrabold' : 'bg-zinc-900 text-zinc-600'}">${isVisited ? `📍 ${count}件` : '未'}</span>
                         `;
                         badge.onclick = () => {
                             if (isVisited) {
@@ -1109,10 +1109,10 @@
                     openDetail(item.id);
                 };
 
-                // 修正: 写真が潰れないよう aspect-square と object-cover で綺麗に正方形に収まるように設定
+                // 修正: 検索結果や一覧で画像やテキスト枠が絶対に潰れないよう flex-shrink-0 を付与し固定
                 card.className = "bg-zinc-900/85 rounded-2xl overflow-hidden flex flex-col border border-zinc-800/80 hover:border-[#06C755]/50 transition shadow-lg cursor-pointer group";
                 card.innerHTML = `
-                    <div class="w-full aspect-square bg-zinc-950 relative overflow-hidden flex items-center justify-center">
+                    <div class="w-full aspect-square bg-zinc-950 relative overflow-hidden flex items-center justify-center shrink-0">
                         <img src="${imageUrl}" alt="${item.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
                         <span class="absolute top-2 right-2 bg-black/70 backdrop-blur-md text-[#06C755] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-[#06C755]/30">${item.genre || 'その他'}</span>
                     </div>
@@ -2127,7 +2127,7 @@
                 <h3 class="text-xs font-bold text-white flex items-center gap-1.5"><span>🔍</span> 検索結果</h3>
                 <button id="close-search-result-modal" class="text-xs text-zinc-400 hover:text-white px-2 py-1 font-bold">✕ 閉じる</button>
             </div>
-            <!-- 修正: 検索結果一覧に grid grid-cols-2 gap-3 と overflow-y-auto を適用しスクロール＆綺麗に表示 -->
+            <!-- 修正: 検索結果一覧に grid grid-cols-2 gap-3 と overflow-y-auto、およびアイテムの潰れ防止を完全適用 -->
             <div class="p-4 overflow-y-auto grid grid-cols-2 gap-3 flex-1" id="search-result-list"></div>
         </div>
     </div>
